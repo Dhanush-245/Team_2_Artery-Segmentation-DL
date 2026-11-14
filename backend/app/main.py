@@ -2726,10 +2726,25 @@ def readiness(db: Session = Depends(get_db)):
         database_ready = True
     except Exception:
         database_ready = False
+    from .task_models import installed
+    storage_ready = STORAGE.is_dir() and os.access(STORAGE, os.W_OK)
+    frontend_ready = (BASE_DIR / 'frontend' / 'dist' / 'index.html').is_file() or (Path(__file__).resolve().parents[2] / 'frontend' / 'dist' / 'index.html').is_file()
     inference_ready = models_ready()
-    ready = database_ready and inference_ready
-    return JSONResponse({'status': 'ready' if ready else 'degraded', 'database': database_ready,
-                         'inference': inference_ready, 'research_only': True}, status_code=200 if ready else 503)
+    volume_ready = installed('imagecas')
+    ready = database_ready and storage_ready and frontend_ready and inference_ready
+    return JSONResponse({
+        'status': 'ready' if ready else 'degraded',
+        'application_ready': ready,
+        # Keep the original booleans for existing health-check consumers.
+        'database': database_ready,
+        'inference': inference_ready,
+        'storage': 'ready' if storage_ready else 'unavailable',
+        'frontend': 'ready' if frontend_ready else 'unavailable',
+        'models': {'2d': 'available' if inference_ready else 'unavailable',
+                   '3d': 'available' if volume_ready else 'optional_checkpoint_unavailable'},
+        'worker': 'configured' if os.getenv('COROVISION_INFERENCE_WORKER', '1') == '1' else 'disabled',
+        'research_only': True,
+    }, status_code=200 if ready else 503)
 
 
 @app.get('/api/admin/operations')

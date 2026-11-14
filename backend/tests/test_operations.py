@@ -20,7 +20,12 @@ def test_operations_permissions_privacy_headers_and_readiness(monkeypatch, caplo
         assert response.headers['X-Request-ID'] != 'PRIVATE_SENTINEL'
         entries = [json.loads(r.message) for r in caplog.records if r.name == 'corovision.operations']
         assert entries and all('PRIVATE_SENTINEL' not in json.dumps(row) for row in entries)
-        assert client.get('/api/health/ready').status_code == 200
+        ready = client.get('/api/health/ready')
+        assert ready.status_code == 200
+        assert ready.json()['database'] is True
+        assert ready.json()['inference'] is True
+        assert ready.json()['application_ready'] is True
+        assert ready.json()['models']['3d'] in {'available', 'optional_checkpoint_unavailable'}
         monkeypatch.setattr(main, 'models_ready', lambda: False)
         assert client.get('/api/health/ready').status_code == 503
         assert client.get('/api/admin/operations').status_code == 401

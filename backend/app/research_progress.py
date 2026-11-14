@@ -197,7 +197,11 @@ def snapshot():
     warnings=[];root=research_root();paths=evidence_paths(); evidence=[]
     for key,(label,path,base) in paths.items():
         available=safe_file(path,base)
-        evidence.append(dict(id=key,label=label,available=available,
+        evidence_class = ('BROWSER_VERIFIED' if 'browser' in key else
+            'SYNTHETIC_KNOWN_TRUTH' if any(word in key for word in ('phantom','synthetic')) else
+            'SOFTWARE_INTEGRATION_TEST' if any(word in key for word in ('api','task-proof','framework')) else
+            'PRESERVED_MODEL_EVIDENCE')
+        evidence.append(dict(id=key,label=label,available=available,evidence_class=evidence_class,
             updated_at=utc_mtime(path) if available else None,
             url='/api/research-progress/evidence/'+key if available else None))
     available={e['id']:e['available'] for e in evidence}
@@ -343,7 +347,8 @@ def snapshot():
             verified_checkpoint_matches=registered,quarantined_checkpoints=unmatched),
         experiments=experiments,tasks=tasks,task_proof=task_proof,activity=activity[:30],evidence=evidence,warnings=warnings,
         next_action=next_action,
-        caveat='Counts summarize the evidence shown here, not every historical experiment. Framework tests and downloads are not accuracy gains.')
+        scientific_validation='NOT_INDEPENDENTLY_VALIDATED',
+        caveat='Evidence classes describe provenance. Synthetic/software verification is not clinical accuracy, and preserved development evidence is not independent patient validation.')
 
 
 @router.get('')

@@ -15,11 +15,19 @@ def test_container_has_nonroot_healthcheck_and_single_worker():
 
 def test_compose_keeps_private_mounts_and_local_binding():
     source=(ROOT/'compose.yaml').read_text()
-    for requirement in ('127.0.0.1:8000:8000', 'read_only: true',
-                        './models/trained_release:/models:ro',
+    for requirement in ('127.0.0.1:${COROVISION_PORT:-8000}:8000', 'read_only: true',
+                        'application-data:/data',
+                        'COROVISION_TRAINED_RELEASE: /models/trained_release',
                         'JWT_SECRET: ${JWT_SECRET:?', 'no-new-privileges:true',
                         'CV_LOCAL_DEMO_SESSIONS: "0"'):
         assert requirement in source
+
+
+def test_image_bakes_hash_verified_public_model_release():
+    source=(ROOT/'Dockerfile').read_text()
+    assert 'COROVISION_MODEL_ARCHIVE_URL=' in source
+    assert 'install_trained_release.py --install' in source
+    assert 'COROVISION_TRAINED_RELEASE=/models/trained_release' in source
 
 
 def test_build_context_excludes_credentials_data_and_checkpoints():

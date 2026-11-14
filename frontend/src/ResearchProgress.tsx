@@ -2,11 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { apiUrl, request } from "./api";
 import "./research-progress.css";
 
-type Evidence = {id:string; label:string; available:boolean; url:string|null; updated_at:string|null};
+type Evidence = {id:string; label:string; available:boolean; url:string|null; updated_at:string|null;evidence_class:'PRESERVED_MODEL_EVIDENCE'|'BROWSER_VERIFIED'|'SYNTHETIC_KNOWN_TRUTH'|'SOFTWARE_INTEGRATION_TEST'};
 type Progress = {
   task_proof?:Array<{id:string;title:string;status:string;detail:string;required_proof:string;evidence_id:string|null}>;
   next_local_trial_at?:string|null;
-  checked_at:string; last_evidence_at:string|null; telemetry:{detail:string; state:string; title?:string; kind?:string; step?:string; heartbeat_at?:string; started_at?:string; finished_at?:string; completed_units?:number|null; total_units?:number|null; elapsed_seconds?:number}; caveat:string; next_action:string;
+  checked_at:string; last_evidence_at:string|null;scientific_validation:string; telemetry:{detail:string; state:string; title?:string; kind?:string; step?:string; heartbeat_at?:string; started_at?:string; finished_at?:string; completed_units?:number|null; total_units?:number|null; elapsed_seconds?:number}; caveat:string; next_action:string;
   summary:{recorded_experiments:number; measured_gains:number; framework_tests:number|null; downloaded_bundles:number|null; verified_checkpoint_matches:number|null; quarantined_checkpoints:number|null};
   experiments:Array<{id:string; title:string; status:string; metric:string; count_unit?:"pixels"|"instances"|"voxels"; baseline:number; candidate:number; delta:number; baseline_fn:number; candidate_fn:number; baseline_fp:number; candidate_fp:number; limitation:string; evidence_id:string}>;
   tasks:Array<{id:string; title:string; status:string; detail:string; checkpoint_sha256:string|null; evidence_id:string}>;
@@ -87,7 +87,7 @@ export default function ResearchProgress({token}:{token:string}) {
       <section className="rp-panel"><h3>Recorded work</h3><p className="rp-caption">Explicitly recorded actions, not a live view of agent activity.</p>{!data.activity.length&&<p>No activity entries recorded yet.</p>}<ol className="rp-timeline">{data.activity.map(event=><li key={event.id}><div><span className="rp-badge">{event.status}</span><time dateTime={event.recorded_at}>{time(event.recorded_at)}</time></div><h4>{event.title}</h4><p>{event.detail}</p>{evidenceButton(event.evidence_id)}</li>)}</ol></section></div>
       <section className="rp-panel"><h3>Dataset and task readiness</h3><p className="rp-caption">A pinned hash identifies a recorded baseline; it does not mean a new model has improved or is installed.</p><div className="rp-task-grid">{data.tasks.map(task=><article key={task.id}><h4>{task.title}</h4><span className="rp-badge">{task.status}</span><p>{task.detail}</p>{task.checkpoint_sha256&&<details><summary>Recorded baseline hash</summary><code>{task.checkpoint_sha256}</code></details>}{evidenceButton(task.evidence_id)}</article>)}</div></section>
       <section className="rp-panel"><h3>Archived planning notes</h3><p>{data.next_action}</p>{data.next_local_trial_at&&<p>Next local experiment eligible after: <strong>{time(data.next_local_trial_at)}</strong> (your local time). Eligibility is not a promise of execution; inputs and resource checks must also pass.</p>}<p>{data.summary.downloaded_bundles??"—"} verified download bundles · {data.summary.verified_checkpoint_matches??"—"} original checkpoint matches. No automatic model activation.</p></section>
-      <section className="rp-panel"><h3>Source evidence</h3><div className="rp-source-grid">{data.evidence.map(e=><article key={e.id}><h4>{e.label}</h4><p className="rp-caption">{e.available?`File updated ${time(e.updated_at)}`:"Not available in this installation"}</p>{evidenceButton(e.id)}</article>)}</div></section>
+      <section className="rp-panel"><h3>Source evidence</h3><p className="rp-caption">Scientific validation: {data.scientific_validation.replaceAll('_',' ').toLowerCase()}.</p><div className="rp-source-grid">{data.evidence.map(e=><article key={e.id}><span className="rp-badge">{e.evidence_class.replaceAll('_',' ').toLowerCase()}</span><h4>{e.label}</h4><p className="rp-caption">{e.available?`File updated ${time(e.updated_at)}`:"Not available in this installation"}</p>{evidenceButton(e.id)}</article>)}</div></section>
       </details>
       {data.warnings.map((warning,index)=><p className="rp-warning" key={index}>{warning}</p>)}
     </>}

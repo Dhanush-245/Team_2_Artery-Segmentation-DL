@@ -20,7 +20,9 @@ def main():
     models=target.parent;models.mkdir(parents=True,exist_ok=True)
     assert target.parent==models and target.name not in {'','.', '..'}
     if target.exists():
-        assert all(sha(target/x['filename'])==x['sha256'] for x in RELEASE['models']),'Existing release differs; preserve it and select a new installation explicitly'
+        expected_files=[target/x['filename'] for x in RELEASE['models']]
+        assert all(p.is_file() for p in expected_files),'Existing release is incomplete; preserve it and select a new installation explicitly'
+        assert all(sha(p)==x['sha256'] for p,x in zip(expected_files,RELEASE['models'])),'Existing release differs; preserve it and select a new installation explicitly'
         print('Existing release verified; no files changed.');return
     with zipfile.ZipFile(args.install) as z:
         expected={x['filename'] for x in RELEASE['models']}|{'release.json'}
