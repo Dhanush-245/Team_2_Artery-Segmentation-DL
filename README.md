@@ -152,7 +152,7 @@ Keep both servers running. Opening `frontend/index.html` directly does not launc
 
 ### 4 · Set up an account
 
-Use registration for the default research account workflow. To bootstrap an administrator, set `ADMIN_EMAIL` and `ADMIN_PASSWORD` privately, then run `python create_admin.py` from `backend/`. The password must contain at least 12 characters.
+Use registration for the default viewer-account workflow. To bootstrap the first administrator, run `python -m app.cli create-admin` from `backend/` and answer the secure interactive prompts. The command refuses to create a second initial administrator and never accepts the password as a command-line argument or environment variable. See [administrator access](docs/ADMIN_ACCESS.md) and [Railway deployment](docs/RAILWAY_DEPLOYMENT.md).
 
 Never commit credentials. See [authentication setup](docs/AUTH_SETUP.md) and [backend/.env.example](backend/.env.example). Provider sign-in and email recovery require their corresponding service configuration.
 

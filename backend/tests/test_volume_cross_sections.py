@@ -19,7 +19,7 @@ def test_missing_lumen_and_truncation():
     assert cross_section(np.ones((31,31,31)),np.eye(4),[15,15,15],[0,0,1],radius_mm=2)['status']=='truncated_section'
 
 
-def test_disconnected_prediction_abstains_before_measurement(tmp_path):
+def test_disconnected_prediction_is_measured_within_each_component(tmp_path):
     mask = np.zeros((31, 31, 31), dtype=np.uint8)
     mask[6:10, 6:10, 5:25] = 1
     mask[20:24, 20:24, 5:25] = 1
@@ -28,10 +28,13 @@ def test_disconnected_prediction_abstains_before_measurement(tmp_path):
     path = tmp_path / 'disconnected.nii.gz'
     nib.save(image, path)
     result = measure(path)
-    assert result['status'] == 'abstained'
-    assert result['reasons'] == ['disconnected_prediction']
+    assert result['status'] == 'experimental_mask_geometry'
     assert result['component_count'] == 2
-    assert result['paths'] == [] and result['candidates'] == []
+    assert result['quality_warnings'] == ['disconnected_prediction_component_local_measurement']
+    assert result['measurement_scope'] == 'component_local_experimental_mask_geometry'
+    assert isinstance(result['paths'], list)
+    assert all(path['component_id'] in {1, 2} for path in result['paths'])
+    assert all(candidate['component_id'] in {1, 2} for candidate in result['candidates'])
 
 
 def test_boundary_clipped_prediction_abstains_before_measurement(tmp_path):

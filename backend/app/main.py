@@ -2579,8 +2579,8 @@ def save_automatic_measurements(case_id: str, event_id: str,
             measured = measure_candidate(mask, gray, candidate, event.id,
                 authorization=authorization if applicable else None)
             if applicable and measured['status'] == 'abstained' and authorization.get('status') == 'researcher_authorized':
-                from .saved_measurement import gharshitha_mask_estimate
-                estimate = gharshitha_mask_estimate(mask, candidate)
+                from .saved_measurement import percentile_ring_mask_estimate
+                estimate = percentile_ring_mask_estimate(mask, candidate)
                 if estimate:
                     measured = {**measured, **estimate, 'cross_section_assessment': measured,
                         'quality_status': 'exploratory_only_quality_gate_failed',

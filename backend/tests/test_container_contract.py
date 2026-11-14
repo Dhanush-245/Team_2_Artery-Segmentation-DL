@@ -8,7 +8,8 @@ def test_container_has_nonroot_healthcheck_and_single_worker():
     source=(ROOT/'Dockerfile').read_text()
     assert 'USER 10001:10001' in source
     assert 'HEALTHCHECK' in source and '/api/health/ready' in source
-    assert '"--workers", "1"' in source
+    start=(ROOT/'deploy/start.sh').read_text()
+    assert '--workers 1' in start and '${PORT:-8000}' in start
     assert 'COPY --from=web /build/frontend/dist/' in source
 
 

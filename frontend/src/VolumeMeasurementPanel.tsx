@@ -56,7 +56,6 @@ export default function VolumeMeasurementPanel({ candidates }: { candidates: Can
       {selected.cross_sections.map((section, index) => <SectionImage key={`${selected.id}-${index}`} section={section}
         title={index === 0 ? 'Candidate minimum' : 'Selected reference'} />)}
     </div>
-    <p>Diameter narrowing = (1 − {selected.minimum_diameter_mm.toFixed(2)} / {selected.reference_diameter_mm.toFixed(2)}) × 100 = {selected.narrowing_percent.toFixed(2)}%.</p>
-    <p>Experimental category {selected.severity}. Reference selection uses the path percentile. Measurement uncertainty remains unquantified.</p>
+    <p className="volume-measurement-result"><strong>{selected.narrowing_percent.toFixed(2)}% narrowing</strong><span>{selected.severity} · experimental</span></p>
   </section>;
 }

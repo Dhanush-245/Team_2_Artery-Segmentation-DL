@@ -28,7 +28,7 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [previews, setPreviews] = useState<Record<string,string>>({});
-  const [report, setReport] = useState<null | {experimental_geometry?: {paths: {id:string;length_mm:number}[];candidates:{id:string;path_id:string;minimum_area_mm2?:number;reference_area_mm2?:number;area_narrowing_percent?:number;minimum_diameter_mm:number;reference_diameter_mm:number;narrowing_percent:number;severity:string;location_ras_mm:number[]}[];limitations:string[]}; analysis_run_id:string; model_id:string; explanation:{text:string}; stages:Record<string,{status:string;reason:string}>}>(null);
+  const [report, setReport] = useState<null | {experimental_geometry?: {status?:string;reasons?:string[];paths?: {id:string;length_mm:number}[];candidates?:{id:string;path_id:string;minimum_area_mm2?:number;reference_area_mm2?:number;area_narrowing_percent?:number;minimum_diameter_mm:number;reference_diameter_mm:number;narrowing_percent:number;severity:string;location_ras_mm:number[]}[];limitations?:string[]}; analysis_run_id:string; model_id:string; explanation:{text:string}; stages:Record<string,{status:string;reason:string}>}>(null);
   const [reportError,setReportError] = useState('');
   const selected = runs.find(r => r.id === chosen) || runs[0];
   const active = runs.some(r => ['queued','running'].includes(r.status));
@@ -111,6 +111,11 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
     } catch (cause) { setError((cause as Error).message); }
   }
 
+  const geometry = report?.experimental_geometry;
+  const candidates = geometry?.candidates ?? [];
+  const primaryCandidate = candidates[0];
+  const geometryReason = geometry?.reasons?.[0]?.replaceAll('_',' ') ?? '';
+
   if (historyOnly) return <section className="volume-inference" aria-label="3D analysis history">
     <h3>3D analysis history</h3>
     {error && <p role="alert">{error}</p>}
@@ -140,51 +145,66 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
         {selected?.result && <>
           {selected.input_kind === 'synthetic_fixture' && <div className="message warning" role="note"><strong>Synthetic geometry test — not a medical scan.</strong><p>This saved run used an artificial gradient, not coronary CTA anatomy. Grey slices and an empty vessel mask do not demonstrate medical segmentation. Upload a real, de-identified CTA from Assets & preparation.</p></div>}
           {selected.input_kind === 'unspecified' && <p className="message warning">Legacy source provenance is unspecified. Verify the original volume before interpreting this result.</p>}
-          <p>Processing time {selected.result.duration_seconds.toFixed(2)} s · source {selected.result.source_shape.join(' × ')} voxels</p>
-          <p>Predicted foreground: {selected.result.coarse_foreground_voxels.toLocaleString()} coarse-grid voxels. This is not an accuracy score or anatomical volume measurement.</p>
-          <p className="message warning">A completed job does not establish anatomically correct segmentation. Predictions can include false positives and missed vessels; no reference coronary mask was used to validate this result.</p>
+          <p className="volume-run-meta">{selected.result.duration_seconds.toFixed(2)} s · {selected.result.source_shape.join(' × ')} voxels · {selected.result.coarse_foreground_voxels.toLocaleString()} predicted coarse-grid voxels</p>
           {selected.result.coarse_foreground_voxels === 0 && <p className="message warning">No vessel overlay was produced by this model. This is not a healthy/normal finding; check source eligibility and image quality and obtain expert review.</p>}
+          <section className="volume-findings-summary" aria-labelledby="volume-findings-title">
+            <div className="volume-findings-heading"><div><p className="eyebrow">SAVED 3D CASE</p><h4 id="volume-findings-title">Analysis findings</h4></div><strong className="volume-result-status">{selected.status}</strong></div>
+            <dl className="volume-summary-grid">
+              <div><dt>Model</dt><dd>{selected.result.model_id}</dd></div>
+              <div><dt>Source volume</dt><dd>{selected.result.source_shape.join(' × ')} voxels</dd></div>
+              <div><dt>Segmentation</dt><dd>Saved prediction · review required</dd></div>
+              <div><dt>Vessel geometry</dt><dd>{geometryReason ? `Not assessable · ${geometryReason}` : geometry ? `${geometry.paths?.length ?? 0} extracted paths` : 'Loading assessment…'}</dd></div>
+              <div><dt>Stenosis candidates</dt><dd>{candidates.length ? `${candidates.length} experimental candidate${candidates.length === 1 ? '' : 's'}` : 'None eligible'}</dd></div>
+              <div><dt>Estimated narrowing</dt><dd>{primaryCandidate ? `${primaryCandidate.narrowing_percent.toFixed(2)}%` : 'Not assessable'}</dd></div>
+              <div className="volume-severity-result"><dt>Severity grading</dt><dd>{primaryCandidate ? primaryCandidate.severity : 'Not assessable'}</dd></div>
+              <div><dt>Reason</dt><dd>{primaryCandidate ? 'Experimental mask-geometry result; expert review required.' : geometryReason ? `Measurement withheld because the saved prediction is ${geometryReason}.` : 'No eligible 3D narrowing measurement is available.'}</dd></div>
+            </dl>
+          </section>
           {selected.preview_url && selected.result.coarse_foreground_voxels > 0 && <section aria-label="Interactive vessel mask">
             <Button type="button" aria-expanded={viewingRun === selected.id} onClick={() => setViewingRun(viewingRun === selected.id ? '' : selected.id)}>
               {viewingRun === selected.id ? 'Close 3D viewer' : 'Open 360° vessel viewer'}
             </Button>
             {viewingRun === selected.id && <VolumeOrbit key={selected.id} url={selected.preview_url} token={token}
-              runId={selected.id} shape={selected.result.source_shape} slices={selected.result.slices} previews={previews} />}
+              shape={selected.result.source_shape} slices={selected.result.slices} previews={previews} />}
           </section>}
           <details open={selected.input_kind !== 'synthetic_fixture'} key={selected.id}><summary>{selected.input_kind === 'synthetic_fixture' ? 'Show synthetic test slices (not medical images)' : 'Slice previews from three directions'}</summary>
           <div className="volume-slices">{selected.result.slices.map(slice => <figure key={slice.artifact}>
             {previews[slice.artifact] ? <img src={previews[slice.artifact]} alt={`Predicted coronary overlay on ${slice.axis} slice ${slice.coarse_index}`} /> : <p>Loading saved preview…</p>}
             <figcaption>{slice.axis} · coarse slice {slice.coarse_index}</figcaption></figure>)}</div></details>
           <div className="volume-downloads"><Button onClick={() => void download('mask_source.nii.gz')}>Download source-grid mask</Button><Button onClick={() => void download('probability_coarse.nii.gz')}>Download coarse probability volume</Button><Button onClick={() => void download('result.json')}>Download result JSON</Button></div>
-          <section aria-label="3D explanation and stage report">
-            <Button onClick={()=>void download('evidence.zip')}>Download 3D evidence ZIP</Button>
-            <h4>3D explanation and downstream stage availability</h4>
+          <section className="volume-measurement-report" aria-label="3D measurement report">
+            <div className="volume-section-heading"><h4>Measurement details</h4><Button onClick={()=>void download('evidence.zip')}>Download evidence ZIP</Button></div>
             {reportError ? <p role="alert">{reportError}</p> : !report ? <p role="status">Loading saved-run report…</p> : <>
-              <p>Run {report.analysis_run_id} · {report.model_id}</p>
-              <p>{report.explanation.text}</p>
               {report.experimental_geometry && <section aria-label="Experimental 3D geometry">
-                <VolumeMeasurementPanel candidates={report.experimental_geometry.candidates} />
-                <h4>3D centerline and mask-width analysis</h4>
-                <p>{report.experimental_geometry.paths.length} extracted paths · total traced length {report.experimental_geometry.paths.reduce((sum,path)=>sum+path.length_mm,0).toFixed(2)} mm</p>
+                <VolumeMeasurementPanel candidates={report.experimental_geometry.candidates ?? []} />
+                <div className="volume-subsection-heading"><h4>Candidate measurements</h4><span>{(report.experimental_geometry.paths ?? []).length} paths · {(report.experimental_geometry.paths ?? []).reduce((sum,path)=>sum+path.length_mm,0).toFixed(2)} mm traced</span></div>
                 <table className="stenosis-summary"><thead><tr><th>Candidate / path</th><th>Minimum width</th><th>Reference width</th><th>Narrowing</th><th>Experimental grade</th><th>RAS location (mm)</th></tr></thead>
-                  <tbody>{report.experimental_geometry.candidates.map(candidate=><tr key={candidate.id}><td>{candidate.id} / {candidate.path_id}</td><td>{candidate.minimum_diameter_mm.toFixed(2)} mm<br/>{candidate.minimum_area_mm2?.toFixed(2)} mm²</td><td>{candidate.reference_diameter_mm.toFixed(2)} mm<br/>{candidate.reference_area_mm2?.toFixed(2)} mm²</td><td>Diameter {candidate.narrowing_percent.toFixed(2)}%<br/>Area {candidate.area_narrowing_percent?.toFixed(2)}%</td><td>{candidate.severity}</td><td>{candidate.location_ras_mm.map(value=>value.toFixed(2)).join(', ')}</td></tr>)}</tbody>
+                  <tbody>{(report.experimental_geometry.candidates ?? []).map(candidate=><tr key={candidate.id}><td>{candidate.id} / {candidate.path_id}</td><td>{candidate.minimum_diameter_mm.toFixed(2)} mm<br/>{candidate.minimum_area_mm2?.toFixed(2)} mm²</td><td>{candidate.reference_diameter_mm.toFixed(2)} mm<br/>{candidate.reference_area_mm2?.toFixed(2)} mm²</td><td>Diameter {candidate.narrowing_percent.toFixed(2)}%<br/>Area {candidate.area_narrowing_percent?.toFixed(2)}%</td><td>{candidate.severity}</td><td>{candidate.location_ras_mm.map(value=>value.toFixed(2)).join(', ')}</td></tr>)}</tbody>
                 </table>
-                {!report.experimental_geometry.candidates.length && <p>No candidate met the experimental path-length and narrowing rules.</p>}
-                {report.experimental_geometry.limitations.map(text=><p key={text}>{text}</p>)}
+                {!(report.experimental_geometry.candidates ?? []).length && <p>No candidate met the experimental path-length and narrowing rules.</p>}
+                {(report.experimental_geometry.limitations?.length
+                  ? report.experimental_geometry.limitations
+                  : (report.experimental_geometry.reasons ?? []).map(reason => `Measurement withheld: ${reason.replaceAll('_',' ')}.`)
+                ).slice(0,1).map(text=><p className="message warning volume-primary-warning" role="note" key={text}>{text}</p>)}
+                {(report.experimental_geometry.limitations?.length ?? 0) > 1 && <details className="volume-method-notes"><summary>Method notes</summary><ul>{report.experimental_geometry.limitations?.slice(1).map(text=><li key={text}>{text}</li>)}</ul></details>}
               </section>}
               {!report.experimental_geometry && <table className="stenosis-summary">
                 <caption>Selected 3D scan measurement assessment</caption>
                 <thead><tr><th scope="col">Minimum lumen</th><th scope="col">Reference lumen</th><th scope="col">Narrowing</th><th scope="col">Research severity</th></tr></thead>
                 <tbody><tr><td>Unavailable</td><td>Unavailable</td><td>Unavailable</td><td>{report.stages.severity?.status.replaceAll('_', ' ') ?? 'Unavailable'}</td></tr></tbody>
               </table>}
-              <dl>{Object.entries(report.stages).map(([name,item])=><div key={name} style={{marginBlock:'1rem'}}>
-                <dt><strong>{name.replaceAll('_',' ')} — {item.status.replaceAll('_',' ')}</strong></dt>
-                <dd style={{marginInlineStart:0}}>{item.reason}</dd>
-              </div>)}</dl>
+              <dl className="volume-stage-grid">{Object.entries(report.stages).map(([name,item])=>{
+                const withheld = geometry?.status === 'abstained' && name !== 'segmentation';
+                const status = withheld ? 'not assessable' : item.status.replaceAll('_',' ');
+                return <div key={name}>
+                  <dt>{name.replaceAll('_',' ')}</dt>
+                  <dd>{status}</dd>
+                </div>;
+              })}</dl>
               <div className="volume-downloads"><Button onClick={()=>void download('research-report.json')}>Export 3D research JSON</Button><Button onClick={()=>void download('research-report.csv')}>Export 3D stage CSV</Button><Button onClick={()=>void download('research-report.pdf')}>Export 3D research PDF</Button></div>
             </>}
           </section>
-          <details><summary>Model limitations and provenance</summary><p>Run: {selected.id} · Model: {selected.result.model_id}. The vessel mask is mapped back to the original volume grid.</p><ul>{selected.result.limitations.map(value => <li key={value}>{value}</li>)}</ul></details>
+          <details><summary>Model limitations and provenance</summary><p>Run: {selected.id} · Model: {selected.result.model_id}. The vessel mask is mapped back to the original volume grid.</p><ul>{(selected.result.limitations ?? []).map(value => <li key={value}>{value}</li>)}</ul></details>
         </>}
       </>}
     </section>

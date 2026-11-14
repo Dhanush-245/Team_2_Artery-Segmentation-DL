@@ -36,10 +36,34 @@ def snapshot(run):
     document['snapshot_sha256'] = hashlib.sha256(json.dumps(document, sort_keys=True, allow_nan=False).encode()).hexdigest()
     geometry = run.get('experimental_geometry')
     if geometry:
+        # Older and abstained geometry records legitimately omit presentation-
+        # only fields such as limitations.  Normalize the report contract
+        # without rewriting the immutable saved measurement.
+        reasons = geometry.get('reasons') or []
+        geometry = {**geometry,
+            'paths': geometry.get('paths') or [],
+            'candidates': geometry.get('candidates') or [],
+            'limitations': geometry.get('limitations') or
+                ([f"Measurement withheld: {str(reason).replace('_', ' ')}." for reason in reasons]
+                 if reasons else ['Experimental 3D mask geometry is unavailable for this saved run.'])}
         document['experimental_geometry'] = geometry
-        for name in ['vessel_graph', 'diameter_measurement', 'stenosis_detection', 'severity']:
-            stages[name] = dict(status='experimental_mask_geometry', reason=f"Computed from saved mask using {geometry.get('method')}. {len(geometry.get('paths', []))} paths and {len(geometry.get('candidates', []))} narrowing candidates.")
-        document['explanation']['text'] = 'Saved segmentation with physical-space skeleton paths, mask-width estimates and rule-based narrowing candidates.'
+        if geometry.get('status') == 'experimental_mask_geometry':
+            for name in ['vessel_graph', 'diameter_measurement', 'stenosis_detection', 'severity']:
+                stages[name] = dict(status='experimental_mask_geometry', reason=f"Computed from saved mask using {geometry.get('method')}. {len(geometry.get('paths', []))} paths and {len(geometry.get('candidates', []))} narrowing candidates.")
+            document['explanation']['text'] = 'Saved segmentation with physical-space skeleton paths, mask-width estimates and rule-based narrowing candidates.'
+            candidates = geometry.get('candidates') or []
+            if candidates:
+                primary = candidates[0]
+                document['narrowing_percent'] = primary.get('narrowing_percent')
+                document['severity_category'] = primary.get('severity')
+                document['severity_status'] = 'experimental_research_grade'
+                document['severity_candidate_id'] = primary.get('id')
+        else:
+            reason = ', '.join(str(item).replace('_', ' ') for item in reasons) or 'geometry quality gates did not pass'
+            for name in ['vessel_graph', 'diameter_measurement', 'stenosis_detection', 'severity']:
+                stages[name] = dict(status='not_assessable', reason=f'3D mask geometry withheld: {reason}.')
+            document['explanation']['text'] = 'The saved segmentation is available, but downstream 3D geometry and stenosis measurements were withheld because their quality gates did not pass.'
+            document['severity_status'] = 'indeterminate'
         document['snapshot_sha256'] = hashlib.sha256(json.dumps({k:v for k,v in document.items() if k != 'snapshot_sha256'}, sort_keys=True, allow_nan=False).encode()).hexdigest()
     return document
 
@@ -62,40 +86,62 @@ def csv_text(document):
 
 
 def pdf_bytes(document):
+    from reportlab.lib import colors
+    from reportlab.platypus import PageBreak, Paragraph, Table, TableStyle
+
     report = ResearchPDF('3D vessel analysis report')
-    report.field('Case', document['case_id'])
-    report.field('Saved run', document['analysis_run_id'])
-    report.field('Model', document['model_id'])
-    report.field('Study type', (document.get('input_kind') or 'Unavailable').replace('_', ' ').capitalize())
-
-    report.section('Findings')
-    report.field('Predicted vessel voxels (coarse grid)', document.get('predicted_coarse_foreground_voxels'))
-    if document.get('source_shape'):
-        report.field('Source volume dimensions', ' × '.join(map(str, document['source_shape'])) + ' voxels')
-    for title, key in [('Vessel mask', 'segmentation'), ('Centerline', 'vessel_graph'),
-                       ('Diameter', 'diameter_measurement'), ('Stenosis', 'stenosis_detection'),
-                       ('Severity', 'severity')]:
-        stage = document['stages'][key]
-        report.field(title, stage['status'].replace('_', ' ').capitalize())
-
-    report.section('Interpretation')
     geometry = document.get('experimental_geometry')
-    if geometry:
-        report.section('Experimental 3D mask geometry')
-        report.field('Extracted centerline paths', len(geometry['paths']))
-        for candidate in geometry['candidates']:
-            report.field('Candidate / path', candidate['id']+' / '+candidate['path_id'])
-            report.field('Minimum / reference mask width (mm)', f"{candidate['minimum_diameter_mm']:.2f} / {candidate['reference_diameter_mm']:.2f}")
-            report.field('Narrowing (%)', round(candidate['narrowing_percent'], 2))
-            report.field('Minimum / reference area (mm2)', f"{candidate.get('minimum_area_mm2')} / {candidate.get('reference_area_mm2')}")
-            report.field('Area narrowing (%)', candidate.get('area_narrowing_percent'))
-            report.field('Diameter definition', 'Area-equivalent perpendicular section')
-            report.field('Experimental severity', candidate['severity'])
-        for limitation in geometry['limitations']:
-            report.paragraph(limitation)
-    report.paragraph('The saved vessel mask is a research prediction. Voxel count describes the predicted mask size. '
-                     'Anatomical accuracy and clinical severity require separate validation.')
-    for limitation in document['limitations']:
-        report.paragraph(limitation)
-    report.paragraph('See the JSON export for source geometry, checkpoint hashes and detailed stage notes.')
+    candidates = (geometry or {}).get('candidates', [])
+
+    def cell(value, style=None):
+        return Paragraph(str(value), style or report.table_body)
+
+    report.story.append(Paragraph('COROVISION AI · 3D RESEARCH ANALYSIS', report.eyebrow))
+    summary = Table([
+        [cell('Case', report.table_label), cell(document['case_id']), cell('Model', report.table_label), cell(document['model_id'])],
+        [cell('Analysis run', report.table_label), cell(document['analysis_run_id']), cell('Study type', report.table_label), cell((document.get('input_kind') or 'Unavailable').replace('_', ' ').capitalize())],
+        [cell('Source volume', report.table_label), cell(' × '.join(map(str, document.get('source_shape') or [])) + ' voxels'), cell('Candidates', report.table_label), cell(len(candidates))],
+    ], colWidths=[70, 174, 78, 172], style=TableStyle([('GRID',(0,0),(-1,-1),.5,colors.HexColor('#ccd8e4')),('VALIGN',(0,0),(-1,-1),'TOP'),('PADDING',(0,0),(-1,-1),7)]))
+    report.story.append(summary)
+    report.section('Analysis summary')
+    if candidates:
+        first = candidates[0]
+        report.paragraph(f"{len(candidates)} experimental narrowing candidate(s) were identified from component-local saved-mask geometry. The leading candidate has {first['narrowing_percent']:.2f}% diameter narrowing and an experimental {first['severity']} category. Expert review is required.")
+    else:
+        report.paragraph('No quality-eligible 3D narrowing candidate is available. No normal finding is inferred.')
+    report.field('Segmentation', document['stages']['segmentation']['status'].replace('_',' ').capitalize())
+    report.field('Severity readiness', document['stages']['severity']['status'].replace('_',' ').capitalize())
+    report.paragraph('Research use only. This document is not a clinical diagnostic report.')
+
+    report.story.append(PageBreak())
+    report.section('Volume geometry and localization')
+    report.field('Source dimensions', ' × '.join(map(str, document.get('source_shape') or [])) + ' voxels')
+    report.field('Predicted coarse-grid foreground', document.get('predicted_coarse_foreground_voxels'))
+    report.field('Extracted centerline paths', len((geometry or {}).get('paths', [])))
+    report.field('Physical coordinate frame', 'RAS millimetres')
+    report.paragraph('Axial, sagittal and coronal saved previews and the interactive vessel reconstruction are available in the application and evidence artifacts. No absent visualization is synthesized in this PDF.')
+
+    report.story.append(PageBreak())
+    report.section('Candidate measurements')
+    data = [[cell(value, report.table_header) for value in ['Candidate', 'Min / ref diameter', 'Diameter narrowing', 'Min / ref area', 'Area narrowing', 'Severity']]]
+    for candidate in candidates:
+        data.append([cell(candidate['id']+' / '+candidate['path_id']),
+            cell(f"{candidate['minimum_diameter_mm']:.2f} / {candidate['reference_diameter_mm']:.2f} mm"),
+            cell(f"{candidate['narrowing_percent']:.2f}%"),
+            cell(f"{candidate.get('minimum_area_mm2', 0):.2f} / {candidate.get('reference_area_mm2', 0):.2f} mm2"),
+            cell(f"{candidate.get('area_narrowing_percent', 0):.2f}%"), cell(str(candidate['severity']).capitalize())])
+    if candidates:
+        report.story.append(Table(data, colWidths=[74,102,78,105,70,65], repeatRows=1,
+            style=TableStyle([('BACKGROUND',(0,0),(-1,0),colors.HexColor('#eaf0f5')),('GRID',(0,0),(-1,-1),.5,colors.HexColor('#ccd8e4')),('VALIGN',(0,0),(-1,-1),'TOP'),('PADDING',(0,0),(-1,-1),6)])))
+    else:
+        report.paragraph('Unavailable — no candidate passed the recorded geometry rules.')
+
+    report.story.append(PageBreak())
+    report.section('Methods, limitations and review')
+    report.field('Geometry method', (geometry or {}).get('method'))
+    report.field('Diameter definition', 'Area-equivalent perpendicular lumen section')
+    report.field('Human review', 'Not linked')
+    for limitation in dict.fromkeys([*((geometry or {}).get('limitations') or []), *(document.get('limitations') or [])]):
+        report.paragraph('- ' + limitation)
+    report.paragraph('The saved vessel mask is a research prediction. Fragmentation, coarse resolution and segmentation error can affect every derived measurement. See JSON and CSV exports for full-precision geometry, hashes and stage notes.')
     return report.build()

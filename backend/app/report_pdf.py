@@ -25,6 +25,16 @@ class ResearchPDF:
         self.fact = ParagraphStyle('Report field', parent=self.body, spaceAfter=3)
         self.title = ParagraphStyle('Report title', parent=self.heading, fontSize=24,
             leading=29, spaceBefore=0, spaceAfter=12)
+        self.eyebrow = ParagraphStyle('Report eyebrow', parent=self.body, fontName='Helvetica-Bold',
+            fontSize=8, leading=11, tracking=1.2, textColor=colors.HexColor('#587188'), spaceAfter=8)
+        self.table_body = ParagraphStyle('Table body', parent=self.body, fontSize=8.2,
+            leading=11, spaceAfter=0, splitLongWords=True)
+        self.table_header = ParagraphStyle('Table header', parent=self.table_body,
+            fontName='Helvetica-Bold', textColor=colors.HexColor('#1e2e40'))
+        self.table_label = ParagraphStyle('Table label', parent=self.table_header,
+            fontSize=7.4, textColor=colors.HexColor('#587188'))
+        self.caption = ParagraphStyle('Report caption', parent=self.body, fontSize=8,
+            leading=11, textColor=colors.HexColor('#587188'), spaceBefore=5, spaceAfter=0)
         self.story.append(Paragraph(escape(title), self.title))
 
     def paragraph(self, text):

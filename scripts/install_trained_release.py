@@ -15,7 +15,10 @@ def main():
             for item in RELEASE['models']:z.write(args.training_root/item['source_relative'],item['filename'])
             z.writestr('release.json',json.dumps(RELEASE,indent=2))
         print(json.dumps(dict(archive=str(args.export.resolve()),sha256=sha(args.export),raw_datasets=False)));return
-    models=(ROOT/'models').resolve();models.mkdir(exist_ok=True);target=(models/'trained_release').resolve();assert target.parent==models
+    configured=__import__('os').environ.get('COROVISION_TRAINED_RELEASE')
+    target=Path(configured).resolve() if configured else (ROOT/'models'/'trained_release').resolve()
+    models=target.parent;models.mkdir(parents=True,exist_ok=True)
+    assert target.parent==models and target.name not in {'','.', '..'}
     if target.exists():
         assert all(sha(target/x['filename'])==x['sha256'] for x in RELEASE['models']),'Existing release differs; preserve it and select a new installation explicitly'
         print('Existing release verified; no files changed.');return

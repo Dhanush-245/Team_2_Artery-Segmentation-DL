@@ -4,7 +4,7 @@ import { apiUrl } from './api';
 type Record = {id:string; analysis_event_id:string; created_at:string; result:{narrowing_percent:number; minimum_diameter:number; reference_diameter:number; diameter_unit:string; candidate_id:string; reference_segment_id:string; measurement_frame:string; quality_gate?:{status:string}; severity:{status:string;category:string|null;protocol_id?:string;protocol_version?:string;reference?:string;measurement_method?:string}; explanation:{text:string}}};
 type Props = {token:string;caseId:string;imageId:string;runId:string;candidates:string[];canReview:boolean;canAssess:boolean};
 const reasonLabel=(reason?:string)=>({
-  mask_width_percentile_estimate:'Experimental Gharshitha mask-width estimate · source pixels',
+  mask_width_percentile_estimate:'Experimental mask-width estimate · source pixels',
   low_local_boundary_contrast:'Not assessable · insufficient vessel-boundary contrast',
   no_stable_nearby_reference_segment:'Not assessable · no stable nearby reference segment',
   ambiguous_vessel_paths:'Not assessable · candidate crosses multiple vessel paths',
@@ -14,6 +14,19 @@ const reasonLabel=(reason?:string)=>({
   candidate_vessel_association_unverified:'Not assessable · vessel association is unverified',
   original_coordinate_mapping_unreliable:'Not assessable · source-coordinate mapping is unreliable'
 }[reason||'']||reason?.replaceAll('_',' ')||'Not assessable · measurement evidence is insufficient');
+const neutralizeLegacyMethodLabel=(value?:string)=>value?.toLowerCase().includes('percentile/ring research rules')
+  ? 'Percentile/ring research rules'
+  : value;
+type AutomaticCandidate={candidate_id:string;status:string;quality_status?:string;eligible_for_reference_validation?:boolean;reasons:string[];minimum_diameter?:number|null;reference_diameter?:number|null;narrowing_percent?:number|null;association?:{path_id:string;status:string};sensitivity?:{narrowing_range_percentage_points?:number[]};severity?:{category?:string|null;reason?:string};minimum_cross_section?:{endpoints:number[][]};reference_cross_sections?:{endpoints:number[][]}[];cross_section_assessment?:{status?:string;reasons?:string[]}};
+const automaticEligible=(candidate?:AutomaticCandidate)=>!!candidate
+  && candidate.status!=='abstained'
+  && candidate.quality_status!=='exploratory_only_quality_gate_failed'
+  && candidate.eligible_for_reference_validation!==false
+  && candidate.cross_section_assessment?.status!=='abstained'
+  && !(candidate.cross_section_assessment?.reasons?.length)
+  && candidate.minimum_diameter!=null && candidate.reference_diameter!=null
+  && candidate.narrowing_percent!=null && !!candidate.severity?.category;
+const automaticReason=(candidate?:AutomaticCandidate)=>candidate?.cross_section_assessment?.reasons?.[0]??candidate?.reasons?.[0];
 
 export default function StenosisMeasurements({token,caseId,imageId,runId,candidates,canReview,canAssess}:Props) {
   const [rows,setRows]=useState<Record[]>([]);
@@ -33,7 +46,7 @@ export default function StenosisMeasurements({token,caseId,imageId,runId,candida
     if(decision==='authorize'&&!authorizationChecked)return;
     setSaving(true);try{const r=await fetch(apiUrl('/api/research/severity-protocol'),{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({protocol_id:selectedProtocol,protocol_version:'1.0.0',research_mode_only:true,decision})});if(!r.ok)throw Error('Protocol decision could not be saved');setProtocolStatus((await r.json()).status);setAuthorizationChecked(false)}catch(e){setError((e as Error).message)}finally{setSaving(false)}
   }
-  const [automatic,setAutomatic]=useState<{id:string;records:{candidate_id:string;status:string;reasons:string[];minimum_diameter?:number|null;reference_diameter?:number|null;narrowing_percent?:number|null;association?:{path_id:string;status:string};sensitivity?:{narrowing_range_percentage_points?:number[]};severity?:{category?:string|null;reason?:string};minimum_cross_section?:{endpoints:number[][]};reference_cross_sections?:{endpoints:number[][]}[]}[]}[]>([]);
+  const [automatic,setAutomatic]=useState<{id:string;records:AutomaticCandidate[]}[]>([]);
   async function assessSavedRun(){
     setSaving(true);setError('');
     try{const response=await fetch(apiUrl(`/api/cases/${caseId}/automatic-measurements/${runId}`),{method:'POST',headers:{Authorization:`Bearer ${token}`}});
@@ -99,17 +112,20 @@ export default function StenosisMeasurements({token,caseId,imageId,runId,candida
         <tbody>{candidates.map(id => {
           const reviewed = rows.find(row => row.result.candidate_id === id)?.result;
           const assessed = automatic[0]?.records.find(candidate => candidate.candidate_id === id);
-          const measurement = reviewed ?? assessed;
+          const reviewedEligible=reviewed?.quality_gate?.status==='passed';
+          const assessedEligible=automaticEligible(assessed);
+          const eligible=reviewedEligible||assessedEligible;
+          const measurement = reviewedEligible ? reviewed : assessed;
           const unit = reviewed?.diameter_unit ?? 'source px';
-          const diameter = (value?: number | null) => value == null ? 'Unavailable' : `${value.toFixed(2)} ${unit}`;
+          const diameter = (value?: number | null) => !eligible||value == null ? 'Unavailable' : `${value.toFixed(2)} ${unit}`;
           return <tr key={id}>
             <th scope="row">{id}</th>
             <td>{reviewed?.reference_segment_id ?? assessed?.association?.path_id ?? 'Unavailable'}</td>
             <td>{diameter(measurement?.minimum_diameter)}</td>
             <td>{diameter(measurement?.reference_diameter)}</td>
-            <td><strong>{measurement?.severity?.category ?? (assessed ? 'Not assessable' : error ? 'Unable to load' : 'Pending')}</strong></td>
-            <td>{measurement?.narrowing_percent == null ? 'Unavailable' : `${measurement.narrowing_percent.toFixed(2)}%`}</td>
-            <td>{reviewed ? 'Reviewed record' : assessed ? reasonLabel(assessed.reasons[0]) : error ? 'Connection or assessment failed. Retry assessment.' : 'Automatic assessment pending'}</td>
+            <td><strong>{eligible ? measurement?.severity?.category : assessed ? 'Indeterminate' : error ? 'Unable to load' : 'Pending'}</strong>{!eligible&&assessed?.severity?.category&&<small>Exploratory: {assessed.severity.category}</small>}</td>
+            <td>{eligible&&measurement?.narrowing_percent != null ? `${measurement.narrowing_percent.toFixed(2)}%` : assessed?.narrowing_percent != null ? `${assessed.narrowing_percent.toFixed(2)}% · exploratory` : 'Unavailable'}</td>
+            <td>{reviewedEligible ? 'Reviewed record · quality passed' : assessed ? reasonLabel(automaticReason(assessed)) : error ? 'Connection or assessment failed. Retry assessment.' : 'Automatic assessment pending'}</td>
           </tr>;
         })}</tbody>
       </table>
@@ -118,7 +134,7 @@ export default function StenosisMeasurements({token,caseId,imageId,runId,candida
     <h4>Saved-run automatic measurement assessment</h4>
     <p className="caption">Runs the saved-mask measurement workflow against the selected immutable analysis. It starts automatically for every compatible saved run. Missing vessel association, stable reference evidence or uncertainty is reported as not assessable instead of producing an unsupported severity.</p>
     {canAssess&&<button type="button" disabled={saving} onClick={assessSavedRun}>{saving?'Assessing…':'Reassess saved-run measurement readiness'}</button>}
-    {automatic.slice(0, 1).map(record=><article key={record.id}><small>Saved assessment {record.id}</small>{record.records.map(candidate=><section key={candidate.candidate_id} className="evidence-details"><strong>{candidate.candidate_id}: {candidate.severity?.category??'Not assessable'}</strong><div className="metadata"><div><span>MLD / RVD</span><strong>{candidate.minimum_diameter?.toFixed(2)??'Unavailable'} / {candidate.reference_diameter?.toFixed(2)??'Unavailable'} source px</strong></div><div><span>Narrowing</span><strong>{candidate.narrowing_percent==null?'Unavailable':`${candidate.narrowing_percent.toFixed(2)}%`}</strong></div><div><span>Geometric path</span><strong>{candidate.association?.path_id??'Unassociated'}</strong></div><div><span>Sensitivity range</span><strong>{candidate.sensitivity?.narrowing_range_percentage_points?.map(v=>v.toFixed(2)).join('–')??'Unavailable'}</strong></div></div><p><strong>Assessment result:</strong> {candidate.reasons.length?candidate.reasons.map(reasonLabel).join('; '):candidate.severity?.reason}</p><p>Research severity: {candidate.severity?.category??'Not assessable'}{candidate.severity?.category?` · ${candidate.severity.reason}`:''}</p><details><summary>Original-coordinate measurement evidence</summary><pre>{JSON.stringify({minimum:candidate.minimum_cross_section?.endpoints,reference:candidate.reference_cross_sections,association:candidate.association},null,2)}</pre></details></section>)}</article>)}
+    {automatic.slice(0, 1).map(record=><article key={record.id}><small>Current saved assessment</small>{record.records.map(candidate=>{const eligible=automaticEligible(candidate);const exploratory=!eligible&&candidate.narrowing_percent!=null;return <section key={candidate.candidate_id} className="evidence-details"><strong>{candidate.candidate_id}: {eligible?candidate.severity?.category:'Indeterminate'}</strong><div className="metadata"><div><span>Minimum lumen / reference vessel</span><strong>{eligible||exploratory?`${candidate.minimum_diameter?.toFixed(2)} / ${candidate.reference_diameter?.toFixed(2)} source px${exploratory?' · exploratory':''}`:'Unavailable · quality gate failed'}</strong></div><div><span>Narrowing</span><strong>{candidate.narrowing_percent!=null?`${candidate.narrowing_percent.toFixed(2)}%${exploratory?' · exploratory':''}`:'Unavailable'}</strong></div><div><span>Geometric path</span><strong>{candidate.association?.path_id??'Unassociated'}</strong></div><div><span>Measurement quality</span><strong>{eligible?'Eligible':'Abstained'}</strong></div></div><p><strong>Assessment result:</strong> {eligible?neutralizeLegacyMethodLabel(candidate.severity?.reason):reasonLabel(automaticReason(candidate))}</p><p><strong>Research severity:</strong> {eligible?candidate.severity?.category:'Indeterminate — no accepted automatic grade'}</p>{exploratory&&<p><strong>Exploratory mask-width category:</strong> {candidate.severity?.category??'Unclassified'} · supporting evidence only</p>}<details><summary>Original-coordinate measurement evidence</summary><pre>{JSON.stringify({minimum:candidate.minimum_cross_section?.endpoints,reference:candidate.reference_cross_sections,association:candidate.association},null,2)}</pre></details></section>})}</article>)}
     {automatic.length > 1 && <details><summary>Earlier assessments ({automatic.length - 1})</summary><p>Earlier saved assessments are retained in the run evidence. The candidate table and details above display the latest assessment.</p></details>}
     {loading?<p role="status">Loading reviewed measurements…</p>:!rows.length?<p>{automatic.length?'Automatic assessment is shown above. No separate reviewed measurement has been saved.':candidates.length?'Automatic assessment is starting for this saved run.':'Severity task completed: no lesion candidate is available for diameter-based grading.'}</p>:rows.map(row=><article key={row.id} className="evidence-details">
       <strong>{row.result.candidate_id} · {row.result.narrowing_percent.toFixed(2)}% estimated diameter reduction</strong>

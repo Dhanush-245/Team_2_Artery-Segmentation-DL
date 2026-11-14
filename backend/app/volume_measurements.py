@@ -10,7 +10,7 @@ import numpy as np
 from scipy.ndimage import distance_transform_edt, convolve, map_coordinates, label
 from skimage.morphology import skeletonize
 
-METHOD = 'lee-skeleton-perpendicular-sections-v3'
+METHOD = 'lee-skeleton-perpendicular-sections-v4'
 
 
 def cross_section(mask, affine, center, tangent, radius_mm=12, step_mm=.25):
@@ -50,7 +50,7 @@ def saved_measurement(path):
     """Reuse geometry only when both its source hash and method match."""
     path = Path(path)
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
-    cache = path.parent / f'geometry-sections-v3-{digest}.json'
+    cache = path.parent / f'geometry-sections-v4-{digest}.json'
     if cache.is_file():
         result = json.loads(cache.read_text())
         if (result.get('mask_sha256') == digest
@@ -75,11 +75,6 @@ def measure(path):
     if not occupied[0].size:
         return dict(status='abstained', method=METHOD, reasons=['empty_prediction'], component_count=0,
                     component_sizes_voxels=[], paths=[], candidates=[], clinical_validated=False)
-    if component_count != 1:
-        return dict(status='abstained', method=METHOD, reasons=['disconnected_prediction'],
-                    component_count=int(component_count), component_sizes_voxels=component_sizes,
-                    paths=[], candidates=[], clinical_validated=False,
-                    measurement_scope='withheld_before_centerline_or_stenosis_measurement')
     if any(np.take(mask, index, axis=axis).any() for axis in range(3) for index in (0, -1)):
         return dict(status='abstained', method=METHOD, reasons=['prediction_touches_volume_boundary'],
                     component_count=1, component_sizes_voxels=component_sizes,
@@ -127,8 +122,10 @@ def measure(path):
             points = np.array(chain)
             world = nib.affines.apply_affine(image.affine, points+origin-1)
             widths = 2*distance[tuple(points.T)]
+            component_id = int(component_labels[tuple((points[0]+origin-1).T)])
             paths.append(dict(id=f'P{len(paths)+1}', points_ras_mm=world.tolist(),
-                mask_width_mm=widths.tolist(), length_mm=float(np.linalg.norm(np.diff(world,axis=0),axis=1).sum())))
+                component_id=component_id, mask_width_mm=widths.tolist(),
+                length_mm=float(np.linalg.norm(np.diff(world,axis=0),axis=1).sum())))
     cropped_affine = image.affine.copy()
     cropped_affine[:3,3] = nib.affines.apply_affine(image.affine,origin-1)
     candidates = []
@@ -155,6 +152,7 @@ def measure(path):
             continue
         grade = 'mild' if narrowing < 50 else 'moderate' if narrowing < 70 else 'severe'
         candidates.append(dict(id=f'C{len(candidates)+1}', path_id=path_record['id'],
+            component_id=path_record['component_id'],
             location_ras_mm=path_record['points_ras_mm'][index], minimum_diameter_mm=minimum,
             reference_diameter_mm=reference, narrowing_percent=narrowing, severity=grade,
             minimum_area_mm2=sections[0]['area_mm2'],reference_area_mm2=sections[1]['area_mm2'],
@@ -164,6 +162,10 @@ def measure(path):
     return dict(status='experimental_mask_geometry', method=METHOD,
         mask_sha256=hashlib.sha256(Path(path).read_bytes()).hexdigest(),
         paths=paths, candidates=candidates, unit='mm', clinical_validated=False,
-        limitations=['Path profiles use EDT widths. Candidate diameters use area-equivalent perpendicular sections.',
+        component_count=int(component_count), component_sizes_voxels=component_sizes,
+        quality_warnings=(['disconnected_prediction_component_local_measurement'] if component_count > 1 else []),
+        measurement_scope='component_local_experimental_mask_geometry',
+        limitations=([f'The predicted mask has {component_count} disconnected components; paths and references are restricted to their own component.'] if component_count > 1 else []) + [
+                    'Path profiles use EDT widths. Candidate diameters use area-equivalent perpendicular sections.',
                     'Coarse segmentation, tapering, branch junctions and mask errors affect candidate selection.',
                     'Reference is the path interior 75th percentile. Grades use experimental 25/50/70 percent rules.'])

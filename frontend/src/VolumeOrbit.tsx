@@ -5,7 +5,6 @@ import { Button } from './components/prismui/button';
 type Point = [number, number, number];
 type Slice = { axis: string; coarse_index: number; artifact: string };
 type MaskComponent = { id: number; foreground_voxels: number; points: Point[] };
-type MaskQuality = { largestFraction: number; fragmentVoxels: number; fragmentVolumeMm3: number };
 type SurfaceMesh = { vertices: Point[]; faces: [number, number, number][] };
 const initialView = { yaw: .5, pitch: -.25, zoom: 1 };
 const turn = Math.PI / 12;
@@ -17,15 +16,14 @@ const presets = [
 ];
 const planeLabels: Record<string, string> = { 'RAS X': 'Sagittal', 'RAS Y': 'Coronal', 'RAS Z': 'Axial' };
 
-export default function VolumeOrbit({ url, token, runId, shape, slices, previews }: {
-  url: string; token: string; runId: string; shape: number[];
+export default function VolumeOrbit({ url, token, shape, slices, previews }: {
+  url: string; token: string; shape: number[];
   slices: Slice[]; previews: Record<string, string>;
 }) {
   const [points, setPoints] = useState<Point[] | null>(null);
   const [components, setComponents] = useState<MaskComponent[]>([]);
   const [showAllComponents, setShowAllComponents] = useState(false);
   const [foregroundVoxels, setForegroundVoxels] = useState(0);
-  const [maskQuality, setMaskQuality] = useState<MaskQuality | null>(null);
   const [mesh, setMesh] = useState<SurfaceMesh>({ vertices: [], faces: [] });
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
@@ -46,24 +44,23 @@ export default function VolumeOrbit({ url, token, runId, shape, slices, previews
     const controller = new AbortController();
     setPoints(null);
     setError('');
-    fetch(apiUrl(url), { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal })
-      .then(async response => {
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.detail || 'Unable to load the saved 3D mask.');
-        const listed = (data.components || []) as MaskComponent[];
-        setComponents(listed);
-        setForegroundVoxels(Number(data.foreground_voxels || 0));
-        setMaskQuality({
-          largestFraction: Number(data.largest_component_fraction || 0),
-          fragmentVoxels: Number(data.isolated_fragment_voxels || 0),
-          fragmentVolumeMm3: Number(data.isolated_fragment_volume_mm3 || 0),
-        });
-        setMesh((data.mesh || { vertices: [], faces: [] }) as SurfaceMesh);
-        return (listed.length ? listed[0].points : data.points) as Point[];
-      })
-      .then(result => { if (!controller.signal.aborted) setPoints(result); })
-      .catch(cause => { if (!controller.signal.aborted) setError(cause.message); });
-    return () => controller.abort();
+    // Deferring one tick lets React StrictMode cancel its development-only
+    // probe effect before it consumes the backend's single mesh-preview slot.
+    const timer = window.setTimeout(() => {
+      fetch(apiUrl(url), { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal })
+        .then(async response => {
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.detail || 'Unable to load the saved 3D mask.');
+          const listed = (data.components || []) as MaskComponent[];
+          setComponents(listed);
+          setForegroundVoxels(Number(data.foreground_voxels || 0));
+          setMesh((data.mesh || { vertices: [], faces: [] }) as SurfaceMesh);
+          return (listed.length ? listed[0].points : data.points) as Point[];
+        })
+        .then(result => { if (!controller.signal.aborted) setPoints(result); })
+        .catch(cause => { if (!controller.signal.aborted) setError(cause.message); });
+    }, 0);
+    return () => { window.clearTimeout(timer); controller.abort(); };
   }, [url, token, attempt]);
 
   useEffect(() => {
@@ -167,7 +164,7 @@ export default function VolumeOrbit({ url, token, runId, shape, slices, previews
 
   return <div className="volume-orbit">
     <div className="volume-orbit-stage">
-    <div className="volume-orbit-heading"><strong>Vessel surface viewport</strong><span>Saved predicted-mask mesh · Research use</span></div>
+    <div className="volume-orbit-heading"><strong>Vessel surface viewport</strong></div>
     <canvas ref={canvas} className="volume-orbit-canvas" tabIndex={0}
       aria-label="Interactive 3D vessel mask. Use arrow keys to rotate."
       onKeyDown={event => {
@@ -194,7 +191,8 @@ export default function VolumeOrbit({ url, token, runId, shape, slices, previews
       onLostPointerCapture={() => { pointer.current = null; }} />
     <p className="caption">Drag or use the arrow keys to rotate. The grid is a visual guide.</p>
     </div>
-    <aside className="volume-orbit-inspector" aria-label="3D workspace inspector">
+    <aside className="volume-orbit-inspector" aria-label="3D workspace controls and details">
+    <section className="volume-view-controls" aria-label="View controls">
     <div><h4>View controls</h4>
       <div className="volume-downloads" role="group" aria-label="View presets">
         {presets.map(preset => <Button key={preset.label} type="button"
@@ -216,12 +214,12 @@ export default function VolumeOrbit({ url, token, runId, shape, slices, previews
       <Button type="button" onClick={() => setView(initialView)}>Reset view</Button>
     </div>
     <label className="volume-confirm"><input type="checkbox" checked={grid} onChange={event => setGrid(event.target.checked)} />Show reference grid</label>
+    </section>
+    <div className="volume-orbit-support">
     {components.length > 1 && <section className="volume-component-quality" aria-label="Predicted mask component quality">
       <h4>Mask connectivity</h4>
       <p><strong>{components.length} disconnected components</strong> · {foregroundVoxels.toLocaleString()} source-grid foreground voxels.</p>
-      <p className="caption">Largest component: {components[0].foreground_voxels.toLocaleString()} voxels
-        {maskQuality ? ` (${(maskQuality.largestFraction * 100).toFixed(1)}%). Fragments: ${maskQuality.fragmentVoxels.toLocaleString()} voxels / ${maskQuality.fragmentVolumeMm3.toFixed(1)} mm³.` : '.'}</p>
-      <p role="alert"><strong>Measurement withheld:</strong> disconnected predictions are not eligible for a research stenosis grade.</p>
+      <p role="note"><strong>Quality warning:</strong> disconnected predictions are reviewed separately. Any experimental path, reference and severity measurement is restricted to a single connected component.</p>
       <label className="volume-confirm"><input type="checkbox" checked={showAllComponents}
         onChange={event => setShowAllComponents(event.target.checked)} />Show all disconnected components</label>
     </section>}
@@ -239,11 +237,7 @@ export default function VolumeOrbit({ url, token, runId, shape, slices, previews
         alt={`${planeLabels[selectedSlice.axis] ?? selectedSlice.axis} source-volume MPR with predicted-mask overlay at slice ${mprIndex + 1}`} />
         : <p className="caption">Saved slice preview unavailable.</p>}
     </section>}
-    <section aria-label="Saved run details">
-      <h4>Saved run</h4>
-      <p className="volume-orbit-run">{runId}</p>
-      <p className="caption">Source grid {shape.join(' × ')} voxels. The viewport renders a bounded surface extracted from the saved prediction. Use the full mask download for detailed review.</p>
-    </section>
+    </div>
     </aside>
   </div>;
 }

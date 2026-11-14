@@ -31,6 +31,45 @@ def test_csv_formula_escape():
     assert "'=unsafe" in csv_text(snapshot(run))
 
 
+def test_abstained_geometry_has_stable_rendering_contract_without_mutation():
+    run = fixture()
+    run['experimental_geometry'] = {
+        'status': 'abstained', 'method': 'test-method',
+        'reasons': ['disconnected_prediction'], 'clinical_validated': False,
+    }
+    before = copy.deepcopy(run)
+    result = snapshot(run)
+    assert run == before
+    assert result['experimental_geometry']['paths'] == []
+    assert result['experimental_geometry']['candidates'] == []
+    assert result['experimental_geometry']['limitations'] == [
+        'Measurement withheld: disconnected prediction.'
+    ]
+    assert result['stages']['vessel_graph']['status'] == 'not_assessable'
+    assert result['stages']['severity']['reason'] == (
+        '3D mask geometry withheld: disconnected prediction.'
+    )
+    assert result['severity_status'] == 'indeterminate'
+
+
+def test_eligible_geometry_promotes_primary_experimental_severity():
+    run = fixture()
+    run['experimental_geometry'] = {
+        'status': 'experimental_mask_geometry', 'method': 'component-local-test',
+        'paths': [{'id': 'P1'}],
+        'candidates': [{
+            'id': 'C1', 'path_id': 'P1', 'narrowing_percent': 43.08,
+            'severity': 'mild', 'minimum_diameter_mm': 5.59,
+            'reference_diameter_mm': 9.82, 'location_ras_mm': [1, 2, 3],
+        }],
+    }
+    result = snapshot(run)
+    assert result['narrowing_percent'] == 43.08
+    assert result['severity_category'] == 'mild'
+    assert result['severity_status'] == 'experimental_research_grade'
+    assert result['severity_candidate_id'] == 'C1'
+
+
 def test_report_api_identity_access_and_failed_run():
     import json
     from uuid import uuid4

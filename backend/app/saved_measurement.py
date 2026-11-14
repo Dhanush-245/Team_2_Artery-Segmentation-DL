@@ -8,7 +8,7 @@ from .local_diameters import METHOD_ID, METHOD_SOURCE, candidate_diameters
 from .narrowing import experimental_research_grade
 
 
-def gharshitha_mask_estimate(mask, candidate):
+def percentile_ring_mask_estimate(mask, candidate):
     """Archived percentile/ring method, reported as an experimental mask estimate."""
     from scipy.ndimage import distance_transform_edt, maximum_filter
     box = candidate.get('bbox_source_xyxy')
@@ -37,9 +37,9 @@ def gharshitha_mask_estimate(mask, candidate):
     grade = next((name for limit, name in [(25,'minimal'),(50,'mild'),(70,'moderate'),(101,'severe')] if narrowing < limit), 'severe')
     return dict(minimum_diameter=minimum, reference_diameter=reference, narrowing_percent=narrowing,
         status='experimental_mask_estimate', unit='source_px', reasons=['mask_width_percentile_estimate'],
-        measurement_method={'id':'gharshitha-mask-percentiles-v1','reference_ring_source_px':45,
+        measurement_method={'id':'mask-percentile-ring-v1','reference_ring_source_px':45,
             'limitations':'Predicted mask widths. Branches and segmentation errors affect the reference and grade.'},
-        severity={'status':'experimental_unvalidated','category':grade,'reason':'Gharshitha percentile/ring research rules'},
+        severity={'status':'experimental_unvalidated','category':grade,'reason':'Percentile/ring research rules'},
         clinical_validated=False)
 
 

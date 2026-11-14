@@ -61,7 +61,7 @@ def heatmap_overlay_png(source: Path, heatmap: np.ndarray, palette: str = "hot")
         color = np.stack((np.minimum(1, values * 2) * 255,
                           np.maximum(0, values * 2 - 0.65) * 255,
                           np.maximum(0, values * 3 - 2) * 255), axis=-1)
-    heat = Image.fromarray(np.uint8(np.clip(color, 0, 255)), "RGB")
+    heat = Image.fromarray(np.uint8(np.clip(color, 0, 255)))
     result = Image.blend(base, heat, 0.48)
     buffer = BytesIO()
     result.save(buffer, format="PNG")

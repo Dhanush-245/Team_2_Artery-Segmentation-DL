@@ -154,9 +154,9 @@ export default function OverviewPanel({
           <Card><span>No model region flagged</span><strong>{analytics.cases_without_model_flag}</strong><small>Does not establish a normal result</small></Card>
             </div>
         <div className="overview-analytics-grid">
-          <Card className="panel"><div className="viewer-heading"><h3>Doctor-assessed severity</h3><span>Latest review per case</span></div>
+          <Card className="panel"><div className="viewer-heading"><h3>Human-reviewed severity</h3><span>Latest review per case</span></div>
             {Object.entries(analytics.clinician_severity_distribution).map(([label, count]) => <div className="analytics-bar-row" key={label}><span>{label.replaceAll("_", " ")}</span><div><i style={{ width: `${Math.min(100, count / Math.max(1, ...Object.values(analytics.clinician_severity_distribution)) * 100)}%` }} /></div><b>{count}</b></div>)}
-            <small className="caption">Severity values are entered by clinical reviewers; the model does not assign grades.</small>
+            <small className="caption">These are human assessments. Quality-eligible automated measurements appear separately as experimental research grades; failed quality gates remain indeterminate.</small>
           </Card>
           {canViewModels(user.role) && <Card className="panel"><div className="viewer-heading"><h3>Model validation</h3><span>ARCADE validation split</span></div>
             {Object.entries(analytics.validation_performance).length ? Object.entries(analytics.validation_performance).map(([task, metric]) => <div className="performance-row" key={task}><span>{task === "syntax" ? "Artery segmentation" : task === "stenosis" ? "Stenosis mask" : task}</span><strong>Dice {metric.validation_dice.toFixed(3)}</strong><small>{metric.validation_images} images</small></div>) : <p className="muted">No validation report is available.</p>}
