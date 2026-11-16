@@ -22,7 +22,10 @@ def test_review_run_binding_reports_exports_and_immutable_history(monkeypatch, t
     monkeypatch.setattr(main, 'analyze', lambda path, spacing=None: (
         raw.getvalue(), 123, 0, {'mean_diameter': None, 'centerline_length': 4, 'diameter_unit': 'px',
         'quality_flags': [{'code': 'test', 'severity': 'warning', 'message': 'Synthetic test evidence only'}]},
-        None, None, None, None, {'calibration': 'unavailable'}, None))
+            None, raw.getvalue(), raw.getvalue(), None,
+            {'calibration': 'unavailable', 'explainability': {
+                'attention': {'status': 'unavailable', 'reason': 'No attention gates.'},
+                'gradcam': {'status': 'unavailable', 'reason': 'No attribution contract.'}}}, None))
     suffix = uuid4().hex
     with TestClient(main.app) as client:
         _, owner = make_user(f'report-owner-{suffix}@example.org', 'doctor')
@@ -39,12 +42,18 @@ def test_review_run_binding_reports_exports_and_immutable_history(monkeypatch, t
         manifest = client.get(panels_url, headers=owner).json()
         assert manifest['analysis_run_id'] == event_id
         assert manifest['model_version'] == analysis['model_version']
-        assert len(manifest['panels']) == 7
+        assert len(manifest['panels']) == 11
         assert not next(p for p in manifest['panels'] if p['key'] == 'landmarks')['available']
         assert client.get(panels_url, headers=outsider).status_code == 404
         assert client.get(panels_url).status_code == 401
         assert client.get(panels_url+'/landmarks', headers=owner).status_code == 404
         assert client.get(panels_url+'/overlay', headers=owner).status_code == 200
+        assert next(p for p in manifest['panels'] if p['key'] == 'artery_probability')['available']
+        assert next(p for p in manifest['panels'] if p['key'] == 'probability')['available']
+        assert not next(p for p in manifest['panels'] if p['key'] == 'attention')['available']
+        assert not next(p for p in manifest['panels'] if p['key'] == 'gradcam')['available']
+        assert client.get(panels_url+'/artery_probability', headers=owner).status_code == 200
+        assert client.get(panels_url+'/probability', headers=owner).status_code == 200
         assert client.get(panels_url+'/unknown', headers=owner).status_code == 404
         evidence = {'image_id': im['id'], 'analysis_event_id': event_id}
         assert client.post(base+'/review', headers=owner, json={**evidence, 'decision': 'reviewed', 'stenosis_severity': 'insufficient_evidence'}).status_code == 422

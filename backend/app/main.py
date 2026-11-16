@@ -1610,14 +1610,17 @@ def analysis_out(run: AnalysisRun) -> dict:
         model_scores = metadata.get("model_scores", {})
     except (OSError, ValueError):
         vessel, model_scores, metadata = {}, {}, {}
+    def map_url(kind: str):
+        return (f"/api/images/{run.image_id}/analysis/map/{kind}"
+                if _explanation_file(run.overlay_path, kind).is_file() else None)
     return {"id": run.id, "image_id": run.image_id, "model_version": run.model_version,
             "artery_pixels": run.artery_pixels, "stenosis_pixels": run.stenosis_pixels,
             "overlay_url": f"/api/images/{run.image_id}/analysis/overlay",
-            "attention_map_url": f"/api/images/{run.image_id}/analysis/map/attention",
-            "stenosis_probability_url": f"/api/images/{run.image_id}/analysis/map/probability",
-            "gradcam_url": f"/api/images/{run.image_id}/analysis/map/gradcam",
-            "centerline_url": f"/api/images/{run.image_id}/analysis/map/centerline",
-            "artery_probability_url": f"/api/images/{run.image_id}/analysis/map/artery_probability",
+            "attention_map_url": map_url("attention"),
+            "stenosis_probability_url": map_url("probability"),
+            "gradcam_url": map_url("gradcam"),
+            "centerline_url": map_url("centerline"),
+            "artery_probability_url": map_url("artery_probability"),
             "vessel_analysis": vessel,
             "model_scores": model_scores,
             "structured_result": metadata.get("structured_result"),
@@ -1632,15 +1635,18 @@ def event_out(event: AnalysisEvent) -> dict:
         evaluation = json.loads(event.validation_json or "{}")
     except ValueError:
         evaluation = {}
+    def map_url(kind: str):
+        return (f"/api/images/{event.image_id}/analyses/{event.id}/map/{kind}"
+                if _explanation_file(event.overlay_path, kind).is_file() else None)
     return {"id": event.id, "image_id": event.image_id,
             "model_version": event.model_version, "artery_pixels": event.artery_pixels,
             "stenosis_pixels": event.stenosis_pixels,
             "overlay_url": f"/api/images/{event.image_id}/analyses/{event.id}/overlay",
-            "attention_map_url": f"/api/images/{event.image_id}/analyses/{event.id}/map/attention",
-            "stenosis_probability_url": f"/api/images/{event.image_id}/analyses/{event.id}/map/probability",
-            "gradcam_url": f"/api/images/{event.image_id}/analyses/{event.id}/map/gradcam",
-            "centerline_url": f"/api/images/{event.image_id}/analyses/{event.id}/map/centerline",
-            "artery_probability_url": f"/api/images/{event.image_id}/analyses/{event.id}/map/artery_probability",
+            "attention_map_url": map_url("attention"),
+            "stenosis_probability_url": map_url("probability"),
+            "gradcam_url": map_url("gradcam"),
+            "centerline_url": map_url("centerline"),
+            "artery_probability_url": map_url("artery_probability"),
             "validation": evaluation.get("models", evaluation),
             "vessel_analysis": evaluation.get("vessel_analysis", {}),
             "model_scores": evaluation.get("model_scores", {}),

@@ -46,6 +46,8 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
   const [source, setSource] = useState("");
   const [sourceError, setSourceError] = useState("");
   const [xaiLayers, setXaiLayers] = useState<Record<string, string>>({});
+  const [xaiFailures, setXaiFailures] = useState<string[]>([]);
+  const [xaiLoading, setXaiLoading] = useState(false);
   const [focusedCandidate, setFocusedCandidate] = useState('');
   const [runtime, setRuntime] = useState<number | null>(null);
   const canvas = useRef<HTMLDivElement>(null);
@@ -82,7 +84,9 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
 
   useEffect(() => {
     setXaiLayers({});
+    setXaiFailures([]);
     if (!analysis || !token) return;
+    setXaiLoading(true);
     let active = true;
     const urls: string[] = [];
     const entries = [
@@ -97,11 +101,12 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
     Promise.all(entries.map(async ([key, path]) => {
       if (!path) return;
       const response = await fetch(apiUrl(path), { headers: { Authorization: `Bearer ${token}` } });
-      if (!response.ok) return;
+      if (!response.ok) { if (active) setXaiFailures(previous => [...new Set([...previous, key])]); return; }
       const url = URL.createObjectURL(await response.blob());
       if (active) { urls.push(url); setXaiLayers((previous) => ({ ...previous, [key]: url })); }
       else URL.revokeObjectURL(url);
-    })).catch(() => undefined);
+    })).catch(() => { if (active) setXaiFailures(['explainability']); })
+      .finally(() => { if (active) setXaiLoading(false); });
     return () => { active = false; urls.forEach((url) => URL.revokeObjectURL(url)); };
   }, [analysis?.id, token]);
 
@@ -136,6 +141,15 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
 
 
   const selectedLesion = analysis?.structured_result?.candidates.find(c => c.candidate_id === focusedCandidate);
+  const attribution = analysis?.model_scores?.explainability || {};
+  const explanationLayers = [
+    { key: 'artery_probability', label: 'Artery probability', available: !!xaiLayers.artery_probability, description: 'Uncalibrated artery pixel-score evidence.' },
+    { key: 'probability', label: 'Stenosis probability', available: !!xaiLayers.probability, description: 'Score-weighted suspected-stenosis evidence.' },
+    { key: 'contours', label: 'Vessel contours', available: !!xaiLayers.contours, description: 'Deterministic boundary of the saved artery mask.' },
+    { key: 'centerline', label: 'Centerline graph', available: !!xaiLayers.centerline, description: 'Mask-derived paths, junctions and endpoints.' },
+    { key: 'attention', label: 'Attention', available: !!xaiLayers.attention, description: attribution.attention?.reason || 'Requires saved attention-gate activations.' },
+    { key: 'gradcam', label: 'Grad-CAM', available: !!xaiLayers.gradcam, description: attribution.gradcam?.reason || 'Requires a verified target and layer contract.' },
+  ] as const;
   const stages = analysis?.structured_result?.stages;
   const candidateCount = analysis?.structured_result?.candidates.length;
   const openSeverity = () => {
@@ -227,6 +241,16 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
             <button type="button" aria-label="Fit image to screen" onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }}><Maximize2 size={18} /></button>
             {([['Left', 40, 0], ['Right', -40, 0], ['Up', 0, 40], ['Down', 0, -40]] as const).map(([label, x, y]) => <button key={label} className="pan-control" type="button" disabled={zoom <= 1} onClick={() => setOffset(p => ({ x: p.x + x, y: p.y + y }))}>Pan {label}</button>)}
           </div>
+          {analysis && <section className="xai-summary" aria-labelledby="xai-summary-title" aria-busy={xaiLoading}>
+            <div className="xai-summary-heading"><div><span className="eyebrow">EXPLAINABLE AI</span><h4 id="xai-summary-title">Saved output evidence</h4></div><span role="status">{xaiLoading ? 'Loading evidence…' : `${explanationLayers.filter(layer => layer.available).length} of ${explanationLayers.length} layers available`}</span></div>
+            <p className="caption">Every available view belongs to this saved run. Unsupported attribution methods are identified explicitly and are never replaced with illustrative heatmaps.</p>
+            <div className="xai-method-grid">{explanationLayers.map(layer => <article key={layer.key} className={layer.available ? 'available' : 'unavailable'}>
+              <div><strong>{layer.label}</strong><span>{layer.available ? 'Available' : 'Unavailable'}</span></div>
+              <p>{layer.description}</p>
+              <button type="button" disabled={!layer.available} onClick={() => setMode(layer.key)} aria-label={layer.available ? `View ${layer.label}` : `${layer.label} unavailable`}>{layer.available ? 'View evidence' : 'Not supplied by model'}</button>
+            </article>)}</div>
+            {!!xaiFailures.length && <p role="alert">Some saved explanation artifacts could not be loaded. The analysis result is unchanged.</p>}
+          </section>}
           {mode === "source" && !source && <p className="caption">{sourceError || "Original DICOM/TIFF cannot be displayed by this browser; showing its processed preview."}</p>}
           {mode === "overlay" && !overlay && <p className="caption">No raster overlay was saved. Available detector polygons are displayed over the saved prepared image.</p>}
           {["attention", "artery_probability", "probability", "gradcam", "centerline"].includes(mode) && !xaiLayers[mode] && <p className="caption">This map is unavailable. Run analysis with a supported segmentation checkpoint first.</p>}

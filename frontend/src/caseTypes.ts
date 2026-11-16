@@ -105,6 +105,10 @@ export type AnalysisResult = {
     artery_foreground_mean_probability?: number | null;
     stenosis_foreground_mean_probability?: number | null;
     calibration?: string;
+    explainability?: Record<string, {
+      status?: string; method?: string; target?: string; layer?: string; reason?: string;
+      faithfulness_validated?: boolean; clinical_validated?: boolean;
+    }>;
   };
   validation: Record<string, { validation_dice: number; validation_images: number }>;
   vessel_analysis?: {

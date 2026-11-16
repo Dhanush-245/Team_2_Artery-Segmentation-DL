@@ -10,6 +10,10 @@ PANELS = [
     ('processed', 'Processed angiography', 'Saved model-input preview after preprocessing; resizing and padding may differ from the original.'),
     ('artery_mask', 'Binary artery segmentation mask', 'Saved predicted artery pixels; not a ground-truth annotation.'),
     ('overlay', 'Predicted segmentation overlay', 'Saved model overlay in the prepared-image frame; not necessarily registered to the original source grid.'),
+    ('artery_probability', 'Artery probability evidence', 'Saved uncalibrated artery pixel scores. Colour intensity is not patient-level confidence.'),
+    ('probability', 'Stenosis probability evidence', 'Saved score-weighted stenosis mask evidence. Colour intensity is not severity or diagnostic confidence.'),
+    ('attention', 'Attention-gate attribution', 'Available only when the saved architecture exposes attention-gate activations. Not a clinically validated explanation.'),
+    ('gradcam', 'Grad-CAM attribution', 'Available only when the saved model has a verified target and convolutional layer contract. Not a clinical explanation.'),
 ]
 
 
@@ -17,7 +21,11 @@ def paths(image, event):
     overlay = Path(event.overlay_path)
     return {'original': Path(image.original_path), 'processed': Path(image.preview_path),
             'overlay': overlay, 'centerline': overlay.with_name(f'{overlay.stem}.centerline.png'),
-            'artery_mask': overlay.with_name(f'{event.id}.artery_mask.png')}
+            'artery_mask': overlay.with_name(f'{event.id}.artery_mask.png'),
+            'artery_probability': overlay.with_name(f'{overlay.stem}.artery_probability.png'),
+            'probability': overlay.with_name(f'{overlay.stem}.probability.png'),
+            'attention': overlay.with_name(f'{overlay.stem}.attention.png'),
+            'gradcam': overlay.with_name(f'{overlay.stem}.gradcam.png')}
 
 
 def inventory(image, event):
