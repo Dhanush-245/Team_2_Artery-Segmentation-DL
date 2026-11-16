@@ -19,13 +19,15 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
+      - name: Install PDF conversion dependency
+        run: sudo apt-get update && sudo apt-get install --yes poppler-utils
       - name: Install backend dependencies
         run: pip install -r backend/requirements-ai.txt
-      - name: Backend tests
-        working-directory: backend
-        run: python -m pytest -q
       - name: Frontend build
         working-directory: frontend
         run: npm ci && npm run build
+      - name: Backend tests
+        working-directory: backend
+        run: python -m pytest -q
       - name: Deployment contract
         run: python -m json.tool railway.json >/dev/null && sh -n deploy/start.sh
