@@ -103,7 +103,7 @@ export default function ModelWorkspace({ token }: { token: string }) {
           <th scope="row">{model.title}</th>
           <td>{model.id.startsWith('cadica') ? 'CADICA' : model.id.startsWith('imagecasx') ? 'ImageCAS-X' : model.id === 'imagecas' ? 'ImageCAS' : model.id.startsWith('aorta') ? 'AortaSeg · aligned pseudo-label subset' : model.id.startsWith('dca') ? 'DCA' : model.id.startsWith('archive') ? 'Stenosis box archive' : model.id.startsWith('hepatic') ? 'Hepatic source package' : 'ARCADE'}</td>
           <td>{model.dimension}</td><td>{model.modality} · {model.anatomy}</td>
-          <td>{model.connected ? 'Hash verified · connected' : model.state.replaceAll('_', ' ')}</td>
+          <td>{model.connected ? 'Hash verified · connected' : (model.state?.replaceAll('_', ' ') || 'Not connected')}</td>
           <td><details><summary>Checkpoint identity</summary><code>{model.checkpoint_sha256 ?? 'Unavailable'}</code><p>{model.limitation}</p></details></td>
         </tr>)}</tbody>
       </table></div>
@@ -129,7 +129,7 @@ export default function ModelWorkspace({ token }: { token: string }) {
       <div className="evaluation-task-grid">{status.trained_release.research_evidence.tasks.map(task =>
         <details className="evaluation-task" key={task.task_id}>
           <summary><span><strong>{task.title}</strong><small>{task.inference_connected ? "Connected research adapter" : "Research evidence only / excluded"}</small></span><span className="evaluation-chevron" aria-hidden="true">⌄</span></summary>
-          <dl><dt>Validation data</dt><dd>{task.validation_support}</dd><dt>Measured results & limitations</dt><dd>{task.baseline_result}</dd><dt>Outcome</dt><dd>{task.outcome.replaceAll("_", " ")}</dd><dt>Application inference</dt><dd>{task.inference_connected ? "Connected to application inference." : "Separate research evidence; not connected to application inference."}</dd></dl>
+          <dl><dt>Validation data</dt><dd>{task.validation_support}</dd><dt>Measured results & limitations</dt><dd>{task.baseline_result}</dd><dt>Outcome</dt><dd>{task.outcome?.replaceAll("_", " ") || "Not recorded"}</dd><dt>Application inference</dt><dd>{task.inference_connected ? "Connected to application inference." : "Separate research evidence; not connected to application inference."}</dd></dl>
         </details>
       )}</div>
       <EvaluationSection title="Prepared-grid voxel-score studies">{status.trained_release.research_evidence.calibration_studies.map(study => <p key={study.task}><strong>{study.task}</strong>: {study.cases} volumes · cross-fitted NLL {study.raw_NLL.toFixed(6)} → {study.crossfit_NLL.toFixed(6)} · Brier {study.raw_Brier.toFixed(6)} → {study.crossfit_Brier.toFixed(6)}. Masks unchanged; no native/patient calibration or deployment.</p>)}</EvaluationSection>

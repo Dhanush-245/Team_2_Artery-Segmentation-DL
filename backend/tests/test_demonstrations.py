@@ -14,7 +14,7 @@ def test_demonstration_suite_runs_real_algorithms_without_training():
     assert result["training_performed"] is False
     assert result["scientific_validation"] == "NOT_INDEPENDENTLY_VALIDATED"
     assert result["clinical_validation"] == "NOT_ESTABLISHED"
-    assert result["summary"] == {"total": 9, "passed": 9}
+    assert result["summary"] == {"total": 14, "passed": 14}
     assert len(result["evidence_sha256"]) == 64
 
 
@@ -25,7 +25,7 @@ def test_demonstration_endpoint_is_authenticated():
         assert client.get("/api/demonstrations").status_code == 401
         response = client.get("/api/demonstrations", headers=headers)
         assert response.status_code == 200
-        assert response.json()["summary"]["passed"] == 9
+        assert response.json()["summary"]["passed"] == 14
         manifest = client.get("/api/demonstrations/manifest", headers=headers)
         assert manifest.status_code == 200
         assert manifest.headers["content-disposition"].endswith('"corovision-demonstration-manifest.json"')
@@ -34,7 +34,7 @@ def test_demonstration_endpoint_is_authenticated():
         assert package.status_code == 200
         with zipfile.ZipFile(io.BytesIO(package.content)) as archive:
             assert set(archive.namelist()) == {"manifest.json", "README.txt", "SHA256SUMS.txt"}
-            assert json.loads(archive.read("manifest.json"))["summary"] == {"total": 9, "passed": 9}
+            assert json.loads(archive.read("manifest.json"))["summary"] == {"total": 14, "passed": 14}
             assert b"not clinical validation" in archive.read("README.txt")
 
 
@@ -49,3 +49,13 @@ def test_uncertain_boundary_and_disconnected_mask_abstain():
     focal = next(row for row in result["three_dimensional_quality"] if row["id"] == "focal-narrowing-tube")
     assert focal["actual"]["research_category"] == "Mild"
     assert focal["absolute_error_percentage_points"] < 3
+
+
+def test_two_dimensional_measurement_and_quality_gate_use_real_geometry_code():
+    rows = suite()["sections"]["two_dimensional_measurement"]
+    measured = next(row for row in rows if row["id"] == "two-dimensional-focal-narrowing")
+    assert measured["actual"]["measurement_eligibility"] == "experimental_measurement"
+    assert measured["absolute_error_percentage_points"] < 3
+    abstained = next(row for row in rows if row["id"] == "two-dimensional-low-contrast")
+    assert abstained["actual"]["measurement_eligibility"] == "abstained"
+    assert abstained["actual"]["reasons"] == ["low_local_boundary_contrast"]

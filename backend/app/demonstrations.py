@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import Response
 
 from .evaluation_workspace import readers
+from .local_diameters import candidate_diameters
 from .narrowing import diameter_reduction, experimental_research_grade
 from .volume_geometry import analyze_volume_mask
 from .volume_measurements import cross_section
@@ -31,7 +32,8 @@ AUTHORIZATION = {
 
 
 def _severity_case(identity: str, minimum: float, reference: float, expected: str | None,
-                   uncertainty: float = 0.0) -> dict:
+                   uncertainty: float = 0.0, expected_status: str | None = None,
+                   authorization: dict | None = AUTHORIZATION) -> dict:
     measurement = diameter_reduction(
         minimum=minimum, reference=reference, unit="mm",
         measurement_frame="synthetic-known-scale", candidate_id=identity,
@@ -39,11 +41,11 @@ def _severity_case(identity: str, minimum: float, reference: float, expected: st
         calibration_verified=True, reference_selection_reviewed=True,
     )
     grade = experimental_research_grade(
-        measurement["narrowing_percent"], authorization=AUTHORIZATION,
+        measurement["narrowing_percent"], authorization=authorization,
         uncertainty_percentage_points=uncertainty,
     )
     actual = grade.get("category")
-    passed = actual == expected
+    passed = actual == expected and (expected_status is None or grade.get("status") == expected_status)
     return {
         "id": identity,
         "title": identity.replace("-", " ").title(),
@@ -58,6 +60,46 @@ def _severity_case(identity: str, minimum: float, reference: float, expected: st
         "absolute_error_percentage_points": 0.0,
         "outcome": "passed" if passed else "failed",
     }
+
+
+def _two_dimensional_measurements() -> list[dict]:
+    """Exercise the real source-grid cross-section method on known geometry."""
+    mask = np.zeros((512, 512), dtype=bool)
+    mask[240:264, 30:480] = True
+    mask[240:245, 200:281] = False
+    mask[259:264, 200:281] = False
+    path = [[x, 252] for x in range(30, 480)]
+    candidate = [198, 230, 282, 275]
+    common = dict(path_xy=path, candidate_xyxy=candidate, run_id="synthetic-2d-known-truth",
+                  candidate_id="C1", association_verified=True, overlap_known=False,
+                  branch_points=[])
+    high_contrast = (0.2 + 0.7 * mask).astype(float)
+    measured = candidate_diameters(mask, high_contrast, **common)
+    expected_narrowing = 100 * (24 - 14) / 24
+    error = (abs(measured["narrowing_percent"] - expected_narrowing)
+             if measured.get("narrowing_percent") is not None else None)
+    low_contrast = np.full(mask.shape, 0.5, dtype=float)
+    abstained = candidate_diameters(mask, low_contrast, **common)
+    return [
+        {"id": "two-dimensional-focal-narrowing", "title": "2D focal narrowing",
+         "evidence_class": "SYNTHETIC_KNOWN_TRUTH",
+         "expected": {"minimum_diameter_source_px": 14.0, "reference_diameter_source_px": 24.0,
+                      "narrowing_percent": expected_narrowing, "measurement_eligibility": "experimental_measurement"},
+         "actual": {"minimum_diameter_source_px": measured.get("minimum_diameter"),
+                    "reference_diameter_source_px": measured.get("reference_diameter"),
+                    "narrowing_percent": measured.get("narrowing_percent"),
+                    "measurement_eligibility": measured.get("status"),
+                    "minimum_cross_section": measured.get("minimum_cross_section"),
+                    "reference_cross_sections": measured.get("reference_cross_sections")},
+         "absolute_error_percentage_points": error,
+         "outcome": "passed" if measured.get("status") == "experimental_measurement" and error is not None and error < 3 else "failed"},
+        {"id": "two-dimensional-low-contrast", "title": "2D low-contrast abstention",
+         "evidence_class": "SYNTHETIC_KNOWN_TRUTH",
+         "expected": {"measurement_eligibility": "abstained", "reason": "low_local_boundary_contrast"},
+         "actual": {"measurement_eligibility": abstained.get("status"),
+                    "reasons": abstained.get("reasons", [])},
+         "outcome": "passed" if abstained.get("status") == "abstained" and abstained.get("reasons") == ["low_local_boundary_contrast"] else "failed"},
+    ]
 
 
 def _tube(disconnected: bool = False) -> np.ndarray:
@@ -105,7 +147,23 @@ def suite() -> dict:
         _severity_case("moderate-boundary", 5, 10, "Moderate"),
         _severity_case("severe-boundary", 3, 10, "Severe"),
         _severity_case("uncertain-boundary", 5, 10, None, 0.01),
+        _severity_case("possible-occlusion", 0, 10, None, 0,
+                       "possible_occlusion_requires_assessment"),
+        _severity_case("inactive-protocol", 5, 10, None, 0, "indeterminate",
+                       {**AUTHORIZATION, "status": "inactive"}),
     ]
+    missing_uncertainty = experimental_research_grade(50, authorization=AUTHORIZATION)
+    severity.append({
+        "id": "missing-uncertainty", "title": "Missing uncertainty",
+        "evidence_class": "SYNTHETIC_KNOWN_TRUTH",
+        "input": {"narrowing_percent": 50, "uncertainty_percentage_points": None},
+        "expected": {"research_category": None, "status": "indeterminate"},
+        "actual": {"research_category": missing_uncertainty.get("category"),
+                   "status": missing_uncertainty.get("status"),
+                   "reason": missing_uncertainty.get("reason")},
+        "outcome": "passed" if missing_uncertainty.get("category") is None and missing_uncertainty.get("status") == "indeterminate" else "failed",
+    })
+    two_dimensional = _two_dimensional_measurements()
     straight = analyze_volume_mask(_tube(), np.diag([0.5, 0.5, 1.0, 1.0]), spatial_unit="mm")
     fragmented = analyze_volume_mask(_tube(True), np.diag([0.5, 0.5, 1.0, 1.0]), spatial_unit="mm")
     volume = [
@@ -123,7 +181,7 @@ def suite() -> dict:
                     "reasons": fragmented["abstention_reasons"]},
          "outcome": "passed" if fragmented["connected_components"] == 2 and fragmented["measurement_eligibility"] == "abstained" else "failed"},
     ]
-    rows = severity + volume
+    rows = severity + two_dimensional + volume
     payload = {
         "schema_version": 1,
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -141,7 +199,9 @@ def suite() -> dict:
             "EXPLORATORY_RESEARCH_ESTIMATE": "Algorithmic research output without qualified independent validation.",
             "EXTERNAL_REFERENCE_EVALUATION": "Evaluation against a documented eligible independent reference.",
         },
-        "sections": {"severity_boundaries": severity, "three_dimensional_quality": volume},
+        "sections": {"severity_boundaries": severity,
+                     "two_dimensional_measurement": two_dimensional,
+                     "three_dimensional_quality": volume},
         "ledger": [
             {"module": "2D measurement and severity", "implemented": True,
              "demonstration_fixture": "Known MLD/RVD pairs and uncertainty boundary",
