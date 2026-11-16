@@ -34,6 +34,7 @@ from . import trained_release
 from .evaluation_catalog import catalog as evaluation_catalog, evaluation_runs
 from .evaluation_workspace import router as evaluation_workspace_router
 from .research_progress import router as research_progress_router
+from .demonstrations import router as demonstrations_router
 from .task_inference import router as task_inference_router
 from .models import TaskInferenceRun
 from .analysis_result import build_result
@@ -105,6 +106,7 @@ app.add_middleware(
 app.include_router(auth_ext_router)
 app.include_router(evaluation_workspace_router)
 app.include_router(research_progress_router)
+app.include_router(demonstrations_router)
 app.include_router(task_inference_router)
 
 

@@ -90,8 +90,8 @@ export default function ModelWorkspace({ token }: { token: string }) {
     finally { setActivationBusy(false); }
   }
 
-  const navigation=<nav className="research-view-nav" aria-label="Model workspace views"><button aria-pressed={panel==="progress"} onClick={()=>setPanel("progress")}>Research progress</button><button aria-pressed={panel==="evaluation"} onClick={()=>setPanel("evaluation")}>Model evaluation</button></nav>;
-  if(panel==="progress")return <div className="settings-page model-workspace"><div className="page-heading"><div><p className="eyebrow">MODEL WORKSPACE</p><h2>Research progress</h2></div><span className="stage-badge">Research only</span></div>{navigation}<ResearchProgress token={token}/></div>;
+  const navigation=<nav className="research-view-nav" aria-label="Model workspace views"><button aria-pressed={panel==="progress"} onClick={()=>setPanel("progress")}>Demonstration &amp; verification</button><button aria-pressed={panel==="evaluation"} onClick={()=>setPanel("evaluation")}>Model evaluation</button></nav>;
+  if(panel==="progress")return <div className="settings-page model-workspace"><div className="page-heading"><div><p className="eyebrow">RESEARCH EVIDENCE</p><h2>Demonstration &amp; verification</h2></div><span className="stage-badge">Research only</span></div>{navigation}<ResearchProgress token={token}/></div>;
   return <div className="settings-page model-workspace">
     <div className="page-heading"><div><p className="eyebrow">RESEARCH EVALUATION</p><h2>Model Evaluation</h2></div><span className="stage-badge">Research only</span></div>
     {navigation}

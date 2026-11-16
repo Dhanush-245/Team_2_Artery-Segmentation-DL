@@ -6,6 +6,7 @@ import { Button } from "./components/prismui/button";
 type Module = { title: string; description: string; icon: LucideIcon; view?: SidebarView; status?: string };
 const moduleItem = (title: string, description: string, icon: LucideIcon, view?: SidebarView, status?: string): Module => ({ title, description, icon, view, status });
 const research: Module[] = [
+  moduleItem("Demonstration & Verification", "Run controlled 2D severity and 3D quality fixtures, then compare expected and actual software outputs.", FlaskConical, "models"),
   moduleItem("Dataset Library", "Dataset versions, permissions, annotations and split checks need a connected, access-controlled registry.", Database, undefined, "Registry not connected"),
   moduleItem("Institutional Collaboration", "Shared datasets, access requests and team results require verified institution membership and resource grants. An account name grants no institutional access.", Users, undefined, "Institution scope not configured"),
   moduleItem("Research Projects", "Create and prepare de-identified research cases you own or have permission to access.", FolderOpen, "cases"),

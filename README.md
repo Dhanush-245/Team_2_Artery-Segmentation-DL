@@ -36,6 +36,7 @@ CoroVision brings these steps into one role-based application: create a case, pr
 | **Explore AI findings** | Inspect artery and suspected stenosis overlays when compatible checkpoints are installed. Review vessel measurements with calibration limitations. |
 | **Record expert review** | Enter a doctor's decision, assessed severity, notes, and follow-up findings separately from predictions. |
 | **Track and report** | Inspect saved analysis history, report revisions, notifications, and authorized exports. |
+| **Demonstrate and verify** | Run clearly labelled synthetic severity-boundary and 3D quality fixtures and download their expected-versus-actual evidence manifest. See the [evidence policy](docs/DEMONSTRATION_EVIDENCE.md). |
 | **Control access** | Use role-specific workspaces. Case ownership and assignment still apply. |
 
 ## The workflow
