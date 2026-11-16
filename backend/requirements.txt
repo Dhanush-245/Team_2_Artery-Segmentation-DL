@@ -17,3 +17,4 @@ python-dotenv>=1,<2
 SimpleITK>=2.4,<3
 nibabel>=5,<6
 reportlab>=4.2,<5
+pypdf>=6,<8
