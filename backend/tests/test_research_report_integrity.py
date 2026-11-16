@@ -60,3 +60,17 @@ def test_abstained_exploratory_values_never_become_primary_grades():
     assert 'Insufficient local vessel boundary contrast' in text
     assert 'Minimum / reference' in text
     assert 'indeterminate' in tabular(snapshot)
+
+
+def test_legacy_exploratory_snapshot_without_evidence_class_remains_abstained():
+    snapshot = abstained_snapshot()
+    assessment = snapshot['automatic_measurements'][0]
+    assessment.pop('evidence_class', None)
+    for record in assessment['records']:
+        # Preserved early snapshots can lack the newer top-level evidence class,
+        # but their quality and cross-section gates remain authoritative.
+        assert record['severity']['category'] is not None
+    rows = primary_candidate_rows(snapshot)
+    assert all(not row['eligible'] for row in rows)
+    assert all(row['narrowing_percent'] is None and row['severity'] is None for row in rows)
+    assert [row['exploratory_narrowing_percent'] for row in rows] == [15.02, 17.54, 27.89]
