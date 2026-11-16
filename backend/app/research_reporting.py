@@ -148,6 +148,7 @@ def tabular(snapshot):
         if eligible_severity else ('indeterminate' if primary else 'unavailable')
     )
     fields = {'report_id': snapshot['report_id'], 'report_version': snapshot['version'],
+              'evidence_class': snapshot.get('evidence_class', 'EXPLORATORY_RESEARCH_ESTIMATE'),
               'generated_at': snapshot['generated_at'], 'case_id': snapshot['case']['id'],
               'case_code': snapshot['case']['case_code'], 'image_id': snapshot['image']['id'],
               'analysis_run_id': result['id'], 'model_version': result['model_version'],
@@ -217,6 +218,7 @@ def pdf_bytes(snapshot, image_paths):
 
     # Page 1 — the current quality-controlled result.
     report.story.append(Paragraph('COROVISION AI · 2D RESEARCH ANALYSIS', report.eyebrow))
+    report.paragraph('EXPERIMENTAL RESEARCH ANALYSIS — NOT CLINICALLY VALIDATED')
     summary = [
         [cell('Case', report.table_label), cell(case['case_code']), cell('Report', report.table_label), cell(f"v{snapshot['version']}")],
         [cell('Study', report.table_label), cell(image.get('original_name')), cell('Modality', report.table_label), cell(case.get('modality') or 'Unavailable')],

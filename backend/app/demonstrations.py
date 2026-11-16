@@ -4,8 +4,10 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from functools import lru_cache
 import hashlib
+import io
 import json
 import math
+import zipfile
 
 import numpy as np
 from fastapi import APIRouter, Depends
@@ -14,6 +16,7 @@ from fastapi.responses import Response
 from .evaluation_workspace import readers
 from .narrowing import diameter_reduction, experimental_research_grade
 from .volume_geometry import analyze_volume_mask
+from .volume_measurements import cross_section
 
 router = APIRouter(prefix="/api/demonstrations", tags=["Demonstration and verification"])
 
@@ -65,6 +68,34 @@ def _tube(disconnected: bool = False) -> np.ndarray:
     return mask.astype(np.uint8)
 
 
+def _focal_tube_measurement() -> dict:
+    grid = np.indices((41, 41, 40))
+    spacing = 0.5
+    radius_mm = np.where((grid[2] >= 16) & (grid[2] <= 24), 2.5, 4.0)
+    radial_mm2 = ((grid[0]-20)*spacing)**2 + ((grid[1]-20)*spacing)**2
+    mask = (radial_mm2 <= radius_mm**2).astype(np.uint8)
+    affine = np.diag([spacing, spacing, 1.0, 1.0])
+    minimum = cross_section(mask, affine, [10, 10, 20], [0, 0, 1], step_mm=.1)
+    reference = cross_section(mask, affine, [10, 10, 10], [0, 0, 1], step_mm=.1)
+    mld, rvd = minimum["equivalent_diameter_mm"], reference["equivalent_diameter_mm"]
+    narrowing = (rvd-mld)/rvd*100
+    grade = experimental_research_grade(narrowing, authorization=AUTHORIZATION,
+                                        uncertainty_percentage_points=0)
+    expected = 37.5
+    error = abs(narrowing-expected)
+    return {"id": "focal-narrowing-tube", "title": "Focal narrowing tube",
+            "evidence_class": "SYNTHETIC_KNOWN_TRUTH",
+            "expected": {"minimum_diameter_mm": 5.0, "reference_diameter_mm": 8.0,
+                         "narrowing_percent": expected, "research_category": "Mild",
+                         "measurement_eligibility": "eligible_for_research_geometry_only"},
+            "actual": {"minimum_diameter_mm": mld, "reference_diameter_mm": rvd,
+                       "narrowing_percent": narrowing, "research_category": grade.get("category"),
+                       "minimum_area_mm2": minimum["area_mm2"], "reference_area_mm2": reference["area_mm2"],
+                       "measurement_eligibility": "eligible_for_research_geometry_only"},
+            "absolute_error_percentage_points": error,
+            "outcome": "passed" if error < 3 and grade.get("category") == "Mild" else "failed"}
+
+
 @lru_cache(maxsize=1)
 def suite() -> dict:
     severity = [
@@ -78,6 +109,7 @@ def suite() -> dict:
     straight = analyze_volume_mask(_tube(), np.diag([0.5, 0.5, 1.0, 1.0]), spatial_unit="mm")
     fragmented = analyze_volume_mask(_tube(True), np.diag([0.5, 0.5, 1.0, 1.0]), spatial_unit="mm")
     volume = [
+        _focal_tube_measurement(),
         {"id": "straight-tube", "title": "Straight tube", "evidence_class": "SYNTHETIC_KNOWN_TRUTH",
          "expected": {"connected_components": 1, "measurement_eligibility": "eligible_for_research_geometry_only"},
          "actual": {"connected_components": straight["connected_components"],
@@ -110,6 +142,35 @@ def suite() -> dict:
             "EXTERNAL_REFERENCE_EVALUATION": "Evaluation against a documented eligible independent reference.",
         },
         "sections": {"severity_boundaries": severity, "three_dimensional_quality": volume},
+        "ledger": [
+            {"module": "2D measurement and severity", "implemented": True,
+             "demonstration_fixture": "Known MLD/RVD pairs and uncertainty boundary",
+             "preserved_evidence": "Saved 2D runs remain separate",
+             "demonstration_status": "DEMONSTRATION_VERIFIED",
+             "browser_verified": False, "report_verified": False,
+             "scientific_limitation": "No qualified independent MLD/RVD reference cohort."},
+            {"module": "3D mask geometry and quality", "implemented": True,
+             "demonstration_fixture": "Connected and disconnected anisotropic tubes",
+             "preserved_evidence": "Saved 3D runs remain separate",
+             "demonstration_status": "DEMONSTRATION_VERIFIED",
+             "browser_verified": False, "report_verified": False,
+             "scientific_limitation": "No independent CTA diameter agreement established."},
+            {"module": "Frozen 2D model inference", "implemented": True,
+             "demonstration_fixture": None, "preserved_evidence": "Hash-pinned release and saved analyses",
+             "demonstration_status": "PRESERVED_MODEL_EVIDENCE",
+             "browser_verified": False, "report_verified": True,
+             "scientific_limitation": "Recorded development evidence is not unseen-patient validation."},
+            {"module": "Frozen 3D model inference", "implemented": True,
+             "demonstration_fixture": None, "preserved_evidence": "Compatible saved runs when available",
+             "demonstration_status": "CHECKPOINT_OPTIONAL",
+             "browser_verified": False, "report_verified": True,
+             "scientific_limitation": "Checkpoint availability and independent validation remain separate."},
+            {"module": "Model-specific explainability", "implemented": False,
+             "demonstration_fixture": None, "preserved_evidence": "Saved overlays are not attribution faithfulness",
+             "demonstration_status": "UNAVAILABLE",
+             "browser_verified": False, "report_verified": False,
+             "scientific_limitation": "Checkpoint-targeted attribution and perturbation tests are pending."},
+        ],
         "summary": {"total": len(rows), "passed": sum(row["outcome"] == "passed" for row in rows)},
     }
     canonical = json.dumps(payload["sections"], sort_keys=True, separators=(",", ":")).encode()
@@ -129,4 +190,27 @@ def demonstration_manifest(user=Depends(readers)):
         "Content-Disposition": 'attachment; filename="corovision-demonstration-manifest.json"',
         "Cache-Control": "no-store",
         "X-Content-Type-Options": "nosniff",
+    })
+
+
+@router.get("/package")
+def demonstration_package(user=Depends(readers)):
+    manifest = json.dumps(suite(), indent=2, sort_keys=True).encode()
+    readme = (
+        "CoroVision AI demonstration evidence\n\n"
+        "This package contains controlled synthetic software verification. "
+        "It contains no patient data and is not clinical validation.\n"
+        "Browser screenshots are excluded until an actual browser journey is executed.\n"
+        "Training and checkpoint modification were not performed.\n"
+    ).encode()
+    files = {"manifest.json": manifest, "README.txt": readme}
+    checksums = "".join(f"{hashlib.sha256(value).hexdigest()}  {name}\n" for name, value in sorted(files.items())).encode()
+    stream = io.BytesIO()
+    with zipfile.ZipFile(stream, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for name, value in files.items():
+            archive.writestr(name, value)
+        archive.writestr("SHA256SUMS.txt", checksums)
+    return Response(stream.getvalue(), media_type="application/zip", headers={
+        "Content-Disposition": 'attachment; filename="corovision-demonstration-evidence.zip"',
+        "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff",
     })

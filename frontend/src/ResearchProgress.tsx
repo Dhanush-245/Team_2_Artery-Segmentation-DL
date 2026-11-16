@@ -4,7 +4,7 @@ import "./research-progress.css";
 
 type Evidence = {id:string; label:string; available:boolean; url:string|null; updated_at:string|null;evidence_class:'PRESERVED_MODEL_EVIDENCE'|'BROWSER_VERIFIED'|'SYNTHETIC_KNOWN_TRUTH'|'SOFTWARE_INTEGRATION_TEST'};
 type DemonstrationRow={id:string;title:string;evidence_class:string;expected:Record<string,unknown>;actual:Record<string,unknown>;outcome:string;absolute_error_percentage_points?:number};
-type Demonstrations={notice:string;evidence_sha256:string;summary:{total:number;passed:number};sections:{severity_boundaries:DemonstrationRow[];three_dimensional_quality:DemonstrationRow[]}};
+type Demonstrations={notice:string;evidence_sha256:string;summary:{total:number;passed:number};sections:{severity_boundaries:DemonstrationRow[];three_dimensional_quality:DemonstrationRow[]};ledger:Array<{module:string;implemented:boolean;demonstration_status:string;browser_verified:boolean;report_verified:boolean;scientific_limitation:string}>};
 type Progress = {
   task_proof?:Array<{id:string;title:string;status:string;detail:string;required_proof:string;evidence_id:string|null}>;
   next_local_trial_at?:string|null;
@@ -51,6 +51,11 @@ export default function ResearchProgress({token}:{token:string}) {
       const blob=await response.blob(),url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download="corovision-demonstration-manifest.json";link.click();window.setTimeout(()=>URL.revokeObjectURL(url),1000);
     }catch(cause){setError(cause instanceof Error?cause.message:"Download failed");}
   }
+  async function downloadDemonstrationPackage(){
+    try{const response=await fetch(apiUrl("/api/demonstrations/package"),{headers:{Authorization:`Bearer ${token}`}});if(!response.ok)throw new Error("Demonstration evidence package download failed");
+      const blob=await response.blob(),url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download="corovision-demonstration-evidence.zip";link.click();window.setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }catch(cause){setError(cause instanceof Error?cause.message:"Download failed");}
+  }
   const evidenceButton=(id:string)=><button className="rp-evidence-button" disabled={!data?.evidence.find(e=>e.id===id)?.available} onClick={()=>void download(id)}>Download evidence</button>;
   const tasks = data?.task_proof ?? [];
   const selectTasks = (ids: string[]) => ids.flatMap(id => tasks.filter(task => task.id === id));
@@ -72,12 +77,13 @@ export default function ResearchProgress({token}:{token:string}) {
       <section className="rp-panel" aria-labelledby="demonstration-verification-heading">
         <div className="rp-section-heading"><div><span className="rp-label">CONTROLLED TEST DATA</span><h3 id="demonstration-verification-heading">Demonstration &amp; verification</h3></div><span className="rp-badge">{demonstrations?`${demonstrations.summary.passed}/${demonstrations.summary.total} passed`:"Unavailable"}</span></div>
         <p className="rp-caption">{demonstrations?.notice??"The deterministic demonstration suite is unavailable."}</p>
-        {demonstrations&&<button type="button" onClick={()=>void downloadDemonstrationManifest()}>Download demonstration evidence</button>}
+        {demonstrations&&<div className="rp-actions"><button type="button" onClick={()=>void downloadDemonstrationManifest()}>Download JSON manifest</button><button type="button" onClick={()=>void downloadDemonstrationPackage()}>Download evidence ZIP</button></div>}
         {demonstrations&&<><div className="rp-demo-grid">
           <article><h4>Severity boundary demonstrations</h4><p>Runs the application’s measurement and versioned research-grading functions against known diameter pairs.</p><div className="rp-table-wrap"><table><thead><tr><th>Fixture</th><th>Expected</th><th>Actual</th><th>Outcome</th></tr></thead><tbody>{demonstrations.sections.severity_boundaries.map(row=><tr key={row.id}><th>{row.title}</th><td>{String(row.expected.research_category??"Withhold grade")}</td><td>{String(row.actual.research_category??"Withheld")}{typeof row.actual.narrowing_percent==="number"?` · ${row.actual.narrowing_percent.toFixed(3)}%`:""}</td><td><span className="rp-badge">{row.outcome}</span></td></tr>)}</tbody></table></div></article>
-          <article><h4>3D quality demonstrations</h4><p>Runs the implemented 3D mask geometry and quality-gate code on controlled tubes. These masks are not model predictions.</p><div className="rp-table-wrap"><table><thead><tr><th>Fixture</th><th>Expected</th><th>Actual</th><th>Outcome</th></tr></thead><tbody>{demonstrations.sections.three_dimensional_quality.map(row=><tr key={row.id}><th>{row.title}</th><td>{String(row.expected.measurement_eligibility).replaceAll("_"," ")}</td><td>{String(row.actual.measurement_eligibility).replaceAll("_"," ")}</td><td><span className="rp-badge">{row.outcome}</span></td></tr>)}</tbody></table></div></article>
+          <article><h4>3D measurement and quality demonstrations</h4><p>Runs the implemented physical cross-section, 3D mask geometry and quality-gate code on controlled tubes. These masks are not model predictions.</p><div className="rp-table-wrap"><table><thead><tr><th>Fixture</th><th>Expected</th><th>Actual</th><th>Outcome</th></tr></thead><tbody>{demonstrations.sections.three_dimensional_quality.map(row=><tr key={row.id}><th>{row.title}</th><td>{typeof row.expected.narrowing_percent==="number"?`${row.expected.narrowing_percent.toFixed(2)}% · ${String(row.expected.research_category)}`:String(row.expected.measurement_eligibility).replaceAll("_"," ")}</td><td>{typeof row.actual.narrowing_percent==="number"?`${row.actual.narrowing_percent.toFixed(2)}% · ${String(row.actual.research_category)}`:String(row.actual.measurement_eligibility).replaceAll("_"," ")}</td><td><span className="rp-badge">{row.outcome}</span></td></tr>)}</tbody></table></div></article>
         </div><details><summary>Machine-readable evidence identity</summary><code>{demonstrations.evidence_sha256}</code><p className="rp-caption">Synthetic known-truth evidence · scientific and clinical validation are not established.</p></details></>}
       </section>
+      {demonstrations&&<section className="rp-panel"><h3>Authoritative demonstration ledger</h3><p className="rp-caption">Software status and scientific validation are tracked separately. Browser verification remains false until an actual browser journey is recorded.</p><div className="rp-table-wrap"><table><thead><tr><th>Module</th><th>Implementation</th><th>Evidence status</th><th>Browser</th><th>Report</th><th>Scientific limitation</th></tr></thead><tbody>{demonstrations.ledger.map(row=><tr key={row.module}><th>{row.module}</th><td>{row.implemented?"Implemented":"Unavailable"}</td><td>{row.demonstration_status.replaceAll("_"," ").toLowerCase()}</td><td>{row.browser_verified?"Verified":"Pending"}</td><td>{row.report_verified?"Verified":"Pending"}</td><td>{row.scientific_limitation}</td></tr>)}</tbody></table></div></section>}
       <section className="rp-panel">
         <h3>Milestone demonstrations</h3>
         <p className="rp-caption">Recorded application demonstrations and their supporting evidence.</p>

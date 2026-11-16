@@ -2600,6 +2600,7 @@ def save_automatic_measurements(case_id: str, event_id: str,
             severity=dict(status='indeterminate', category=None, reason='Measurement quality requirements are not satisfied.')))
     from .local_diameters import METHOD_ID, METHOD_SOURCE
     snapshot = dict(schema_version='corovision.automatic-measurement.v1',
+        evidence_class='EXPLORATORY_RESEARCH_ESTIMATE',
         case_id=case.id, image_id=image.id, analysis_event_id=event.id,
         model_version=event.model_version, model_provenance=(result.get('structured_result') or {}).get('models'),
         artifact_sha256=hashes, algorithm_version='saved-run-source-cross-section-v4-mask-estimates',
@@ -2648,6 +2649,7 @@ def create_research_report(case_id: str, data: ResearchReportIn,
     result = event_out(event)
     structured = result.get('structured_result') or {}
     snapshot = {'schema_version': 'corovision.research-report.v1', 'report_id': report.id,
+                'evidence_class': 'EXPLORATORY_RESEARCH_ESTIMATE',
                 'version': version, 'generated_at': now().isoformat(), 'generated_by': user.id,
                 'sections': sorted(set(data.sections)), 'case': {'id': case.id, 'case_code': case.case_code,
                 'modality': json.loads(image.preprocessing_config_json or '{}').get('modality', case.modality), 'anatomy': case.anatomy, 'scan_date': case.scan_date},

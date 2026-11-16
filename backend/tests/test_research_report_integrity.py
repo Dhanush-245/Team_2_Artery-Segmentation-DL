@@ -50,6 +50,7 @@ def test_abstained_exploratory_values_never_become_primary_grades():
     reader = PdfReader(BytesIO(pdf))
     text = '\n'.join(page.extract_text() or '' for page in reader.pages)
     assert len(reader.pages) == 5
+    assert 'EXPERIMENTAL RESEARCH ANALYSIS — NOT CLINICALLY VALIDATED' in text
     assert 'All primary quantitative assessments abstained' in text
     assert text.count('Indeterminate') >= 3
     assert 'Exploratory mask-width result: 15.02%, minimal category' in text
