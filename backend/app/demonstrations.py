@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from functools import lru_cache
 import hashlib
 import json
 import math
@@ -64,6 +65,7 @@ def _tube(disconnected: bool = False) -> np.ndarray:
     return mask.astype(np.uint8)
 
 
+@lru_cache(maxsize=1)
 def suite() -> dict:
     severity = [
         _severity_case("no-narrowing", 10, 10, "No measured narrowing"),

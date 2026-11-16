@@ -33,11 +33,12 @@ export default function ResearchProgress({token}:{token:string}) {
   const refresh=useCallback(async()=>{
     if(pending.current) return;
     pending.current=true; setBusy(true);
-    try {const [result,demo]=await Promise.all([request<Progress>("/api/research-progress",token),request<Demonstrations>("/api/demonstrations",token)]); if(mounted.current){setData(result);setDemonstrations(demo);setError("");}}
+    try {const result=await request<Progress>("/api/research-progress",token); if(mounted.current){setData(result);setError("");}}
     catch(cause){if(mounted.current)setError(cause instanceof Error?cause.message:"Unable to refresh evidence");}
     finally{pending.current=false;if(mounted.current)setBusy(false);}
   },[token]);
   useEffect(()=>{mounted.current=true;void refresh();return()=>{mounted.current=false;};},[refresh]);
+  useEffect(()=>{let active=true;request<Demonstrations>("/api/demonstrations",token).then(result=>{if(active)setDemonstrations(result)}).catch(cause=>{if(active)setError(cause instanceof Error?cause.message:"Unable to load demonstrations")});return()=>{active=false};},[token]);
   useEffect(()=>{if(!auto)return; const id=window.setInterval(()=>{if(document.visibilityState==="visible")void refresh();},15000);return()=>window.clearInterval(id);},[auto,refresh]);
   async function download(id:string){
     const evidence=data?.evidence.find(row=>row.id===id);if(!evidence?.url)return;
