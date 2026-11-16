@@ -44,3 +44,33 @@ Resume state: base revision `a8faf5b1f4f6b8ba4c6ba05ff7e91239aeb928c7`, dirty us
 - Training remains paused. No model weights, datasets, credentials, database, uploads, or generated build artifacts were published.
 
 Next exact actions: rebuild after `UI-3D-001`; verify the corrected 3D panel; test report reopen/download consistency; run 1280px and smaller responsive checks; then complete the remaining administration/security and per-control browser inventory. Scientific blockers remain independent patient evaluation, qualified reference measurements, severity agreement, current target-specific XAI faithfulness, and unseen-patient performance.
+
+## 16 November 2026 current audit continuation
+
+Training and checkpoint changes remain frozen.
+
+1. Reproduce UI-NAV-01 with a focused component/browser test; trace `activeView`/`caseSection` state and repair without changing saved evidence.
+2. Repeat browser 2D and 3D open-analysis, refresh/reopen and export-download value reconciliation after the navigation repair.
+3. Add 3D local proximal/distal same-path reference suitability and perturbation sensitivity; withhold severity when a boundary is crossed.
+4. Verify direct eligible DICOM-series intake to inference in an isolated fresh case.
+5. Execute checkpoint-specific attribution faithfulness and randomization controls when eligible non-clinical inputs are available.
+6. Scientific work requires external evidence: exposure-cleared cohorts, qualified MLD/RVD, calibrated acquisition scale, matched severity grades and native-resolution CTA lumen references.
+
+Reproducible commands:
+
+```text
+cd backend && ./.venv/bin/python -m pytest tests -q
+cd frontend && node --test tests/*.test.mjs
+cd frontend && npm run build
+./backend/.venv/bin/python scripts/run_local.py --port 8000
+```
+
+## 17 November 2026 final-acceptance closeout
+
+- Registered checkpoints were reconciled: ResNet34 U-Net SHA-256 `ea692f8c9c655791a44a340907629cda4e812138a6f15d93cdb2a45166177a7c`; Mask R-CNN SHA-256 `f0bc898c95b6efdd53863d5a430fb4b850c2451b440c5a53b92a73e73c5be2e3`. Rejected attention work was not promoted.
+- Candidate-bound detector Grad-CAM was integrated at revision `82b9a79`. Checkpoint-specific verification passed stability and deletion but failed insertion; randomization had no eligible retained target. Faithfulness remains unestablished.
+- Full backend regression: **322 passed, 5 skipped**. Frontend tests: **20 passed**. Frontend production build: **PASS**.
+- Fresh browser upload and download/reopen acceptance was not completed because connected browser control became unavailable. Historical browser evidence remains preserved, but the fresh gate is `NOT_TESTED`.
+- 3D synthetic geometry remains software-verified. Percentile reference selection, uncertainty, taper-aware bilateral reference suitability and independent CTA comparison remain incomplete.
+- Training remains paused. No checkpoints were modified. Deployment remains postponed and was not attempted.
+- Authoritative closeout documents are `APPLICATION_FINAL_ENGINEERING_AUDIT.md`, `INPUT_FORMAT_BROWSER_VERIFICATION.md`, `THREE_D_MEASUREMENT_VALIDATION.md`, `XAI_FAITHFULNESS_VERIFICATION.md`, `REPORT_DOWNLOAD_CONSISTENCY.md`, `FULL_APPLICATION_REGRESSION.md`, `DEPLOYMENT_READINESS_NOT_DEPLOYED.md`, `SCIENTIFIC_VALIDATION_LIMITATIONS.md`, and `PROJECT_REQUIREMENTS_ACCEPTANCE_MATRIX.md`.
