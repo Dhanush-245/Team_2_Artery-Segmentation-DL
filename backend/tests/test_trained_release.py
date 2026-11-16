@@ -38,6 +38,10 @@ def test_adapter_keeps_masks_and_instance_semantics(tmp_path, monkeypatch):
     artery=np.zeros((512,512),bool);artery[100:150,200:204]=True
     stenosis=np.zeros_like(artery);stenosis[110:115,200:204]=True
     monkeypatch.setattr(trained_release,'predict_masks',lambda _: (artery,stenosis,artery.astype('float32'),stenosis.astype('float32'),[dict(category_id=26,model_score=.4)]))
+    monkeypatch.setattr(trained_release, '_models', lambda _: (object(), object()))
+    monkeypatch.setattr(trained_release, '_detector_explanations',
+                        lambda *_: (np.ones((512,512), dtype='float32'),
+                                    np.ones((512,512), dtype='float32')))
     result=trained_release.analyze(path)
     assert len(result)==10 and result[1:3]==(200,20)
     assert result[8]['instance_detections'][0]['category_id']==26
