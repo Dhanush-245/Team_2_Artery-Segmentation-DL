@@ -70,7 +70,8 @@ def test_detector_explanations_use_frozen_foreground_target():
         def forward(self, images):
             feature = self.backbone.body(images[0][None])
             score = feature.square().mean().sigmoid()
-            return [{'scores': torch.stack([score]), 'labels': torch.tensor([1])}]
+            mask = feature[:, :1].sigmoid()
+            return [{'scores': torch.stack([score]), 'labels': torch.tensor([1]), 'masks': mask}]
 
     model = Detector().eval()
     before = {key: value.detach().clone() for key, value in model.state_dict().items()}

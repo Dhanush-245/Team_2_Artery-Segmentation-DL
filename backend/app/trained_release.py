@@ -146,30 +146,46 @@ def _detector_explanations(model, image, score_threshold):
             output = model([image.detach().clone().requires_grad_(True)])[0]
             scores = output['scores']
             labels = output['labels']
-            eligible = (labels == 1) & (scores >= float(score_threshold))
-            foreground = scores[eligible]
-            if foreground.numel() == 0:
-                foreground = scores[labels == 1]
-            if foreground.numel() == 0:
+            retained = torch.where((labels == 1) & (scores >= float(score_threshold)))[0]
+            if retained.numel() == 0:
                 return None, None
-            # A sum retains every displayed stenosis instance in the attribution
-            # target while remaining stable when the number of detections changes.
-            foreground.sum().backward()
         activation = captured.get('activation')
-        gradient = captured.get('gradient')
-        if activation is None or gradient is None:
+        if activation is None:
             return None, None
-        weights = gradient.mean(dim=(2, 3), keepdim=True)
-        gradcam = torch.relu((weights * activation).sum(dim=1, keepdim=True))
         activation_energy = activation.detach().square().mean(dim=1, keepdim=True).sqrt()
 
-        def normalize(value):
+        def resize_normalize(value):
             value = F.interpolate(value, size=tuple(image.shape[-2:]), mode='bilinear',
                                   align_corners=False)[0, 0]
             value = value - value.min()
-            return (value / value.max().clamp_min(1e-8)).detach().cpu().numpy()
+            return value / value.max().clamp_min(1e-8)
 
-        return normalize(gradcam), normalize(activation_energy)
+        # Detection Grad-CAM is computed per retained instance.  Each candidate's
+        # coarse backbone attribution is constrained by that same predicted mask
+        # before candidates are combined.  This prevents the highest-score box
+        # from visually displacing the other saved candidate explanations.
+        instance_cams = []
+        for position, index in enumerate(retained.tolist()):
+            model.zero_grad(set_to_none=True)
+            captured.pop('gradient', None)
+            scores[index].backward(retain_graph=position < retained.numel() - 1)
+            gradient = captured.get('gradient')
+            if gradient is None:
+                continue
+            weights = gradient.mean(dim=(2, 3), keepdim=True)
+            candidate_cam = resize_normalize(torch.relu((weights * activation).sum(dim=1, keepdim=True)))
+            candidate_mask = output['masks'][index:index + 1]
+            candidate_mask = F.interpolate(candidate_mask, size=tuple(image.shape[-2:]), mode='bilinear',
+                                           align_corners=False)[0, 0].detach().clamp(0, 1)
+            # Use the same 0.5 instance-mask operating point as the displayed
+            # stenosis result so attribution cannot appear at a different site.
+            instance_cams.append(candidate_cam * (candidate_mask >= 0.5))
+        if not instance_cams:
+            return None, None
+        gradcam = torch.stack(instance_cams).amax(dim=0)
+        gradcam = gradcam / gradcam.max().clamp_min(1e-8)
+
+        return gradcam.detach().cpu().numpy(), resize_normalize(activation_energy).detach().cpu().numpy()
     finally:
         handle.remove()
         model.zero_grad(set_to_none=True)
@@ -216,9 +232,10 @@ def analyze(path, spacing_mm=None):
                       'stenosis_mask_threshold': next(item['mask_threshold'] for item in RELEASE['models'] if item['task'] == 'stenosis'),
                       'scope': 'Preserved application profile; separate from frozen research comparisons.'},
                   explainability={
-                      'gradcam': ({'status': 'saved', 'method': 'detector_gradcam_v1',
-                                   'target': 'sum of retained foreground detection scores',
+                      'gradcam': ({'status': 'saved', 'method': 'instance_mask_constrained_detector_gradcam_v2',
+                                   'target': 'each retained foreground detection score, combined after predicted-instance-mask constraint',
                                    'layer': 'backbone.body.layer4', 'coordinate_frame': 'prepared_512_xy',
+                                   'candidate_scope': 'all retained stenosis instances at the saved operating point',
                                    'weights_updated': False, 'faithfulness_validated': False,
                                    'clinical_validated': False}
                                   if gradcam_map is not None else
