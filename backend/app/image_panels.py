@@ -12,7 +12,7 @@ PANELS = [
     ('overlay', 'Predicted segmentation overlay', 'Saved model overlay in the prepared-image frame; not necessarily registered to the original source grid.'),
     ('artery_probability', 'Artery probability evidence', 'Saved uncalibrated artery pixel scores. Colour intensity is not patient-level confidence.'),
     ('probability', 'Stenosis probability evidence', 'Saved score-weighted stenosis mask evidence. Colour intensity is not severity or diagnostic confidence.'),
-    ('attention', 'Attention-gate attribution', 'Available only when the saved architecture exposes attention-gate activations. Not a clinically validated explanation.'),
+    ('attention', 'Detector feature activation', 'Saved backbone activation energy for compatible detector runs. This is not an attention-gate weight or a clinically validated explanation.'),
     ('gradcam', 'Grad-CAM attribution', 'Available only when the saved model has a verified target and convolutional layer contract. Not a clinical explanation.'),
 ]
 

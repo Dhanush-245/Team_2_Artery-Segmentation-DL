@@ -123,6 +123,58 @@ def predict_masks(path):
     return artery, stenosis, artery_probability, probability, records
 
 
+def _detector_explanations(model, image, score_threshold):
+    """Return frozen-detector Grad-CAM and FPN activation energy in input coordinates.
+
+    Mask R-CNN has no attention gates.  The second map is therefore explicitly an
+    activation-energy view, not an attention weight or a substitute for Grad-CAM.
+    """
+    import torch
+    import torch.nn.functional as F
+
+    layer = model.backbone.body.layer4
+    captured = {}
+
+    def capture(_module, _inputs, output):
+        captured['activation'] = output
+        output.register_hook(lambda gradient: captured.__setitem__('gradient', gradient))
+
+    handle = layer.register_forward_hook(capture)
+    try:
+        model.zero_grad(set_to_none=True)
+        with torch.enable_grad():
+            output = model([image.detach().clone().requires_grad_(True)])[0]
+            scores = output['scores']
+            labels = output['labels']
+            eligible = (labels == 1) & (scores >= float(score_threshold))
+            foreground = scores[eligible]
+            if foreground.numel() == 0:
+                foreground = scores[labels == 1]
+            if foreground.numel() == 0:
+                return None, None
+            # A sum retains every displayed stenosis instance in the attribution
+            # target while remaining stable when the number of detections changes.
+            foreground.sum().backward()
+        activation = captured.get('activation')
+        gradient = captured.get('gradient')
+        if activation is None or gradient is None:
+            return None, None
+        weights = gradient.mean(dim=(2, 3), keepdim=True)
+        gradcam = torch.relu((weights * activation).sum(dim=1, keepdim=True))
+        activation_energy = activation.detach().square().mean(dim=1, keepdim=True).sqrt()
+
+        def normalize(value):
+            value = F.interpolate(value, size=tuple(image.shape[-2:]), mode='bilinear',
+                                  align_corners=False)[0, 0]
+            value = value - value.min()
+            return (value / value.max().clamp_min(1e-8)).detach().cpu().numpy()
+
+        return normalize(gradcam), normalize(activation_energy)
+    finally:
+        handle.remove()
+        model.zero_grad(set_to_none=True)
+
+
 def analyze(path, spacing_mm=None):
     from io import BytesIO
     import numpy as np
@@ -137,6 +189,21 @@ def analyze(path, spacing_mm=None):
     geometry = analyze_vessel_geometry(artery, spacing_mm, artery_p, .5)
     geometry['stenosis_mask_components'] = int(ndimage.label(stenosis)[1])
     geometry['stenosis_component_interpretation'] = 'Predicted mask components,not confirmed lesions.'
+    gradcam_map = activation_map = None
+    try:
+        import torch
+        with Image.open(path) as opened:
+            color = np.asarray(opened.convert('RGB'), dtype=np.float32).copy() / 255.
+        profile = next(item for item in RELEASE['models'] if item['task'] == 'stenosis')
+        with LOCK:
+            _, stenosis_model = _models(str(artifact_root()))
+            gradcam_map, activation_map = _detector_explanations(
+                stenosis_model, torch.from_numpy(color.transpose(2, 0, 1).copy()),
+                profile['score_threshold'])
+    except (RuntimeError, AttributeError, ValueError):
+        # Prediction remains usable if an installed Torch/Torchvision build cannot
+        # supply the required detector gradients.  The result records the absence.
+        gradcam_map = activation_map = None
     scores = dict(artery_foreground_mean_probability=float(artery_p[artery].mean()) if artery.any() else None,
                   stenosis_foreground_mean_probability=float(stenosis_p[stenosis].mean()) if stenosis.any() else None,
                   calibration='uncalibrated_raw_pixel_and_instance_scores', instance_detections=instances,
@@ -149,8 +216,20 @@ def analyze(path, spacing_mm=None):
                       'stenosis_mask_threshold': next(item['mask_threshold'] for item in RELEASE['models'] if item['task'] == 'stenosis'),
                       'scope': 'Preserved application profile; separate from frozen research comparisons.'},
                   explainability={
-                      'gradcam': {'status': 'unavailable', 'reason': 'No verified attribution target/layer for this preserved instance detector.', 'faithfulness_validated': False},
-                      'attention': {'status': 'unavailable', 'reason': 'No attention-gate map supplied by this detector.', 'faithfulness_validated': False}})
+                      'gradcam': ({'status': 'saved', 'method': 'detector_gradcam_v1',
+                                   'target': 'sum of retained foreground detection scores',
+                                   'layer': 'backbone.body.layer4', 'coordinate_frame': 'prepared_512_xy',
+                                   'weights_updated': False, 'faithfulness_validated': False,
+                                   'clinical_validated': False}
+                                  if gradcam_map is not None else
+                                  {'status': 'unavailable', 'reason': 'Detector gradients were not produced for a foreground target.', 'faithfulness_validated': False}),
+                      'attention': ({'status': 'saved', 'method': 'fpn_backbone_activation_energy_v1',
+                                     'label': 'Feature activation',
+                                     'layer': 'backbone.body.layer4', 'coordinate_frame': 'prepared_512_xy',
+                                     'attention_gate': False, 'faithfulness_validated': False,
+                                     'clinical_validated': False}
+                                    if activation_map is not None else
+                                    {'status': 'unavailable', 'reason': 'Detector feature activations were not captured.', 'faithfulness_validated': False})})
     # Private artifacts are consumed by the API, never serialized into ordinary JSON.
     payload = {}
     for name, mask in [('artery_mask', artery), ('stenosis_mask', stenosis)]:
@@ -162,6 +241,8 @@ def analyze(path, spacing_mm=None):
     payload['raw_scores'] = stream.getvalue()
     scores['_artifacts'] = payload
     return (overlay_png(path, artery, stenosis), int(artery.sum()), int(stenosis.sum()), geometry,
-            None, heatmap_overlay_png(path, artery_p), heatmap_overlay_png(path, stenosis_p), None,
+            heatmap_overlay_png(path, activation_map, 'attention') if activation_map is not None else None,
+            heatmap_overlay_png(path, artery_p), heatmap_overlay_png(path, stenosis_p),
+            heatmap_overlay_png(path, gradcam_map, 'attention') if gradcam_map is not None else None,
             scores, centerline_overlay_png(path, geometry['centerline_paths'], geometry['branch_points'],
                                           geometry['endpoint_points'], artery, 512))

@@ -106,7 +106,7 @@ export type AnalysisResult = {
     stenosis_foreground_mean_probability?: number | null;
     calibration?: string;
     explainability?: Record<string, {
-      status?: string; method?: string; target?: string; layer?: string; reason?: string;
+      status?: string; method?: string; target?: string; layer?: string; reason?: string; label?: string;
       faithfulness_validated?: boolean; clinical_validated?: boolean;
     }>;
   };

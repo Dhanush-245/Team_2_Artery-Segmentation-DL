@@ -41,11 +41,39 @@ def test_adapter_keeps_masks_and_instance_semantics(tmp_path, monkeypatch):
     result=trained_release.analyze(path)
     assert len(result)==10 and result[1:3]==(200,20)
     assert result[8]['instance_detections'][0]['category_id']==26
-    assert result[4] is None and result[7] is None  # No invented attention/Grad-CAM layer.
+    # The installed frozen detector supplies run-bound explanation images even
+    # when the mask-returning adapter is isolated for this contract test.
+    assert result[4].startswith(b'\x89PNG') and result[7].startswith(b'\x89PNG')
     assert 'absence of disease' in result[8]['absence_interpretation']
     profile = next(item for item in trained_release.RELEASE['models'] if item['task'] == 'stenosis')
     assert result[8]['operating_point']['stenosis_score_threshold'] == profile['score_threshold']
     assert result[8]['explainability']['gradcam']['faithfulness_validated'] is False
+    assert result[8]['explainability']['gradcam']['status'] == 'saved'
+    assert result[8]['explainability']['attention']['label'] == 'Feature activation'
+
+
+def test_detector_explanations_use_frozen_foreground_target():
+    torch = pytest.importorskip('torch')
+    from torch import nn
+
+    class Body(nn.Module):
+        def __init__(self):
+            super().__init__(); self.layer4 = nn.Conv2d(3, 4, 3, padding=1)
+        def forward(self, x): return self.layer4(x)
+    class Detector(nn.Module):
+        def __init__(self):
+            super().__init__(); self.backbone = nn.Module(); self.backbone.body = Body()
+        def forward(self, images):
+            feature = self.backbone.body(images[0][None])
+            score = feature.square().mean().sigmoid()
+            return [{'scores': torch.stack([score]), 'labels': torch.tensor([1])}]
+
+    model = Detector().eval()
+    before = {key: value.detach().clone() for key, value in model.state_dict().items()}
+    gradcam, activation = trained_release._detector_explanations(model, torch.rand(3, 32, 32), .25)
+    assert gradcam.shape == (32, 32) and activation.shape == (32, 32)
+    assert np.isfinite(gradcam).all() and np.isfinite(activation).all()
+    assert all(torch.equal(before[key], value) for key, value in model.state_dict().items())
 
 
 @pytest.mark.skipif(os.environ.get('CV_TEST_REAL_TRAINED_RELEASE') != '1', reason='Opt-in installed-checkpoint integration test')
