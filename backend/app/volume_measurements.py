@@ -10,7 +10,12 @@ import numpy as np
 from scipy.ndimage import distance_transform_edt, convolve, map_coordinates, label
 from skimage.morphology import skeletonize
 
-METHOD = 'lee-skeleton-perpendicular-sections-v4'
+METHOD = 'lee-skeleton-local-bilateral-sections-v5'
+REFERENCE_GUARD = 7
+REFERENCE_SAMPLES = 4
+REFERENCE_MAX_CV = .20
+REFERENCE_MAX_SIDE_DIFFERENCE = .25
+SECTION_STEPS_MM = (.20, .25, .30)
 
 
 def cross_section(mask, affine, center, tangent, radius_mm=12, step_mm=.25):
@@ -50,7 +55,7 @@ def saved_measurement(path):
     """Reuse geometry only when both its source hash and method match."""
     path = Path(path)
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
-    cache = path.parent / f'geometry-sections-v4-{digest}.json'
+    cache = path.parent / f'geometry-sections-v5-{digest}.json'
     if cache.is_file():
         result = json.loads(cache.read_text())
         if (result.get('mask_sha256') == digest
@@ -131,34 +136,73 @@ def measure(path):
     candidates = []
     for path_record in paths:
         widths = np.array(path_record['mask_width_mm'])
-        if len(widths) < 11:
+        required = 2 * (REFERENCE_GUARD + REFERENCE_SAMPLES) + 1
+        if len(widths) < required:
             continue
-        interior = widths[3:-3]
-        index = int(np.argmin(interior))+3
-        reference = float(np.percentile(interior, 75))
-        minimum = float(widths[index])
         world = np.asarray(path_record['points_ras_mm'])
-        reference_index = int(np.argmin(np.abs(interior-reference)))+3
-        sections = []
-        for sample in [index, reference_index]:
-            sections.append(cross_section(cropped,cropped_affine,world[sample],world[sample+2]-world[sample-2]))
-        if any(section['status'] != 'experimental_section' for section in sections):
+        eligible = range(REFERENCE_GUARD + REFERENCE_SAMPLES + 2,
+                         len(widths) - REFERENCE_GUARD - REFERENCE_SAMPLES - 2)
+        index = min(eligible, key=lambda sample: widths[sample])
+        proximal = list(range(index-REFERENCE_GUARD-REFERENCE_SAMPLES, index-REFERENCE_GUARD))
+        distal = list(range(index+REFERENCE_GUARD+1, index+REFERENCE_GUARD+1+REFERENCE_SAMPLES))
+        proximal_width = float(np.median(widths[proximal]))
+        distal_width = float(np.median(widths[distal]))
+        reference_profile = np.asarray([*widths[proximal], *widths[distal]], dtype=float)
+        profile_cv = float(np.std(reference_profile) / np.mean(reference_profile))
+        side_difference = float(abs(proximal_width-distal_width) / max(proximal_width, distal_width))
+        if profile_cv > REFERENCE_MAX_CV or side_difference > REFERENCE_MAX_SIDE_DIFFERENCE:
             continue
-        minimum, reference = [section['equivalent_diameter_mm'] for section in sections]
-        if reference <= 0 or index == reference_index:
+        proximal_index = proximal[len(proximal)//2]
+        distal_index = distal[len(distal)//2]
+
+        def section(sample, step):
+            return cross_section(cropped, cropped_affine, world[sample],
+                                 world[sample+2]-world[sample-2], step_mm=step)
+
+        sections = [section(index, .25), section(proximal_index, .25), section(distal_index, .25)]
+        if any(value['status'] != 'experimental_section' for value in sections):
+            continue
+        minimum = sections[0]['equivalent_diameter_mm']
+        reference = float(np.mean([sections[1]['equivalent_diameter_mm'],
+                                   sections[2]['equivalent_diameter_mm']]))
+        if reference <= 0:
             continue
         narrowing = float(max(0, (1-minimum/reference)*100))
         if narrowing < 25:
             continue
-        grade = 'mild' if narrowing < 50 else 'moderate' if narrowing < 70 else 'severe'
+        sensitivity = []
+        for step in SECTION_STEPS_MM:
+            sampled = [section(index, step), section(proximal_index, step), section(distal_index, step)]
+            if any(value['status'] != 'experimental_section' for value in sampled):
+                continue
+            local_reference = float(np.mean([sampled[1]['equivalent_diameter_mm'],
+                                             sampled[2]['equivalent_diameter_mm']]))
+            sensitivity.append(dict(step_mm=step,
+                narrowing_percent=float(max(0, (1-sampled[0]['equivalent_diameter_mm']/local_reference)*100))))
+        if len(sensitivity) != len(SECTION_STEPS_MM):
+            continue
+        sensitivity_range = [min(value['narrowing_percent'] for value in sensitivity),
+                             max(value['narrowing_percent'] for value in sensitivity)]
+        bands = ((25, 50, 'mild'), (50, 70, 'moderate'), (70, float('inf'), 'severe'))
+        grade = next((name for lower, upper, name in bands
+                      if sensitivity_range[0] >= lower and sensitivity_range[1] < upper), None)
+        uncertainty_status = 'quantified_step_size_sensitivity'
+        abstention_reasons = [] if grade else ['sensitivity_crosses_severity_boundary']
         candidates.append(dict(id=f'C{len(candidates)+1}', path_id=path_record['id'],
             component_id=path_record['component_id'],
             location_ras_mm=path_record['points_ras_mm'][index], minimum_diameter_mm=minimum,
             reference_diameter_mm=reference, narrowing_percent=narrowing, severity=grade,
-            minimum_area_mm2=sections[0]['area_mm2'],reference_area_mm2=sections[1]['area_mm2'],
-            area_narrowing_percent=max(0,(1-sections[0]['area_mm2']/sections[1]['area_mm2'])*100),
+            minimum_area_mm2=sections[0]['area_mm2'],
+            reference_area_mm2=float(np.mean([sections[1]['area_mm2'], sections[2]['area_mm2']])),
+            area_narrowing_percent=max(0,(1-sections[0]['area_mm2']/
+                np.mean([sections[1]['area_mm2'], sections[2]['area_mm2']]))*100),
             cross_sections=sections, protocol_id='CCTA_GEOMETRY_RESEARCH_V1',
-            uncertainty_status='not_quantified', reference_status='experimental_path_percentile_selection'))
+            reference_indices=dict(proximal=proximal, distal=distal),
+            reference_profile_cv=profile_cv, reference_side_difference=side_difference,
+            reference_status='experimental_local_bilateral_same_path_selection',
+            sensitivity=dict(method='section_grid_step_perturbation', values=sensitivity,
+                             narrowing_range_percent=sensitivity_range),
+            uncertainty_status=uncertainty_status, abstention_reasons=abstention_reasons))
     return dict(status='experimental_mask_geometry', method=METHOD,
         mask_sha256=hashlib.sha256(Path(path).read_bytes()).hexdigest(),
         paths=paths, candidates=candidates, unit='mm', clinical_validated=False,
@@ -167,5 +211,6 @@ def measure(path):
         measurement_scope='component_local_experimental_mask_geometry',
         limitations=([f'The predicted mask has {component_count} disconnected components; paths and references are restricted to their own component.'] if component_count > 1 else []) + [
                     'Path profiles use EDT widths. Candidate diameters use area-equivalent perpendicular sections.',
-                    'Coarse segmentation, tapering, branch junctions and mask errors affect candidate selection.',
-                    'Reference is the path interior 75th percentile. Grades use experimental 25/50/70 percent rules.'])
+                    'Local references use stable proximal and distal same-path windows separated from the minimum.',
+                    'Reference side disagreement or variation above policy limits withholds the candidate.',
+                    'Severity is withheld when section-grid sensitivity crosses an experimental 25/50/70 percent boundary.'])

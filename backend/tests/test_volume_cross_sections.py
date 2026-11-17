@@ -45,3 +45,32 @@ def test_boundary_clipped_prediction_abstains_before_measurement(tmp_path):
     path = tmp_path / 'clipped.nii.gz'
     nib.save(image, path)
     assert measure(path)['reasons'] == ['prediction_touches_volume_boundary']
+
+
+def test_local_bilateral_reference_and_step_sensitivity(tmp_path):
+    grid = np.indices((65, 65, 65))
+    radius = np.full(65, 6.0)
+    radius[29:36] = 3.0
+    mask = (((grid[0]-32)**2 + (grid[1]-32)**2) <= radius[grid[2]]**2) & (grid[2] >= 5) & (grid[2] < 60)
+    image = nib.Nifti1Image(mask.astype(np.uint8), np.diag([.5, .5, .8, 1]))
+    image.header.set_xyzt_units('mm')
+    path = tmp_path / 'local-reference.nii.gz'
+    nib.save(image, path)
+    result = measure(path)
+    candidate, = result['candidates']
+    assert candidate['reference_status'] == 'experimental_local_bilateral_same_path_selection'
+    assert set(candidate['reference_indices']) == {'proximal', 'distal'}
+    assert candidate['uncertainty_status'] == 'quantified_step_size_sensitivity'
+    assert len(candidate['sensitivity']['values']) == 3
+    assert candidate['severity'] in {'mild', 'moderate', 'severe', None}
+
+
+def test_taper_disagreement_does_not_create_candidate(tmp_path):
+    grid = np.indices((65, 65, 65))
+    radius = 7.0 - 3.5 * grid[2] / 64
+    mask = (((grid[0]-32)**2 + (grid[1]-32)**2) <= radius**2) & (grid[2] >= 5) & (grid[2] < 60)
+    image = nib.Nifti1Image(mask.astype(np.uint8), np.diag([.5, .5, .8, 1]))
+    image.header.set_xyzt_units('mm')
+    path = tmp_path / 'taper.nii.gz'
+    nib.save(image, path)
+    assert measure(path)['candidates'] == []

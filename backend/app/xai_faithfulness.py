@@ -29,6 +29,33 @@ def _auc(values):
     return float(np.trapezoid(values, dx=1 / max(1, len(values) - 1)))
 
 
+def matched_instance_score(output, reference_mask, *, label=1, minimum_iou=.1):
+    """Return the score of the same spatial detection target or zero if lost.
+
+    This prevents an unrelated high-score instance from replacing the candidate
+    being perturbed during deletion/insertion diagnostics.
+    """
+    import torch
+
+    reference = torch.as_tensor(reference_mask, dtype=torch.bool)
+    labels = output['labels'].detach().cpu()
+    scores = output['scores'].detach().cpu()
+    masks = output['masks'].detach().cpu()[:, 0] >= .5
+    if masks.shape[-2:] != reference.shape:
+        raise ValueError('Reference mask and detector output use different coordinates')
+    eligible = torch.where(labels == int(label))[0]
+    if eligible.numel() == 0 or not bool(reference.any()):
+        return 0.0
+    candidate_masks = masks[eligible]
+    intersection = (candidate_masks & reference).flatten(1).sum(1).float()
+    union = (candidate_masks | reference).flatten(1).sum(1).float().clamp_min(1)
+    iou = intersection / union
+    best = int(torch.argmax(iou))
+    if float(iou[best]) < float(minimum_iou):
+        return 0.0
+    return float(scores[eligible[best]])
+
+
 def evaluate_forward_occlusion(image, attribution, score_fn, *, randomized_score_fn=None,
                                randomized_attribution=None, grid=8, seed=20261114,
                                baseline_value=0.0):
@@ -40,18 +67,25 @@ def evaluate_forward_occlusion(image, attribution, score_fn, *, randomized_score
     if grid < 2 or min(attribution.shape) < grid or not np.isfinite(image).all() or not np.isfinite(attribution).all():
         raise ValueError("Finite input and attribution on a valid grid are required")
     cells = _cells(image.shape, grid)
+    baseline = np.asarray(baseline_value, dtype=np.float32)
+    try:
+        baseline = np.broadcast_to(baseline, image.shape).copy()
+    except ValueError as error:
+        raise ValueError('Baseline must be scalar or broadcast to the exact input frame') from error
+    if not np.isfinite(baseline).all():
+        raise ValueError('Finite perturbation baseline required')
     importance = np.array([float(np.mean(attribution[cell])) for cell in cells])
     ranked = np.argsort(importance)[::-1]
     random = np.random.default_rng(seed).permutation(len(cells))
 
     def curves(order):
         deleted = image.copy()
-        inserted = np.full_like(image, baseline_value)
+        inserted = baseline.copy()
         deletion = [float(score_fn(deleted))]
         insertion = [float(score_fn(inserted))]
         for index in order:
             cell = cells[int(index)]
-            deleted[..., cell[0], cell[1]] = baseline_value
+            deleted[..., cell[0], cell[1]] = baseline[..., cell[0], cell[1]]
             inserted[..., cell[0], cell[1]] = image[..., cell[0], cell[1]]
             deletion.append(float(score_fn(deleted)))
             insertion.append(float(score_fn(inserted)))

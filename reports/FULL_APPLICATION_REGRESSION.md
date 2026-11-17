@@ -4,7 +4,7 @@
 
 | Layer | Command | Result |
 | --- | --- | --- |
-| Backend | `.venv/bin/python -m pytest -q -p no:cacheprovider` | 322 passed, 5 skipped, 51 dependency warnings |
+| Backend | `.venv/bin/python -m pytest -q -p no:cacheprovider` | 326 passed, 5 skipped, 51 dependency warnings |
 | Frontend tests | `node --test tests/*.test.mjs` | 20 passed |
 | Frontend build | `npm run build` | PASS; 2,408 modules transformed |
 

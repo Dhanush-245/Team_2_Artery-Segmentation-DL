@@ -1,0 +1,42 @@
+{
+  "protocol": "corovision-forward-occlusion-v1",
+  "checkpoint_sha256": "f0bc898c95b6efdd53863d5a430fb4b850c2451b440c5a53b92a73e73c5be2e3",
+  "input_sha256": "ad6df80591449c4a456a13bd74dc2f64bfd76edbc5c6e11bad209a9fc3fcf926",
+  "target_binding": "candidate_position_and_original_instance_mask_iou",
+  "baseline": "per_channel_input_median",
+  "grid": 4,
+  "seed": 20261117,
+  "candidates": [
+    {
+      "candidate_position": 0,
+      "original_target_score": 0.6291059255599976,
+      "deletion_auc_advantage": 0.2524408735334873,
+      "insertion_auc_advantage": -0.02844374254345894,
+      "deletion_pass": true,
+      "insertion_pass": false
+    },
+    {
+      "candidate_position": 1,
+      "original_target_score": 0.2955250144004822,
+      "deletion_auc_advantage": 0.0,
+      "insertion_auc_advantage": -0.11166544444859028,
+      "deletion_pass": false,
+      "insertion_pass": false
+    },
+    {
+      "candidate_position": 2,
+      "original_target_score": 0.2584562301635742,
+      "deletion_auc_advantage": 0.22264261543750763,
+      "insertion_auc_advantage": 0.1295119016431272,
+      "deletion_pass": true,
+      "insertion_pass": true
+    }
+  ],
+  "randomization": {
+    "status": "target_unavailable_after_backbone_randomization",
+    "eligible_target": false,
+    "classification": "NOT_TESTED"
+  },
+  "weights_updated": false,
+  "status": "faithfulness_not_established"
+}

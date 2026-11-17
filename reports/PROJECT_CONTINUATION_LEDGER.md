@@ -74,3 +74,11 @@ cd frontend && npm run build
 - 3D synthetic geometry remains software-verified. Percentile reference selection, uncertainty, taper-aware bilateral reference suitability and independent CTA comparison remain incomplete.
 - Training remains paused. No checkpoints were modified. Deployment remains postponed and was not attempted.
 - Authoritative closeout documents are `APPLICATION_FINAL_ENGINEERING_AUDIT.md`, `INPUT_FORMAT_BROWSER_VERIFICATION.md`, `THREE_D_MEASUREMENT_VALIDATION.md`, `XAI_FAITHFULNESS_VERIFICATION.md`, `REPORT_DOWNLOAD_CONSISTENCY.md`, `FULL_APPLICATION_REGRESSION.md`, `DEPLOYMENT_READINESS_NOT_DEPLOYED.md`, `SCIENTIFIC_VALIDATION_LIMITATIONS.md`, and `PROJECT_REQUIREMENTS_ACCEPTANCE_MATRIX.md`.
+
+## 17 November 2026 reliability continuation
+
+- Connected computer control again reported `Local browser access is unavailable for this chat`; Chrome was running. No installed Playwright/Cypress/Selenium fallback exists. Fresh browser priorities remain `NOT_TESTED`.
+- 3D geometry method v5 replaced the global path percentile with stable bilateral local same-path references, taper/variation rejection and 0.20/0.25/0.30 mm section-grid sensitivity. Severity is withheld when the range crosses a category boundary. Historical caches remain versioned.
+- XAI perturbation now binds scores to the original candidate mask by IoU and uses a per-channel median insertion baseline. Candidate 1 passed deletion only, candidate 2 failed deletion/insertion, and candidate 3 passed both. Randomization remained target-unavailable; faithfulness is still not established.
+- Full backend regression: **326 passed, 5 skipped**. Frontend: **20 passed** and production build PASS.
+- Deployment preflight and Compose configuration passed; backup/restore, container and operations tests passed 10 tests. Docker image checking was blocked because the Docker Desktop daemon was not running. Nothing was deployed.

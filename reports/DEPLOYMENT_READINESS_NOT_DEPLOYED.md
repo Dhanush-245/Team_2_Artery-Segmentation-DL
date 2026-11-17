@@ -14,3 +14,11 @@ Deployment was intentionally not performed.
 | Hosting | Not provisioned | Environment, DNS/TLS, capacity and security acceptance |
 
 No Railway resource, DNS record, production database, secret, or hosted service was changed. Readiness: **PARTIAL; NOT DEPLOYED**.
+
+## Locally executed on 17 November 2026
+
+- Preflight: Docker 29.9.3 and Compose 5.7.0 CLIs detected; required files and disk check passed.
+- `docker compose config --quiet`: PASS with an ephemeral local-only secret value.
+- Backup/restore, container-contract and operations tests: 10 passed.
+- `docker build --check .`: BLOCKED because the Docker Desktop daemon socket was not running.
+- PostgreSQL migration rehearsal, production image build, vulnerability scan and hosted recovery remain NOT_TESTED.

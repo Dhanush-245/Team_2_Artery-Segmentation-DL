@@ -9,7 +9,7 @@
 - Candidate count: 3.
 - Candidate support overlap: 1.0. This is descriptive and expected from the explicit candidate-mask constraint; it is not proof of causal faithfulness.
 
-## Measured checks
+## Initial combined-target check
 
 | Check | Result | Decision |
 | --- | ---: | --- |
@@ -20,6 +20,18 @@
 
 The randomized copy was kept isolated and no attribution image was fabricated when its target disappeared. No weights were changed.
 
+## Target-binding investigation
+
+The initial score function summed all retained detections, which allowed an unrelated instance to replace the candidate during perturbation. The insertion baseline was also an all-zero image. The diagnostic now binds each score to the original instance mask by IoU and uses the input's per-channel median baseline. Acceptance thresholds were not changed.
+
+| Candidate | Original score | Deletion advantage | Insertion advantage | Result |
+| --- | ---: | ---: | ---: | --- |
+| 1 | 0.629106 | 0.252441 | -0.028444 | deletion PASS; insertion FAIL |
+| 2 | 0.295525 | 0.000000 | -0.111665 | deletion FAIL; insertion FAIL |
+| 3 | 0.258456 | 0.222643 | 0.129512 | deletion PASS; insertion PASS |
+
+The disposable randomized model still produced no eligible spatially matched target, so randomization remains **NOT_TESTED**. Machine-readable evidence is `xai_checkpoint_verification_20261117.json`.
+
 ## Conclusion
 
-The displayed map is candidate-aligned and checkpoint-bound, but predefined faithfulness acceptance is **not established** because insertion failed and model-randomization comparison was unavailable. Overall XAI scientific acceptance: **PARTIAL**. The UI must describe it as research saliency, not a clinical explanation.
+The displayed map is candidate-aligned and checkpoint-bound, but predefined faithfulness acceptance is **not established** because results are inconsistent across candidates and model-randomization comparison was unavailable. Overall XAI scientific acceptance: **PARTIAL**. The UI must describe it as research saliency, not a clinical explanation.

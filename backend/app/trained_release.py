@@ -123,7 +123,7 @@ def predict_masks(path):
     return artery, stenosis, artery_probability, probability, records
 
 
-def _detector_explanations(model, image, score_threshold):
+def _detector_explanations(model, image, score_threshold, candidate_position=None):
     """Return frozen-detector Grad-CAM and FPN activation energy in input coordinates.
 
     Mask R-CNN has no attention gates.  The second map is therefore explicitly an
@@ -149,6 +149,10 @@ def _detector_explanations(model, image, score_threshold):
             retained = torch.where((labels == 1) & (scores >= float(score_threshold)))[0]
             if retained.numel() == 0:
                 return None, None
+            if candidate_position is not None:
+                if type(candidate_position) is not int or not 0 <= candidate_position < retained.numel():
+                    raise ValueError('Candidate position is outside the retained detector targets')
+                retained = retained[candidate_position:candidate_position + 1]
         activation = captured.get('activation')
         if activation is None:
             return None, None

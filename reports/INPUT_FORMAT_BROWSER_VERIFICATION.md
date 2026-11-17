@@ -17,7 +17,7 @@ The full backend suite passed 322 tests with five opt-in external/model checks s
 
 ## Browser status
 
-Historical browser evidence exists for saved 2D and 3D cases, but a fresh upload-to-inference-to-reopen sequence was not completed in this closeout because connected browser control became unavailable. Exact local test files and a newly downloaded artifact set therefore cannot be asserted. Browser acceptance: **NOT_TESTED** for the fresh closeout journey, not FAIL.
+Historical browser evidence exists for saved 2D and 3D cases, but a fresh upload-to-inference-to-reopen sequence was not completed in this closeout. The computer-control inventory returned `Local browser access is unavailable for this chat`; Chrome itself was running. The repository has no installed Playwright, Cypress or Selenium suite to substitute. Exact local test files and a newly downloaded artifact set therefore cannot be asserted. Browser acceptance: **NOT_TESTED** for the fresh closeout journey, not FAIL.
 
 ## Remaining action
 

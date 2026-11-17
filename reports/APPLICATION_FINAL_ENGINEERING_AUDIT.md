@@ -15,7 +15,7 @@ The release registry does not promote the rejected attention experiment. No opti
 
 ## Reproducible verification
 
-- Backend: `322 passed, 5 skipped` in 69.64 seconds.
+- Backend: `326 passed, 5 skipped` in 69.49 seconds.
 - Frontend unit tests: `20 passed`.
 - Frontend production build: PASS, 2,408 modules transformed.
 - Candidate-bound Grad-CAM implementation and focused integration tests: PASS.
@@ -23,4 +23,4 @@ The release registry does not promote the rejected attention experiment. No opti
 
 ## Acceptance
 
-Core 2D/3D application integration, saved-run isolation, authorization checks, report generation, abstention behavior, and frontend build are software verified. Fresh browser input/export reconciliation, 3D scientific measurement validation, XAI faithfulness, and independent clinical evidence remain incomplete. Overall: **PARTIAL**.
+Core 2D/3D application integration, saved-run isolation, authorization checks, report generation, abstention behavior, and frontend build are software verified. 3D references now use bilateral local same-path windows with variation/taper rejection and deterministic section-grid sensitivity; this remains synthetic research validation. Fresh browser input/export reconciliation, complete XAI faithfulness, and independent clinical evidence remain incomplete. Overall: **PARTIAL**.
