@@ -63,3 +63,5 @@ external_artifacts/
 audit_tests/
 *.mp4
 final_artifacts/*.pptx
+_to_delete/
+scripts/evaluate_cadica_external.py

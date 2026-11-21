@@ -5,6 +5,9 @@ on:
     branches: [lingareddy-dhanush, review]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   application:
     runs-on: ubuntu-latest
@@ -22,12 +25,47 @@ jobs:
       - name: Install PDF conversion dependency
         run: sudo apt-get update && sudo apt-get install --yes poppler-utils
       - name: Install backend dependencies
-        run: pip install -r backend/requirements-ai.txt
-      - name: Frontend build
+        run: pip install -r backend/requirements-ai.txt ruff==0.6.9
+      - name: Backend lint (syntax errors and undefined names)
+        run: ruff check --select E9,F63,F7,F82 backend
+      - name: Frontend build (type check + bundle)
         working-directory: frontend
         run: npm ci && npm run build
+      - name: Frontend tests
+        working-directory: frontend
+        run: node --test tests/*.test.mjs
       - name: Backend tests
         working-directory: backend
         run: python -m pytest -q
       - name: Deployment contract
         run: python -m json.tool railway.json >/dev/null && sh -n deploy/start.sh
+
+  container:
+    runs-on: ubuntu-latest
+    needs: application
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production image
+        run: docker build -t corovision-ci:${{ github.sha }} .
+      - name: Smoke test container readiness
+        run: |
+          docker run -d --name cv -e JWT_SECRET="$(openssl rand -hex 32)" -p 8000:8000 corovision-ci:${{ github.sha }}
+          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:8000/api/health/ready && exit 0; sleep 3; done
+          docker logs cv; exit 1
+      - name: Vulnerability scan (fail on fixable critical findings)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: corovision-ci:${{ github.sha }}
+          scanners: vuln
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+      - name: Vulnerability report (high and critical, informational)
+        if: always()
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: corovision-ci:${{ github.sha }}
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          format: table
+          exit-code: '0'

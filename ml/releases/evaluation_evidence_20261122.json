@@ -1,0 +1,161 @@
+{
+  "schema_version": "corovision.evaluation-evidence.v1",
+  "generated_utc": "2026-11-22",
+  "scope": "Development-exposed validation of the frozen corovision-preserved-2d-20261023 release; not independent test or clinical validation.",
+  "records": [
+    {
+      "task": "syntax",
+      "metrics": [
+        {
+          "name": "Pixel accuracy",
+          "value": 0.9879294967651367,
+          "unit": "ratio",
+          "aggregation": "mean image",
+          "definition": "(TP+TN) / all pixels"
+        },
+        {
+          "name": "Precision",
+          "value": 0.8443600533723558,
+          "unit": "ratio",
+          "aggregation": "mean image",
+          "definition": "TP / (TP+FP)"
+        },
+        {
+          "name": "Recall",
+          "value": 0.821873792933815,
+          "unit": "ratio",
+          "aggregation": "mean image",
+          "definition": "TP / (TP+FN)"
+        },
+        {
+          "name": "Sensitivity",
+          "value": 0.821873792933815,
+          "unit": "ratio",
+          "aggregation": "mean image",
+          "definition": "TP / (TP+FN)"
+        },
+        {
+          "name": "Specificity",
+          "value": 0.9942900086372701,
+          "unit": "ratio",
+          "aggregation": "mean image",
+          "definition": "TN / (TN+FP)"
+        },
+        {
+          "name": "Hausdorff distance",
+          "value": 70.53011832946325,
+          "unit": "px (512 grid)",
+          "aggregation": "mean image",
+          "definition": "Maximum symmetric boundary distance"
+        },
+        {
+          "name": "HD95",
+          "value": 46.5346201836885,
+          "unit": "px (512 grid)",
+          "aggregation": "mean image",
+          "definition": "95th percentile symmetric boundary distance"
+        },
+        {
+          "name": "ASSD",
+          "value": 6.05173651086896,
+          "unit": "px (512 grid)",
+          "aggregation": "mean image",
+          "definition": "Mean symmetric surface distance"
+        }
+      ],
+      "confusion": {
+        "level": "pixel, pooled over 200 images",
+        "tp": 1534098,
+        "fp": 288082,
+        "fn": 344760,
+        "tn": 50261860
+      },
+      "samples": 200,
+      "source": "reports/segmentation_boundary_metrics_20261120/arcade_artery_validation.json",
+      "source_sha256": "38470a7cee62c9f9e32f3dc39e8a6eb38bfe14542e5c4423f0563a79da220df7"
+    },
+    {
+      "task": "stenosis",
+      "metrics": [
+        {
+          "name": "Precision",
+          "value": 0.34574468085106386,
+          "unit": "ratio",
+          "aggregation": "instance, IoU-matched",
+          "definition": "TP / (TP+FP)"
+        },
+        {
+          "name": "Recall",
+          "value": 0.4802955665024631,
+          "unit": "ratio",
+          "aggregation": "instance, IoU-matched",
+          "definition": "TP / (TP+FN)"
+        },
+        {
+          "name": "Sensitivity",
+          "value": 0.4802955665024631,
+          "unit": "ratio",
+          "aggregation": "instance, IoU-matched",
+          "definition": "TP / (TP+FN)"
+        },
+        {
+          "name": "F1",
+          "value": 0.4020618556701031,
+          "unit": "ratio",
+          "aggregation": "instance, IoU-matched",
+          "definition": "2PR / (P+R)"
+        },
+        {
+          "name": "Official ARCADE F1",
+          "value": 0.439394301564994,
+          "unit": "ratio",
+          "aggregation": "ARCADE challenge scorer",
+          "definition": "ARCADE challenge stenosis F1"
+        },
+        {
+          "name": "False positives per image",
+          "value": 1.845,
+          "unit": "count",
+          "aggregation": "instances / image",
+          "definition": "FP / images"
+        },
+        {
+          "name": "Pixel precision",
+          "value": 0.5395434956361782,
+          "unit": "ratio",
+          "aggregation": "pooled pixel",
+          "definition": "TP / (TP+FP) over lesion pixels"
+        },
+        {
+          "name": "Pixel recall",
+          "value": 0.607151492963985,
+          "unit": "ratio",
+          "aggregation": "pooled pixel",
+          "definition": "TP / (TP+FN) over lesion pixels"
+        },
+        {
+          "name": "AUC-ROC",
+          "value": 0.8568180644883431,
+          "unit": "ratio",
+          "aggregation": "pooled pixel",
+          "definition": "Area under the pixel ROC curve"
+        }
+      ],
+      "confusion": {
+        "level": "lesion instance",
+        "tp": 195,
+        "fp": 369,
+        "fn": 211,
+        "tn": null
+      },
+      "operating_point": {
+        "score_threshold": 0.25,
+        "mask_threshold": 0.5,
+        "decision": "RETAIN score threshold 0.25 with pixel threshold 0.5 and the existing Mask R-CNN ResNet50-FPN checkpoint; no candidate threshold met the predeclared acceptance gates."
+      },
+      "samples": 200,
+      "source": "reports/stenosis_threshold_sweep_20261120/decision.json",
+      "source_sha256": "72810e287b7e284a4b6e8d8bfce63deb3c7058d78b0b909b516ab913dd4a0cdc"
+    }
+  ]
+}

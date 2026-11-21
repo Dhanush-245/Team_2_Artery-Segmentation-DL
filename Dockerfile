@@ -16,9 +16,12 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends && apt-get inst
     && groupadd --gid 10001 corovision && useradd --uid 10001 --gid 10001 --create-home corovision \
     && mkdir -p /data/storage /models && chown -R 10001:10001 /data /models
 COPY backend/requirements*.txt /app/backend/
+# pip is needed only at build time. Removing it drops its vendored
+# urllib3, msgpack and setuptools copies, which are image-scan findings.
 RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu \
     && pip install --no-cache-dir -r backend/requirements-ai.txt \
-    && pip install --no-cache-dir 'setuptools>=78.1.1'
+    && pip install --no-cache-dir 'setuptools>=78.1.1' \
+    && python -m pip uninstall -y pip
 COPY scripts/install_trained_release.py /app/scripts/install_trained_release.py
 COPY deploy/start.sh /app/deploy/start.sh
 COPY ml/ /app/ml/

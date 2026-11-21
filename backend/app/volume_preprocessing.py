@@ -106,7 +106,7 @@ def read_volume(path: Path):
         if not files:
             raise ValueError("DICOM series contains no slices")
         positions = []
-        first_spacing = None
+        first_spacing = first_orientation = None
         first_shape = None
         for file in files:
             ds = pydicom.dcmread(file, stop_before_pixels=True)
@@ -135,9 +135,11 @@ def read_volume(path: Path):
             axes = orientation.reshape(2, 3)
             if not np.allclose(axes @ axes.T, np.eye(2), atol=1e-4):
                 raise ValueError('DICOM orientation axes must be orthonormal')
-            if positions and not np.allclose(orientation, first_orientation, atol=1e-4):
+            # Compare every slice with the first so gradual drift cannot pass pairwise checks.
+            if first_orientation is not None and not np.allclose(orientation, first_orientation, atol=1e-4):
                 raise ValueError("DICOM slice orientations differ")
-            first_orientation = orientation
+            if first_orientation is None:
+                first_orientation = orientation
             positions.append(float(position @ np.cross(orientation[:3], orientation[3:])))
         differences = np.diff(positions)
         if len(differences) and (np.any(np.abs(differences) < 1e-5) or

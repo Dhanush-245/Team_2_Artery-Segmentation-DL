@@ -20,9 +20,15 @@ This deployment serves the React frontend and FastAPI API from one Docker servic
    COROVISION_INFERENCE_WORKER=1
    CV_LOCAL_DEMO_SESSIONS=0
    CV_LOCAL_DEMO_SHARING=0
-   COROVISION_TRAINED_RELEASE=/models
    STORAGE_DIR=/data/storage
+   FRONTEND_ORIGIN=https://YOUR-DOMAIN
+   OAUTH_REDIRECT_BASE=https://YOUR-DOMAIN
+   CORS_ORIGINS=https://YOUR-DOMAIN
    ```
+
+   The image runs as the non-root user 10001, while Railway mounts volumes owned by root. If readiness reports storage as not writable, set `RAILWAY_RUN_UID=0` (Railway's documented switch for this case) and redeploy.
+
+   Replace `YOUR-DOMAIN` with the service's Railway domain (Settings → Networking → Generate Domain). Do not set `COROVISION_TRAINED_RELEASE`: the image already points it at `/models/trained_release`, where the build installs the verified models. Overriding it with `/models` makes the release unreadable and inference reports unavailable.
 
 Railway supplies `PORT`; the container binds to it. The Docker build downloads the public, hash-pinned 2D model release and verifies its internal release contract and checkpoint hashes. Model files are not committed to Git.
 

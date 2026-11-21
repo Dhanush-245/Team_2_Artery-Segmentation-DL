@@ -307,11 +307,19 @@ def audit(db: Session, user_id: str, action: str, case_id: str | None = None):
     db.add(AuditEvent(user_id=user_id, action=action, case_id=case_id))
 
 
+# Model findings and failures are results the requester must see too; collaboration
+# events (comments, edits, assignments) are only news to the other case members.
+REQUESTER_ALERT_KINDS = {"model_stenosis_flag", "model_multiple_regions", "analysis_quality_review",
+                         "model_uncertainty_review", "analysis_failed", "validation_failed"}
+
+
 def notify_case(db: Session, case: Case, actor_id: str, kind: str, message: str,
                 roles: set[str] | None = None) -> None:
     recipient_ids = {case.owner_id} | {entry.user_id for entry in case.access_list}
+    if kind in REQUESTER_ALERT_KINDS:
+        recipient_ids.add(actor_id)
     for recipient_id in recipient_ids:
-        if recipient_id == actor_id:
+        if recipient_id == actor_id and kind not in REQUESTER_ALERT_KINDS:
             continue
         recipient = db.get(User, recipient_id)
         if recipient and recipient.status == "active" and (roles is None or recipient.role in roles):
@@ -1129,11 +1137,15 @@ def grant_case_access(
     case = db.get(Case, case_id)
     if not case or (case.owner_id != user.id and user.role != "admin"):
         raise HTTPException(status_code=403, detail="Only the case owner or administrator can assign access")
+    if case.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Case not found")
     target_user = resolve_user(data.user_email_or_id, db)
     if not target_user:
         target_user = db.get(User, data.user_email_or_id)
     if not target_user:
         raise HTTPException(status_code=404, detail="User to assign not found")
+    if target_user.role not in CASE_ROLES or getattr(target_user, "status", "active") != "active":
+        raise HTTPException(status_code=422, detail="Case access can only be assigned to an active user with a case role")
     existing = db.scalar(
         select(CaseAccess).where(CaseAccess.case_id == case.id, CaseAccess.user_id == target_user.id)
     )
@@ -2908,6 +2920,10 @@ def operations_metrics(user: User = Depends(require_roles('admin'))):
     return Response(prometheus(telemetry_snapshot()), media_type='text/plain; version=0.0.4')
 
 
+from .model_registry import install as install_model_registry  # noqa: E402
+install_model_registry(app, require_roles, ROLE_MODEL_MANAGERS)
+
+
 frontend_dist = BASE_DIR / "frontend" / "dist"
 if not frontend_dist.is_dir():
     frontend_dist = Path(__file__).resolve().parents[2] / "frontend" / "dist"
@@ -2931,5 +2947,24 @@ if frontend_dist.is_dir():
             # Revalidate the entry page so it picks up the current hashed assets after a rebuild.
             return FileResponse(index_file, headers={"Cache-Control": "no-cache"})
         return {"status": "ok", "app": "CoroVision AI"}
+
+    from fastapi.exception_handlers import http_exception_handler
+    from starlette.exceptions import HTTPException as StarletteHTTPException
+
+    @app.exception_handler(StarletteHTTPException)
+    async def serve_client_route(request, exc):
+        """Return the app shell for unmatched page navigations so deep links survive a refresh.
+
+        Only an unmatched GET for a non-API, extension-less path is served; API routes,
+        static files, other methods and every other status keep their normal response.
+        """
+        path = request.url.path
+        last = path.rsplit("/", 1)[-1]
+        index_file = frontend_dist / "index.html"
+        if (exc.status_code == 404 and request.method == "GET" and not path.startswith(("/api/", "/assets/"))
+                and path != "/api" and "." not in last and index_file.is_file()
+                and getattr(exc, "detail", None) == "Not Found"):
+            return FileResponse(index_file, headers={"Cache-Control": "no-cache"})
+        return await http_exception_handler(request, exc)
 
 
