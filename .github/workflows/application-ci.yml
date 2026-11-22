@@ -53,7 +53,7 @@ jobs:
           for i in $(seq 1 60); do curl -fsS http://127.0.0.1:8000/api/health/ready && exit 0; sleep 3; done
           docker logs cv; exit 1
       - name: Vulnerability scan (fail on fixable critical findings)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.33.1
         with:
           image-ref: corovision-ci:${{ github.sha }}
           scanners: vuln
@@ -62,7 +62,7 @@ jobs:
           exit-code: '1'
       - name: Vulnerability report (high and critical, informational)
         if: always()
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.33.1
         with:
           image-ref: corovision-ci:${{ github.sha }}
           scanners: vuln
