@@ -472,3 +472,37 @@ details[open] > summary .evaluation-chevron { transform: rotate(180deg); }
 @media (max-width: 720px) { .volume-mpr-controls { grid-template-columns: 1fr 1fr; } .volume-mpr-controls > label:first-of-type { grid-column: 1 / -1; } }
 .volume-mpr-download, .volume-mpr-opacity span { white-space: nowrap; }
 .volume-mpr-download { align-self: end; }
+
+/* 3D vessel surface viewer, matching the MPR viewer's card style. */
+.volume-orbit { display: grid; gap: .75rem; margin: 1rem 0; padding: 1rem; border: 1px solid #e4e4e7; border-radius: 12px; background: #fff; }
+.dark .volume-orbit { background: #18181b; border-color: #3f3f46; }
+.volume-orbit-heading { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: .75rem; }
+.volume-orbit-heading h4 { margin: .15rem 0 0; font-size: 1rem; }
+.volume-orbit-presets { display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: #f4f4f5; }
+.dark .volume-orbit-presets { background: #27272a; }
+.volume-orbit-presets button { min-height: 34px; padding: 0 .9rem; border: 0; border-radius: 8px; background: transparent; color: inherit; font-weight: 600; font-size: .82rem; cursor: pointer; }
+.volume-orbit-presets button.active { background: #18181b; color: #fff; }
+.dark .volume-orbit-presets button.active { background: #fafafa; color: #18181b; }
+.volume-orbit-canvas { display: block; width: 100%; height: clamp(300px, 56vh, 620px); border-radius: 8px; background: radial-gradient(ellipse at 50% 40%, #12223a 0%, #070b12 75%); cursor: grab; touch-action: none; outline: none; }
+.volume-orbit-canvas:active { cursor: grabbing; }
+.volume-orbit-canvas:focus-visible { box-shadow: 0 0 0 3px #2f8fdb; }
+.volume-orbit-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: .82rem; }
+.volume-orbit-tool { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid #d4d4d8; border-radius: 8px; background: inherit; color: inherit; cursor: pointer; }
+.volume-orbit-tool.wide { width: auto; padding: 0 .9rem; font-weight: 600; }
+.volume-orbit-tool:hover:not(:disabled) { background: #f4f4f5; }
+.dark .volume-orbit-tool { border-color: #3f3f46; } .dark .volume-orbit-tool:hover:not(:disabled) { background: #27272a; }
+.volume-orbit-tool:disabled { opacity: .4; cursor: not-allowed; }
+.volume-orbit-divider { width: 1px; height: 22px; margin: 0 4px; background: #e4e4e7; }
+.dark .volume-orbit-divider { background: #3f3f46; }
+.volume-orbit-zoom { min-width: 44px; text-align: center; font-variant-numeric: tabular-nums; }
+.volume-orbit-toggle { display: inline-flex; align-items: center; gap: 6px; margin-left: 4px; font-weight: 600; cursor: pointer; }
+.volume-orbit-toggle input { accent-color: #0891b2; }
+.volume-orbit-legend { display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; font-size: .78rem; }
+.volume-orbit-legend .swatch { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 3px; vertical-align: -1px; }
+.volume-orbit-legend .swatch.main { background: hsl(188 72% 50%); } .volume-orbit-legend .swatch.other { background: hsl(32 85% 55%); }
+.volume-orbit-note { margin: 0; padding: .6rem .8rem; border-left: 3px solid #d97706; border-radius: 6px; background: rgba(217,119,6,.08); font-size: .8rem; }
+.volume-orbit-loading { display: inline-flex; align-items: center; gap: 8px; }
+@media (max-width: 650px) { .volume-orbit-canvas { height: clamp(240px, 55vh, 420px); } }
+.volume-orbit-toolbar .volume-orbit-toggle input[type=checkbox] { appearance: auto; width: 16px; height: 16px; min-width: 16px; min-height: 0; margin: 0; padding: 0; border: 0; box-shadow: none; }
+.volume-orbit-hint { margin: 0; }
+.volume-orbit .volume-orbit-toolbar label.volume-orbit-toggle { display: inline-flex; flex-direction: row; align-items: center; gap: 6px; min-height: 34px; }

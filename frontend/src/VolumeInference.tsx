@@ -188,11 +188,10 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
             </dl>
           </section>
           {selected.preview_url && selected.result.coarse_foreground_voxels > 0 && <section aria-label="Interactive vessel mask">
-            <Button type="button" aria-expanded={viewingRun === selected.id} onClick={() => setViewingRun(viewingRun === selected.id ? '' : selected.id)}>
-              {viewingRun === selected.id ? 'Close 3D viewer' : 'Open 360° vessel viewer'}
+            <Button type="button" variant="outline" aria-expanded={viewingRun === selected.id} onClick={() => setViewingRun(viewingRun === selected.id ? '' : selected.id)}>
+              {viewingRun === selected.id ? 'Hide 3D surface' : 'Show 3D vessel surface'}
             </Button>
-            {viewingRun === selected.id && <VolumeOrbit key={selected.id} url={selected.preview_url} token={token}
-              shape={selected.result.source_shape} slices={selected.result.slices} previews={previews} />}
+            {viewingRun === selected.id && <VolumeOrbit key={selected.id} url={selected.preview_url} token={token} />}
           </section>}
           {selected.status === 'completed' && <VolumeMprViewer key={`mpr-${selected.id}`} caseId={caseId} runId={selected.id} token={token} shape={selected.result.source_shape} />}
           <details key={selected.id}><summary>{selected.input_kind === 'synthetic_fixture' ? 'Show synthetic test slices (not medical images)' : 'Saved coarse-grid previews (model input resolution)'}</summary>

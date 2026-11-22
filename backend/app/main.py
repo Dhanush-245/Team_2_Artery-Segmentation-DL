@@ -1602,11 +1602,11 @@ def volume_artifact(case_id: str, run_id: str, name: str,
     if name == 'preview-3d.json':
         from fastapi.responses import JSONResponse
         from nibabel.filebasedimages import ImageFileError
-        from .volume_preview import PREVIEW_SLOTS, mask_preview
+        from .volume_preview import PREVIEW_SLOTS, cached_preview
         if not PREVIEW_SLOTS.acquire(blocking=False):
             raise HTTPException(429, 'The 3D viewer is busy. Try again shortly.')
         try:
-            return JSONResponse(mask_preview(path))
+            return JSONResponse(cached_preview(path, STORAGE/'previews'))
         except (ImageFileError, OSError, ValueError) as exc:
             raise HTTPException(422, 'The saved mask could not be displayed in 3D.') from exc
         finally:

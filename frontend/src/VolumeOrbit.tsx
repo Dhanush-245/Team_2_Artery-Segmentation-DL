@@ -1,243 +1,207 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Loader2, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
 import { apiUrl } from './api';
-import { Button } from './components/prismui/button';
 
 type Point = [number, number, number];
-type Slice = { axis: string; coarse_index: number; artifact: string };
 type MaskComponent = { id: number; foreground_voxels: number; points: Point[] };
-type SurfaceMesh = { vertices: Point[]; faces: [number, number, number][] };
-const initialView = { yaw: .5, pitch: -.25, zoom: 1 };
-const turn = Math.PI / 12;
-const presets = [
-  { label: 'Angled', yaw: initialView.yaw, pitch: initialView.pitch, axis: null },
-  { label: 'Coronal', yaw: 0, pitch: 0, axis: 'RAS Y' },
-  { label: 'Sagittal', yaw: Math.PI / 2, pitch: 0, axis: 'RAS X' },
-  { label: 'Axial', yaw: 0, pitch: Math.PI / 2, axis: 'RAS Z' },
-];
-const planeLabels: Record<string, string> = { 'RAS X': 'Sagittal', 'RAS Y': 'Coronal', 'RAS Z': 'Axial' };
+type SurfaceMesh = { vertices: Point[]; faces: [number, number, number][]; face_components?: number[]; step_voxels?: number | null };
+type Preview = { foreground_voxels: number; component_count: number; mesh?: SurfaceMesh; components: MaskComponent[]; points: Point[] };
+type View = { yaw: number; pitch: number; zoom: number };
 
-export default function VolumeOrbit({ url, token, shape, slices, previews }: {
-  url: string; token: string; shape: number[];
-  slices: Slice[]; previews: Record<string, string>;
-}) {
-  const [points, setPoints] = useState<Point[] | null>(null);
-  const [components, setComponents] = useState<MaskComponent[]>([]);
-  const [showAllComponents, setShowAllComponents] = useState(false);
-  const [foregroundVoxels, setForegroundVoxels] = useState(0);
-  const [mesh, setMesh] = useState<SurfaceMesh>({ vertices: [], faces: [] });
+const INITIAL: View = { yaw: 0.55, pitch: 0.35, zoom: 1 };
+const TURN = Math.PI / 12;
+const PITCH_LIMIT = Math.PI / 2 - 0.001;
+/** World coordinates are RAS (x right, y anterior, z superior); positive pitch looks down from above. */
+const PRESETS: { label: string; yaw: number; pitch: number }[] = [
+  { label: 'Angled', yaw: INITIAL.yaw, pitch: INITIAL.pitch },
+  { label: 'Anterior', yaw: 0, pitch: 0 },
+  { label: 'Lateral', yaw: Math.PI / 2, pitch: 0 },
+  { label: 'Superior', yaw: 0, pitch: PITCH_LIMIT },
+];
+
+function normalize(v: number[]): Point { const n = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / n, v[1] / n, v[2] / n]; }
+const LIGHT = normalize([0.35, 0.6, 0.75]);
+
+/** World point → camera space: [screen x, screen y, depth toward the viewer]. */
+function camera([x, y, z]: Point, view: View): Point {
+  const cy = Math.cos(view.yaw), sy = Math.sin(view.yaw), cp = Math.cos(view.pitch), sp = Math.sin(view.pitch);
+  const horizontal = cy * x + sy * y;
+  const toward = -sy * x + cy * y;
+  return [horizontal, cp * z - sp * toward, sp * z + cp * toward];
+}
+
+export default function VolumeOrbit({ url, token }: { url: string; token: string }) {
+  const [data, setData] = useState<Preview | null>(null);
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
-  const [view, setView] = useState(initialView);
+  const [view, setView] = useState<View>(INITIAL);
   const [grid, setGrid] = useState(true);
-  const [sliceIndex, setSliceIndex] = useState(0);
-  const selectedSlice = slices[sliceIndex];
-  const mprAxis = Math.max(0, ['RAS X', 'RAS Y', 'RAS Z'].indexOf(selectedSlice?.axis));
-  const [mprIndex, setMprIndex] = useState(() => Math.floor((shape[0] || 1) / 2));
-  const [windowWidth, setWindowWidth] = useState(800);
-  const [windowLevel, setWindowLevel] = useState(300);
-  const [overlayOpacity, setOverlayOpacity] = useState(.55);
-  const [mprImage, setMprImage] = useState('');
+  const [showAll, setShowAll] = useState(false);
   const canvas = useRef<HTMLCanvasElement>(null);
   const pointer = useRef<{ id: number; x: number; y: number } | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
-    setPoints(null);
-    setError('');
-    // Deferring one tick lets React StrictMode cancel its development-only
-    // probe effect before it consumes the backend's single mesh-preview slot.
+    setData(null); setError('');
+    // One tick of delay lets React StrictMode cancel its probe effect before it uses the server's single preview slot.
     const timer = window.setTimeout(() => {
       fetch(apiUrl(url), { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal })
         .then(async response => {
-          const data = await response.json();
-          if (!response.ok) throw new Error(data.detail || 'Unable to load the saved 3D mask.');
-          const listed = (data.components || []) as MaskComponent[];
-          setComponents(listed);
-          setForegroundVoxels(Number(data.foreground_voxels || 0));
-          setMesh((data.mesh || { vertices: [], faces: [] }) as SurfaceMesh);
-          return (listed.length ? listed[0].points : data.points) as Point[];
+          const body = await response.json();
+          if (!response.ok) throw new Error(body.detail || 'Unable to load the saved 3D mask.');
+          return body as Preview;
         })
-        .then(result => { if (!controller.signal.aborted) setPoints(result); })
-        .catch(cause => { if (!controller.signal.aborted) setError(cause.message); });
+        .then(result => { if (!controller.signal.aborted) setData(result); })
+        .catch(cause => { if (!controller.signal.aborted) setError((cause as Error).message); });
     }, 0);
     return () => { window.clearTimeout(timer); controller.abort(); };
   }, [url, token, attempt]);
 
-  useEffect(() => {
-    setMprIndex(Math.floor((shape[mprAxis] || 1) / 2));
-  }, [mprAxis, shape]);
-
-  useEffect(() => {
-    if (!selectedSlice) return;
-    const controller = new AbortController();
-    let objectUrl = '';
-    const endpoint = url.replace(/\/artifacts\/preview-3d\.json$/, '/mpr.png');
-    const query = new URLSearchParams({ axis: String(mprAxis), index: String(mprIndex),
-      window: String(windowWidth), level: String(windowLevel), opacity: String(overlayOpacity) });
-    fetch(apiUrl(`${endpoint}?${query}`), { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal })
-      .then(response => response.ok ? response.blob() : Promise.reject(new Error('MPR unavailable')))
-      .then(blob => { objectUrl = URL.createObjectURL(blob); setMprImage(objectUrl); })
-      .catch(() => { if (!controller.signal.aborted) setMprImage(''); });
-    return () => { controller.abort(); if (objectUrl) URL.revokeObjectURL(objectUrl); };
-  }, [url, token, selectedSlice, mprAxis, mprIndex, windowWidth, windowLevel, overlayOpacity]);
-
-  useEffect(() => {
-    if (!components.length) return;
-    setPoints(showAllComponents
-      ? components.flatMap(component => component.points)
-      : components[0].points);
-  }, [components, showAllComponents]);
+  /** Visible geometry, re-centred and scaled to fill the view, plus the floor height for the grid. */
+  const scene = useMemo(() => {
+    if (!data) return null;
+    const mesh = data.mesh;
+    const hasMesh = !!mesh?.faces.length;
+    const tags = mesh?.face_components ?? [];
+    const faces = hasMesh ? mesh!.faces.map((face, index) => ({ face, component: tags[index] ?? 1 })).filter(item => showAll || item.component === 1) : [];
+    const points = hasMesh ? [] : (showAll ? data.components.flatMap(c => c.points) : data.components[0]?.points ?? data.points);
+    const used = hasMesh ? faces.flatMap(item => item.face.map(index => mesh!.vertices[index])) : points;
+    if (!used.length) return null;
+    const min = [0, 1, 2].map(axis => used.reduce((m, p) => Math.min(m, p[axis]), Infinity));
+    const max = [0, 1, 2].map(axis => used.reduce((m, p) => Math.max(m, p[axis]), -Infinity));
+    const centre = min.map((value, axis) => (value + max[axis]) / 2);
+    const half = Math.max(...max.map((value, axis) => (value - min[axis]) / 2)) || 1;
+    const fit = (p: Point): Point => [(p[0] - centre[0]) / half, (p[1] - centre[1]) / half, (p[2] - centre[2]) / half];
+    return { hasMesh, faces, vertices: hasMesh ? mesh!.vertices.map(fit) : [], points: points.map(fit),
+      floor: (min[2] - centre[2]) / half - 0.08 };
+  }, [data, showAll]);
 
   useEffect(() => {
     const element = canvas.current;
     const context = element?.getContext('2d');
-    if (!element || !context || !points?.length) return;
+    if (!element || !context || !scene) return;
     const draw = () => {
       const { width, height } = element.getBoundingClientRect();
       const ratio = Math.min(window.devicePixelRatio || 1, 2);
-      element.width = Math.round(width * ratio);
-      element.height = Math.round(height * ratio);
-      context.scale(ratio, ratio);
-      const scale = Math.min(width, height) * .43 * view.zoom;
-      const cy = Math.cos(view.yaw), sy = Math.sin(view.yaw);
-      const cp = Math.cos(view.pitch), sp = Math.sin(view.pitch);
-      const project = ([x, y, z]: Point) => {
-        const horizontal = cy * x + sy * y;
-        const forward = -sy * x + cy * y;
-        return [horizontal, cp * z - sp * forward, sp * z + cp * forward];
+      element.width = Math.round(width * ratio); element.height = Math.round(height * ratio);
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      context.clearRect(0, 0, width, height);
+      const scale = Math.min(width, height) * 0.38 * view.zoom;
+      const screen = (p: Point) => [width / 2 + p[0] * scale, height / 2 - p[1] * scale] as const;
+      const line = (a: Point, b: Point, color: string) => {
+        context.beginPath(); context.moveTo(...screen(camera(a, view))); context.lineTo(...screen(camera(b, view)));
+        context.strokeStyle = color; context.lineWidth = 1; context.stroke();
       };
-      const position = ([x, y]: number[]) => [width / 2 + x * scale, height / 2 - y * scale] as const;
-      const line = (from: Point, to: Point, color: string) => {
-        context.beginPath();
-        context.moveTo(...position(project(from)));
-        context.lineTo(...position(project(to)));
-        context.strokeStyle = color;
-        context.stroke();
-      };
-      if (grid) {
-        for (let index = -5; index <= 5; index++) {
-          const offset = index / 5;
-          line([offset, -1, -.95], [offset, 1, -.95], '#365367');
-          line([-1, offset, -.95], [1, offset, -.95], '#365367');
-        }
+      if (grid) for (let i = -5; i <= 5; i++) {
+        const o = (i / 5) * 1.15;
+        line([o, -1.15, scene.floor], [o, 1.15, scene.floor], 'rgba(96,165,250,.22)');
+        line([-1.15, o, scene.floor], [1.15, o, scene.floor], 'rgba(96,165,250,.22)');
       }
-      if (mesh.vertices.length && mesh.faces.length) {
-        const vertices = mesh.vertices.map(project);
-        const faces = mesh.faces.map(face => ({ face, depth: face.reduce((sum, index) => sum + vertices[index][2], 0) / 3 }));
-        faces.sort((a, b) => a.depth - b.depth);
-        for (const { face, depth } of faces) {
-          const triangle = face.map(index => position(vertices[index]));
-          context.beginPath();
-          context.moveTo(...triangle[0]);
-          context.lineTo(...triangle[1]);
-          context.lineTo(...triangle[2]);
-          context.closePath();
-          context.fillStyle = `hsl(188 70% ${Math.round(42 + depth * 18)}%)`;
-          context.fill();
+      if (scene.hasMesh) {
+        const cam = scene.vertices.map(v => camera(v, view));
+        const light = camera(LIGHT, view);
+        const ordered = scene.faces.map(item => ({ ...item, depth: (cam[item.face[0]][2] + cam[item.face[1]][2] + cam[item.face[2]][2]) / 3 }))
+          .sort((a, b) => a.depth - b.depth);
+        for (const { face, component } of ordered) {
+          const [a, b, c] = face.map(index => cam[index]);
+          const normal = normalize([(b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]),
+            (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]), (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])]);
+          const shade = 0.3 + 0.7 * Math.abs(normal[0] * light[0] + normal[1] * light[1] + normal[2] * light[2]);
+          const [hue, saturation] = component === 1 ? [188, 72] : [32, 85];
+          const [p0, p1, p2] = [a, b, c].map(screen);
+          context.beginPath(); context.moveTo(...p0); context.lineTo(...p1); context.lineTo(...p2); context.closePath();
+          context.fillStyle = `hsl(${hue} ${saturation}% ${Math.round(20 + shade * 48)}%)`;
+          context.fill(); context.strokeStyle = context.fillStyle; context.lineWidth = 0.5; context.stroke();
         }
       } else {
-        const projected = points.map(project);
-        projected.sort((a, b) => a[2] - b[2]);
-        const size = Math.max(1.5, Math.min(4.5, 3.2 * view.zoom));
-        for (const [x, y, depth] of projected) {
-          context.fillStyle = `hsl(188 76% ${Math.round(49 + depth * 24)}%)`;
-          context.beginPath();
-          context.arc(width / 2 + x * scale, height / 2 - y * scale, size / 2, 0, Math.PI * 2);
-          context.fill();
+        const projected = scene.points.map(p => camera(p, view)).sort((a, b) => a[2] - b[2]);
+        for (const p of projected) {
+          const [x, y] = screen(p);
+          context.fillStyle = `hsl(188 76% ${Math.round(45 + p[2] * 18)}%)`;
+          context.beginPath(); context.arc(x, y, 1.6, 0, Math.PI * 2); context.fill();
         }
+      }
+      // Orientation marker: R (right), A (anterior), S (superior).
+      const origin: [number, number] = [34, height - 34];
+      for (const [label, axis, color] of [['R', [1, 0, 0], '#f87171'], ['A', [0, 1, 0], '#4ade80'], ['S', [0, 0, 1], '#60a5fa']] as const) {
+        const p = camera(axis as unknown as Point, view);
+        context.beginPath(); context.moveTo(...origin); context.lineTo(origin[0] + p[0] * 20, origin[1] - p[1] * 20);
+        context.strokeStyle = color; context.lineWidth = 2; context.stroke();
+        context.fillStyle = color; context.font = '600 11px system-ui, sans-serif';
+        context.fillText(label, origin[0] + p[0] * 27 - 3, origin[1] - p[1] * 27 + 4);
       }
     };
     draw();
     const observer = new ResizeObserver(draw);
     observer.observe(element);
     return () => observer.disconnect();
-  }, [points, mesh, view, grid]);
+  }, [scene, view, grid]);
 
-  function rotate(yaw: number, pitch: number) {
-    setView(current => ({ ...current, yaw: (current.yaw + yaw) % (2 * Math.PI),
-      pitch: Math.max(-Math.PI / 2, Math.min(Math.PI / 2, current.pitch + pitch)) }));
-  }
+  // Wheel zoom needs a non-passive listener so the page does not scroll while zooming.
+  useEffect(() => {
+    const element = canvas.current;
+    if (!element) return;
+    // Plain scrolling keeps scrolling the page; zoom only on a trackpad pinch or Ctrl/⌘ + scroll.
+    const onWheel = (event: WheelEvent) => {
+      if (!event.ctrlKey && !event.metaKey) return;
+      event.preventDefault();
+      setView(v => ({ ...v, zoom: Math.max(0.5, Math.min(4, v.zoom * (event.deltaY < 0 ? 1.1 : 1 / 1.1))) }));
+    };
+    element.addEventListener('wheel', onWheel, { passive: false });
+    return () => element.removeEventListener('wheel', onWheel);
+  }, [scene]);
 
-  if (error) return <div><p role="alert">{error}</p><Button type="button" onClick={() => setAttempt(value => value + 1)}>Retry viewer</Button></div>;
-  if (points === null) return <p role="status">Loading the saved vessel mask…</p>;
-  if (!points.length) return <p role="status">The saved mask is empty. Use the slice previews to review the run.</p>;
+  const rotate = (yaw: number, pitch: number) => setView(v => ({ ...v, yaw: (v.yaw + yaw) % (2 * Math.PI), pitch: Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, v.pitch + pitch)) }));
+  const zoomBy = (factor: number) => setView(v => ({ ...v, zoom: Math.max(0.5, Math.min(4, v.zoom * factor)) }));
 
-  return <div className="volume-orbit">
-    <div className="volume-orbit-stage">
-    <div className="volume-orbit-heading"><strong>Vessel surface viewport</strong></div>
+  if (error) return <div className="volume-orbit"><p role="alert">{error}</p><button type="button" className="volume-orbit-tool wide" onClick={() => setAttempt(a => a + 1)}>Retry</button></div>;
+  if (!data) return <div className="volume-orbit"><p role="status" className="volume-orbit-loading"><Loader2 size={16} className="spin" /> Building the vessel surface…</p></div>;
+  if (!scene) return <div className="volume-orbit"><p role="status">The saved mask is empty. Use the slice viewer to review the run.</p></div>;
+  const others = Math.max(0, data.component_count - 1);
+  const presetActive = (p: { yaw: number; pitch: number }) => Math.abs(view.yaw - p.yaw) < 1e-3 && Math.abs(view.pitch - p.pitch) < 1e-3;
+
+  return <section className="volume-orbit" aria-labelledby="volume-orbit-title">
+    <div className="volume-orbit-heading">
+      <div><span className="eyebrow">3D SURFACE</span><h4 id="volume-orbit-title">Predicted vessel mask</h4></div>
+      <div className="volume-orbit-presets" role="group" aria-label="View direction">
+        {PRESETS.map(preset => <button key={preset.label} type="button" aria-pressed={presetActive(preset)} className={presetActive(preset) ? 'active' : ''}
+          onClick={() => setView(v => ({ ...v, yaw: preset.yaw, pitch: preset.pitch }))}>{preset.label}</button>)}
+      </div>
+    </div>
     <canvas ref={canvas} className="volume-orbit-canvas" tabIndex={0}
-      aria-label="Interactive 3D vessel mask. Use arrow keys to rotate."
+      aria-label="3D vessel surface. Drag or use the arrow keys to rotate; pinch, Ctrl or Command plus scroll, or plus and minus to zoom; double-click to reset."
+      onDoubleClick={() => setView(INITIAL)}
       onKeyDown={event => {
-        switch (event.key) {
-          case 'ArrowLeft': rotate(-turn, 0); break;
-          case 'ArrowRight': rotate(turn, 0); break;
-          case 'ArrowUp': rotate(0, turn); break;
-          case 'ArrowDown': rotate(0, -turn); break;
-          default: return;
-        }
-        event.preventDefault();
+        const keys: Record<string, () => void> = { ArrowLeft: () => rotate(-TURN, 0), ArrowRight: () => rotate(TURN, 0), ArrowUp: () => rotate(0, TURN), ArrowDown: () => rotate(0, -TURN), '+': () => zoomBy(1.2), '=': () => zoomBy(1.2), '-': () => zoomBy(1 / 1.2) };
+        if (keys[event.key]) { event.preventDefault(); keys[event.key](); }
       }}
-      onPointerDown={event => {
-        if (event.button !== 0 || pointer.current) return;
-        event.currentTarget.setPointerCapture(event.pointerId);
-        pointer.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
-      }}
+      onPointerDown={event => { if (event.button !== 0) return; event.currentTarget.setPointerCapture(event.pointerId); pointer.current = { id: event.pointerId, x: event.clientX, y: event.clientY }; }}
       onPointerMove={event => {
-        const previous = pointer.current;
-        if (!previous || previous.id !== event.pointerId) return;
-        rotate((event.clientX - previous.x) * .012, (event.clientY - previous.y) * .012);
+        const last = pointer.current; if (!last || last.id !== event.pointerId) return;
+        rotate((event.clientX - last.x) * 0.01, (event.clientY - last.y) * 0.01);
         pointer.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
       }}
       onLostPointerCapture={() => { pointer.current = null; }} />
-    <p className="caption">Drag or use the arrow keys to rotate. The grid is a visual guide.</p>
+    <div className="volume-orbit-toolbar" role="group" aria-label="3D view controls">
+      <button type="button" className="volume-orbit-tool" aria-label="Rotate left" title="Rotate left" onClick={() => rotate(-TURN, 0)}><ArrowLeft size={16} /></button>
+      <button type="button" className="volume-orbit-tool" aria-label="Rotate right" title="Rotate right" onClick={() => rotate(TURN, 0)}><ArrowRight size={16} /></button>
+      <button type="button" className="volume-orbit-tool" aria-label="Tilt up" title="Tilt up" onClick={() => rotate(0, TURN)}><ArrowUp size={16} /></button>
+      <button type="button" className="volume-orbit-tool" aria-label="Tilt down" title="Tilt down" onClick={() => rotate(0, -TURN)}><ArrowDown size={16} /></button>
+      <span className="volume-orbit-divider" aria-hidden="true" />
+      <button type="button" className="volume-orbit-tool" aria-label="Zoom out" title="Zoom out" disabled={view.zoom <= 0.5} onClick={() => zoomBy(1 / 1.2)}><ZoomOut size={16} /></button>
+      <span className="volume-orbit-zoom" aria-live="polite">{Math.round(view.zoom * 100)}%</span>
+      <button type="button" className="volume-orbit-tool" aria-label="Zoom in" title="Zoom in" disabled={view.zoom >= 4} onClick={() => zoomBy(1.2)}><ZoomIn size={16} /></button>
+      <button type="button" className="volume-orbit-tool" aria-label="Reset view" title="Reset view" onClick={() => setView(INITIAL)}><RotateCcw size={16} /></button>
+      <span className="volume-orbit-divider" aria-hidden="true" />
+      <label className="volume-orbit-toggle"><input type="checkbox" checked={grid} onChange={event => setGrid(event.target.checked)} />Floor grid</label>
+      {others > 0 && <label className="volume-orbit-toggle"><input type="checkbox" checked={showAll} onChange={event => setShowAll(event.target.checked)} />Show {others} disconnected fragment{others === 1 ? '' : 's'}</label>}
     </div>
-    <aside className="volume-orbit-inspector" aria-label="3D workspace controls and details">
-    <section className="volume-view-controls" aria-label="View controls">
-    <div><h4>View controls</h4>
-      <div className="volume-downloads" role="group" aria-label="View presets">
-        {presets.map(preset => <Button key={preset.label} type="button"
-          aria-pressed={view.yaw === preset.yaw && view.pitch === preset.pitch}
-          onClick={() => {
-            setView(current => ({ ...current, yaw: preset.yaw, pitch: preset.pitch }));
-            const index = slices.findIndex(slice => slice.axis === preset.axis);
-            if (index >= 0) setSliceIndex(index);
-          }}>{preset.label}</Button>)}
-      </div>
+    <div className="volume-orbit-legend">
+      <span><i className="swatch main" />Largest connected component</span>
+      {showAll && others > 0 && <span><i className="swatch other" />Disconnected fragments</span>}
+      <span className="muted">{data.foreground_voxels.toLocaleString()} mask voxels{data.mesh?.step_voxels && data.mesh.step_voxels > 1 ? ` · surface simplified ${data.mesh.step_voxels}×` : ''}</span>
     </div>
-    <div className="volume-downloads" role="group" aria-label="3D view controls">
-      <Button type="button" onClick={() => rotate(-turn, 0)}>Rotate left</Button>
-      <Button type="button" onClick={() => rotate(turn, 0)}>Rotate right</Button>
-      <Button type="button" onClick={() => rotate(0, turn)}>Tilt up</Button>
-      <Button type="button" onClick={() => rotate(0, -turn)}>Tilt down</Button>
-      <Button type="button" disabled={view.zoom <= .5} onClick={() => setView(current => ({ ...current, zoom: Math.max(.5, current.zoom / 1.2) }))}>Zoom out</Button>
-      <Button type="button" disabled={view.zoom >= 3} onClick={() => setView(current => ({ ...current, zoom: Math.min(3, current.zoom * 1.2) }))}>Zoom in</Button>
-      <Button type="button" onClick={() => setView(initialView)}>Reset view</Button>
-    </div>
-    <label className="volume-confirm"><input type="checkbox" checked={grid} onChange={event => setGrid(event.target.checked)} />Show reference grid</label>
-    </section>
-    <div className="volume-orbit-support">
-    {components.length > 1 && <section className="volume-component-quality" aria-label="Predicted mask component quality">
-      <h4>Mask connectivity</h4>
-      <p><strong>{components.length} disconnected components</strong> · {foregroundVoxels.toLocaleString()} source-grid foreground voxels.</p>
-      <p role="note"><strong>Quality warning:</strong> disconnected predictions are reviewed separately. Any experimental path, reference and severity measurement is restricted to a single connected component.</p>
-      <label className="volume-confirm"><input type="checkbox" checked={showAllComponents}
-        onChange={event => setShowAllComponents(event.target.checked)} />Show all disconnected components</label>
-    </section>}
-    {selectedSlice && <section aria-label="Saved slice reference">
-      <h4>Slice reference</h4>
-      <label>Plane<select value={sliceIndex} onChange={event => setSliceIndex(Number(event.target.value))}>
-        {slices.map((slice, index) => <option key={slice.artifact} value={index}>{planeLabels[slice.axis] ?? slice.axis}</option>)}
-      </select></label>
-      <label>Source slice <input type="range" min="0" max={Math.max(0, (shape[mprAxis] || 1)-1)} value={mprIndex}
-        onChange={event => setMprIndex(Number(event.target.value))} /><span>{mprIndex + 1} / {shape[mprAxis]}</span></label>
-      <label>Window width <input type="number" min="1" max="5000" value={windowWidth} onChange={event => setWindowWidth(Number(event.target.value))} /></label>
-      <label>Window level <input type="number" min="-1500" max="2500" value={windowLevel} onChange={event => setWindowLevel(Number(event.target.value))} /></label>
-      <label>Overlay opacity <input type="range" min="0" max="1" step="0.05" value={overlayOpacity} onChange={event => setOverlayOpacity(Number(event.target.value))} /></label>
-      {mprImage || previews[selectedSlice.artifact] ? <img className="volume-orbit-slice" src={mprImage || previews[selectedSlice.artifact]}
-        alt={`${planeLabels[selectedSlice.axis] ?? selectedSlice.axis} source-volume MPR with predicted-mask overlay at slice ${mprIndex + 1}`} />
-        : <p className="caption">Saved slice preview unavailable.</p>}
-    </section>}
-    </div>
-    </aside>
-  </div>;
+    <p className="caption volume-orbit-hint">Drag to rotate · pinch or Ctrl/⌘ + scroll to zoom · double-click to reset</p>
+    {others > 0 && <p className="volume-orbit-note" role="note">The prediction has {data.component_count} disconnected pieces. Measurements use one connected component only; fragments often indicate segmentation errors and need review.</p>}
+  </section>;
 }
