@@ -15,7 +15,10 @@ hepatic, ImageCAS-X, MRA and 3D stenosis models are not silently substituted.
 1. Sign into a Researcher or Administrator account with case upload/analysis rights.
 2. Create/select a coronary CTA case, choosing the 3D volume workflow.
 3. Open Assets & preparation. Choose an original de-identified NIfTI file, at
-   most 384 MiB on disk and 96 million native voxels with explicit millimetre units.
+   most 384 MiB on disk and 96 million native voxels with explicit millimetre units,
+   or select every slice of one de-identified classic CT DICOM series (2–2,000
+   slices, same 96-million-voxel limit). Slices carrying patient name, ID, birth
+   date, address, telephone or referring physician are rejected, not stripped.
 4. Confirm original Hounsfield-unit intensities and research-only use. These are
    operator attestations, not automatic modality or de-identification detection.
 5. Run 3D segmentation. The saved job progresses queued → running → completed

@@ -197,3 +197,46 @@ def test_volume_upload_export_and_access(tmp_path):
             record = json.loads(archive.read("processing_record.json"))
             assert record["registration"] is None
             assert record["prepared_geometry"]["origin_lps_mm"] == list(image.GetOrigin())
+
+
+def _write_ct_series(folder, slices=3, size=32):
+    from pydicom.dataset import FileDataset, FileMetaDataset
+    from pydicom.uid import CTImageStorage, ExplicitVRLittleEndian, generate_uid
+    folder.mkdir()
+    series, study = generate_uid(), generate_uid()
+    for index in range(slices):
+        meta = FileMetaDataset()
+        meta.MediaStorageSOPClassUID = CTImageStorage
+        meta.MediaStorageSOPInstanceUID = generate_uid()
+        meta.TransferSyntaxUID = ExplicitVRLittleEndian
+        path = folder / f"slice_{index}.dcm"
+        ds = FileDataset(str(path), {}, file_meta=meta, preamble=b"\0"*128)
+        ds.SOPClassUID = CTImageStorage; ds.SOPInstanceUID = meta.MediaStorageSOPInstanceUID
+        ds.SeriesInstanceUID = series; ds.StudyInstanceUID = study
+        ds.Modality = "CT"; ds.Rows = size; ds.Columns = size
+        ds.ImageOrientationPatient = [1, 0, 0, 0, 1, 0]
+        ds.ImagePositionPatient = [0, 0, index]
+        ds.PixelSpacing = [.5, .5]; ds.SliceThickness = 1
+        ds.SamplesPerPixel = 1; ds.PhotometricInterpretation = "MONOCHROME2"
+        ds.BitsAllocated = 16; ds.BitsStored = 16; ds.HighBit = 15; ds.PixelRepresentation = 1
+        ds.PixelData = np.zeros((size, size), dtype=np.int16).tobytes()
+        ds.save_as(path, enforce_file_format=True)
+    return folder
+
+
+def test_dicom_series_voxel_limit_is_set_by_the_caller(tmp_path, monkeypatch):
+    """Inference intake allows the 3D model's limit; generic preparation keeps its own (smaller) default."""
+    import app.volume_preprocessing as preprocessing
+    folder = _write_ct_series(tmp_path / "series")  # 3 x 32 x 32 = 3072 voxels
+    monkeypatch.setattr(preprocessing, "MAX_VOXELS", 2_000)
+    with pytest.raises(ValueError, match="voxel"):
+        read_volume(folder)
+    assert read_volume(folder, max_voxels=5_000).GetSize() == (32, 32, 3)
+    archive_path = tmp_path / "series.zip"
+    with ZipFile(archive_path, "w") as archive:
+        for path in sorted(folder.glob("*.dcm")):
+            archive.write(path, path.name)
+    converted = dicom_zip_to_nifti(archive_path, tmp_path / "out.nii.gz", tmp_path / "extract", max_voxels=5_000)
+    assert converted.GetSize() == (32, 32, 3)
+    with pytest.raises(ValueError, match="voxel"):
+        dicom_zip_to_nifti(archive_path, tmp_path / "out2.nii.gz", tmp_path / "extract2")

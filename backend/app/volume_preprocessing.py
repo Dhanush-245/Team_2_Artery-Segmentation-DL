@@ -13,7 +13,7 @@ MAX_DICOM_ARCHIVE_FILES = 2_000
 MAX_DICOM_ARCHIVE_EXPANDED_BYTES = 768 * 1024 * 1024
 
 
-def dicom_zip_to_nifti(archive_path: Path, output_path: Path, extraction_root: Path):
+def dicom_zip_to_nifti(archive_path: Path, output_path: Path, extraction_root: Path, max_voxels: int | None = None):
     """Safely flatten one de-identified DICOM series ZIP and write scalar NIfTI."""
     from zipfile import BadZipFile, ZipFile
 
@@ -43,7 +43,7 @@ def dicom_zip_to_nifti(archive_path: Path, output_path: Path, extraction_root: P
                         target.write(block)
     except BadZipFile as exc:
         raise ValueError("Unreadable or corrupt DICOM ZIP") from exc
-    image = read_volume(extraction_root)
+    image = read_volume(extraction_root, max_voxels)
     sitk.WriteImage(image, str(output_path), useCompression=True)
     return image
 
@@ -53,11 +53,15 @@ def geometry(image):
             "origin_lps_mm": list(image.GetOrigin()), "direction_lps": list(image.GetDirection())}
 
 
-def validate(image):
+def _limit(max_voxels):
+    return MAX_VOXELS if max_voxels is None else max_voxels
+
+
+def validate(image, max_voxels: int | None = None):
     if image.GetDimension() != 3 or image.GetNumberOfComponentsPerPixel() != 1:
         raise ValueError("A scalar 3D volume is required; 4D/time-series and vector data are unsupported")
-    if np.prod(image.GetSize(), dtype=np.int64) > MAX_VOXELS or min(image.GetSize()) < 2:
-        raise ValueError("Volume must have at least two voxels per axis and at most 32 million voxels")
+    if np.prod(image.GetSize(), dtype=np.int64) > _limit(max_voxels) or min(image.GetSize()) < 2:
+        raise ValueError(f"Volume must have at least two voxels per axis and at most {_limit(max_voxels):,} voxels")
     if not np.all(np.isfinite(image.GetSpacing())) or min(image.GetSpacing()) <= 0:
         raise ValueError("Positive finite voxel spacing is required")
     direction = np.asarray(image.GetDirection()).reshape(3, 3)
@@ -67,8 +71,11 @@ def validate(image):
         raise ValueError("Volume contains non-finite intensities")
 
 
-def read_volume(path: Path):
-    """Read NIfTI or one unambiguous, de-identified DICOM series directory."""
+def read_volume(path: Path, max_voxels: int | None = None):
+    """Read NIfTI or one unambiguous, de-identified DICOM series directory.
+
+    ``max_voxels`` defaults to the generic preparation limit; the 3D inference intake passes its own.
+    """
     if path.is_dir():
         import pydicom
         identities = set()
@@ -120,8 +127,8 @@ def read_volume(path: Path):
             if first_spacing is not None and (shape != first_shape or not np.allclose(spacing, first_spacing, atol=1e-6)):
                 raise ValueError('DICOM slice dimensions or pixel spacing differ')
             first_spacing, first_shape = spacing, shape
-            if int(ds.Rows)*int(ds.Columns)*len(files) > MAX_VOXELS:
-                raise ValueError("DICOM volume exceeds the 32-million-voxel limit")
+            if int(ds.Rows)*int(ds.Columns)*len(files) > _limit(max_voxels):
+                raise ValueError(f"DICOM volume exceeds the {_limit(max_voxels):,}-voxel limit")
             if any(str(getattr(ds, tag, "")).strip() for tag in
                    ("PatientName", "PatientID", "PatientBirthDate", "PatientAddress",
                     "PatientTelephoneNumbers", "ReferringPhysicianName")):
@@ -159,11 +166,11 @@ def read_volume(path: Path):
         reader = sitk.ImageFileReader()
         reader.SetFileName(str(path))
         reader.ReadImageInformation()
-        if reader.GetDimension() != 3 or np.prod(reader.GetSize(), dtype=np.int64) > MAX_VOXELS:
-            raise ValueError("Only 3D volumes up to 32 million voxels are supported")
+        if reader.GetDimension() != 3 or np.prod(reader.GetSize(), dtype=np.int64) > _limit(max_voxels):
+            raise ValueError(f"Only 3D volumes up to {_limit(max_voxels):,} voxels are supported")
         reader.SetNumberOfThreads(1)
         image = reader.Execute()
-    validate(image)
+    validate(image, max_voxels)
     return image
 
 

@@ -1522,7 +1522,8 @@ def create_volume_analysis(case_id: str, background: BackgroundTasks, file: Uplo
             if filename.endswith('.zip'):
                 from .volume_preprocessing import dicom_zip_to_nifti
                 source = temporary_path / 'source.nii.gz'
-                dicom_zip_to_nifti(upload_path, source, temporary_path / 'dicom-series')
+                from .volume_inference import MAX_VOXELS as INFERENCE_MAX_VOXELS
+                dicom_zip_to_nifti(upload_path, source, temporary_path / 'dicom-series', INFERENCE_MAX_VOXELS)
             inspect_input(source)  # Header-only validation; heavy preprocessing runs once, in the job.
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from exc
