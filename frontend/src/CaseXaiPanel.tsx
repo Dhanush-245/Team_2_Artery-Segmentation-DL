@@ -5,7 +5,7 @@ import { Button } from "./components/prismui/button";
 import { utcDate } from "./lib/time";
 
 type Target = { task: "stenosis" | "segmentation"; target_id: string; model_score?: number | null; bbox_prepared_xyxy?: number[] | null };
-type Verification = { status: string; deletion: string; insertion: string; randomization: string; randomization_note?: string;
+type Verification = { status: string; deletion: string; insertion: string; randomization: string; randomization_note?: string; randomization_protocol?: string;
   metrics?: Record<string, number>; error?: string; completed_at?: string };
 type XaiRecord = { id: string; status: string; error?: string; method_label: string; created_at: string; completed_at?: string;
   identity: { task: string; target_id: string; method: string; method_version: string; checkpoint_sha256: string; source_sha256: string; run_id: string; target_definition_version: string };
@@ -186,9 +186,11 @@ export default function CaseXaiPanel({ token, caseId, runId, preparedUrl }: { to
           <div><dt>Insertion</dt><dd><Chip value={record.verification?.insertion ?? "NOT_TESTED"} />{record.verification?.metrics && <span className="caption"> advantage {record.verification.metrics.insertion_auc_advantage?.toFixed(3)}</span>}</dd></div>
           <div><dt>Model randomization</dt><dd><Chip value={record.verification?.randomization ?? "NOT_TESTED"} /></dd></div>
         </dl>
-        <p className="caption">Protocol corovision-forward-occlusion-v1: 8×8 cells, image-mean baseline, ranked order against one fixed random order; each advantage must be ≥ 0.01. A visible heatmap is not evidence of faithfulness.</p>
-        {record.verification?.status === "running" ? <p role="status"><Loader2 size={14} className="spin" /> Deletion/insertion running…</p>
-          : record.status === "ready" && overview.can_generate && record.verification?.status !== "completed" && <Button size="sm" variant="outline" disabled={busy} onClick={() => post(`${base}/explanations/${record.id}/verification`)}>Run deletion/insertion check</Button>}
+        {record.verification?.randomization_note && <p className="caption">Randomization: {record.verification.randomization_note}</p>}
+        <p className="caption">Deletion/insertion (protocol corovision-forward-occlusion-v1): 8×8 cells, image-mean baseline, ranked order against one fixed random order; each advantage must be ≥ 0.01. Model randomization: the same map recomputed on a fully randomized copy of the model must have |Spearman ρ| ≤ 0.2. A visible heatmap is not evidence of faithfulness.</p>
+        {record.verification?.status === "running" ? <p role="status"><Loader2 size={14} className="spin" /> Faithfulness checks running…</p>
+          : record.status === "ready" && overview.can_generate && (record.verification?.status !== "completed" || (!record.verification?.randomization_protocol && record.identity.method !== "occlusion"))
+            && <Button size="sm" variant="outline" disabled={busy} onClick={() => post(`${base}/explanations/${record.id}/verification`)}>{record.verification?.status === "completed" ? "Add model-randomization check" : "Run faithfulness checks"}</Button>}
         {record.verification?.error && <p className="message warning">{record.verification.error}</p>}
       </article>
       {task === "stenosis" && <article className="xai-card">

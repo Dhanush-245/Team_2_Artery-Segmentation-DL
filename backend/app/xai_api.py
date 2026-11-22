@@ -229,6 +229,7 @@ def install(app, *, get_db, current_user, accessible_case, case_out, storage: Pa
                 values = np.asarray(opened, dtype=np.float32) / 255.
             with engine.GENERATION_LOCK, tr.LOCK:
                 result = engine.verify(prepared, record['identity']['task'], values, candidate, threshold())
+                result.update(randomization_result(record, prepared, values, candidate))
             record['verification'] = dict(result, status='completed', completed_at=now())
         except (ValueError, RuntimeError, OSError, LookupError) as error:
             LOG.warning('xai_verification_failed record=%s error=%s', record['id'], error)
@@ -236,6 +237,15 @@ def install(app, *, get_db, current_user, accessible_case, case_out, storage: Pa
                                           deletion='NOT_TESTED', insertion='NOT_TESTED', randomization='NOT_TESTED')
         finally:
             write_record(record['run_id'], record)
+
+    def randomization_result(record, prepared, values, candidate):
+        from .xai_randomization import check
+        try:
+            return check(prepared, record['identity']['task'], record['identity']['method'], values, candidate,
+                         bool(record['parameters'].get('constrained')))
+        except (ValueError, RuntimeError, OSError, LookupError) as error:
+            LOG.warning('xai_randomization_failed record=%s error=%s', record['id'], error)
+            return dict(randomization='NOT_TESTED', randomization_note='The model-randomization check could not be completed.')
 
     def can_generate(case, user, db):
         permissions = case_out(case, db, user)['permissions']
@@ -341,7 +351,11 @@ def install(app, *, get_db, current_user, accessible_case, case_out, storage: Pa
             raise HTTPException(403, 'Analysis or review permission on this case is required')
         if record.get('status') != 'ready':
             raise HTTPException(409, 'Only a ready explanation can be verified')
-        if (record.get('verification') or {}).get('status') in ('running', 'completed'):
+        previous = record.get('verification') or {}
+        # A record verified before per-target randomization existed may run once more to add it.
+        missing_randomization = (previous.get('status') == 'completed' and 'randomization_protocol' not in previous
+                                 and record['identity']['method'] != 'occlusion')
+        if previous.get('status') == 'running' or (previous.get('status') == 'completed' and not missing_randomization):
             return public(record)
         candidate = None
         if record['identity']['task'] == 'stenosis':

@@ -217,3 +217,42 @@ def test_report_freezes_explanations_into_pdf_and_zip(fake_models):
             manifest = json.loads(archive.read('manifest.json'))
             assert any(a['path'] == overlay for a in manifest['artifacts'])
         assert client.get(f"/api/cases/{case['id']}/research-reports/{report_id}/export/pdf", headers=owner).status_code == 200
+
+
+def test_verification_adds_per_target_randomization_and_catches_up_older_records(fake_models, monkeypatch):
+    import time
+    from app import xai_randomization
+    verified = []
+    monkeypatch.setattr(engine, 'verify', lambda *a: dict(protocol='p', metrics={}, deletion='PASS', insertion='PASS',
+                                                         randomization='NOT_TESTED'))
+
+    def check(prepared, task, method, values, candidate, constrained):
+        verified.append((task, method, constrained))
+        return dict(randomization='PASS', randomization_protocol=xai_randomization.PROTOCOL, randomization_note='ok')
+    monkeypatch.setattr(xai_randomization, 'check', check)
+    with TestClient(app) as client:
+        _, owner = make_user(f'xai-rand-{uuid4().hex}@example.org', 'researcher')
+        case, event_id = _run(client, owner, [{'candidate_id': 'C1', 'polygon_prepared_xy': SQUARE, 'model_score': .6}])
+        base = f"/api/cases/{case['id']}/xai/{event_id}"
+        record = client.post(base + '/explanations', headers=owner, json={'task': 'stenosis', 'target_id': 'C1', 'method': 'gradcam'}).json()
+
+        def wait():
+            for _ in range(100):
+                body = client.get(f"{base}/explanations/{record['id']}", headers=owner).json()
+                if body['verification']['status'] != 'running':
+                    return body
+                time.sleep(.05)
+            raise AssertionError('verification did not finish')
+        assert client.post(f"{base}/explanations/{record['id']}/verification", headers=owner).status_code == 202
+        body = wait()
+        assert body['verification']['randomization'] == 'PASS' and verified == [('stenosis', 'gradcam', False)]
+        assert client.post(f"{base}/explanations/{record['id']}/verification", headers=owner).json()['verification']['status'] == 'completed'
+        assert len(verified) == 1, 'a record with a randomization result is not re-run'
+        # An older record verified before this check existed runs once more to add it.
+        from app.main import STORAGE
+        path = STORAGE / 'xai' / event_id / f"{record['id']}.json"
+        saved = json.loads(path.read_text())
+        saved['verification'] = dict(status='completed', deletion='PASS', insertion='PASS', randomization='NOT_TESTED')
+        path.write_text(json.dumps(saved))
+        assert client.post(f"{base}/explanations/{record['id']}/verification", headers=owner).status_code == 202
+        assert wait()['verification']['randomization'] == 'PASS' and len(verified) == 2

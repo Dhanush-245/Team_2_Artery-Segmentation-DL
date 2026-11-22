@@ -270,7 +270,7 @@ def verify(prepared: Path, task: str, values: np.ndarray, candidate: dict | None
                 deletion='PASS' if gates['deletion'] else 'FAIL',
                 insertion='PASS' if gates['insertion'] else 'FAIL',
                 randomization='NOT_TESTED',
-                randomization_note='Per-target model randomization is not run here; see the study-level M3-02 result.')
+                randomization_note='Run separately by xai_randomization.check for gradient maps.')
 
 
 def summarize(values: np.ndarray, reference: np.ndarray | None) -> dict:

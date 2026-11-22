@@ -42,7 +42,8 @@ Mask-constrained variants are optional. They follow the predicted mask by design
 ## Verification evidence
 
 - **Production parity.** For the single-candidate saved run of VERIFY-GRADCAMPP-024d68, the mask-constrained candidate maps equal the production saved maps exactly: Grad-CAM and Grad-CAM++ max abs diff 0.0.
-- **Per-target deletion/insertion.** Protocol `corovision-forward-occlusion-v1`: 8×8 grid, image-mean baseline, one fixed random order, each advantage must be ≥ 0.01. Per-target model randomization is reported as NOT_TESTED.
+- **Per-target deletion/insertion.** Protocol `corovision-forward-occlusion-v1`: 8×8 grid, image-mean baseline, one fixed random order, each advantage must be ≥ 0.01.
+- **Per-target model randomization** (`corovision-target-randomization-v1`, `backend/app/xai_randomization.py`). The same check run also recomputes the Grad-CAM / Grad-CAM++ map on two randomized deep copies of the frozen model (output head only, then the fully randomized model; seed 20261122). PASS needs |Spearman ρ| ≤ 0.2 against the fully randomized map, the same gate as M3-02. A constant randomized map gives NOT_EVALUABLE. Detector targets bind to the detection matching the saved candidate (mask IoU ≥ 0.1), else the declared top-detection fallback. Occlusion maps are not checked (NOT_TESTED). 3D records still report randomization only at study level.
 - **Study level (M3-02, ARCADE validation, `reports/xai_faithfulness_20261122`).**
   - All four maps beat the random order on deletion and insertion (n = 24–25, p < 0.001).
   - Only raw Grad-CAM also passes model randomization, so it is the only map that is PASS overall. The other three are PARTIAL.
@@ -58,7 +59,7 @@ Mask-constrained variants are optional. They follow the predicted mask by design
 | Identity-keyed persistence, hashes, integrity check, authorization | Done (pytest) |
 | Research dashboard (2D and 3D records) | Done |
 | PDF/JSON/CSV/ZIP section | Done (ZIP hash reconciliation tested) |
-| Faithfulness: per-target deletion/insertion; study-level randomization | Done; per-target randomization NOT_TESTED |
+| Faithfulness: per-target deletion/insertion and model randomization; study-level randomization | Done for 2D gradient maps; occlusion and 3D per-target randomization NOT_TESTED |
 | 3D CTA volumetric attribution (Grad-CAM, Grad-CAM++, occlusion), native-grid alignment check, MPR overlay, 3D deletion/insertion | Done (see "3D CTA" below) |
 | Clinical validity | Not assessed |
 
