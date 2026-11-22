@@ -1,0 +1,2939 @@
+{
+ "seed": 20261122,
+ "stages": [
+  [
+   "roi_predictors",
+   [
+    "roi_heads.box_predictor",
+    "roi_heads.mask_predictor"
+   ]
+  ],
+  [
+   "roi_heads",
+   [
+    "roi_heads"
+   ]
+  ],
+  [
+   "rpn",
+   [
+    "rpn"
+   ]
+  ],
+  [
+   "fpn",
+   [
+    "backbone.fpn"
+   ]
+  ],
+  [
+   "layer4",
+   [
+    "backbone.body.layer4"
+   ]
+  ],
+  [
+   "layer3",
+   [
+    "backbone.body.layer3"
+   ]
+  ],
+  [
+   "layer2",
+   [
+    "backbone.body.layer2"
+   ]
+  ],
+  [
+   "layer1_and_stem",
+   [
+    "backbone.body.layer1",
+    "backbone.body.conv1",
+    "backbone.body.bn1"
+   ]
+  ]
+ ],
+ "cumulative": true,
+ "rows": [
+  {
+   "image_id": 1,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 3,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "original": {
+    "saved_gradcam": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      127,
+      186
+     ],
+     "peak_inside_reference_lesion": true,
+     "energy_fraction_inside_reference_lesion": 0.9726266264915466
+    },
+    "saved_gradcampp": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      135,
+      174
+     ],
+     "peak_inside_reference_lesion": true,
+     "energy_fraction_inside_reference_lesion": 0.9509966373443604
+    },
+    "raw_gradcam": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      133,
+      194
+     ],
+     "peak_inside_reference_lesion": false,
+     "energy_fraction_inside_reference_lesion": 0.13831230998039246
+    },
+    "raw_gradcampp": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      133,
+      174
+     ],
+     "peak_inside_reference_lesion": true,
+     "energy_fraction_inside_reference_lesion": 0.038505639880895615
+    }
+   },
+   "stages": [
+    {
+     "stage": "roi_predictors",
+     "binding": {
+      "targets": 3,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.014156120435189858,
+       "absolute_spearman": 0.014156120435189858,
+       "ssim": 0.04361581735897809
+      },
+      "gradcampp_raw": {
+       "spearman": 0.9404886084661399,
+       "absolute_spearman": 0.9404886084661399,
+       "ssim": 0.9302766538764011
+      },
+      "gradcam_constrained": {
+       "spearman": 0.390653575169346,
+       "absolute_spearman": 0.390653575169346,
+       "ssim": 0.9859728520545084
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.35962912217645354,
+       "absolute_spearman": 0.35962912217645354,
+       "ssim": 0.9808868831624833
+      }
+     }
+    },
+    {
+     "stage": "roi_heads",
+     "binding": {
+      "targets": 3,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.40133501225408913,
+       "absolute_spearman": 0.40133501225408913,
+       "ssim": 0.03794588924788163
+      },
+      "gradcampp_raw": {
+       "spearman": 0.6980320975496904,
+       "absolute_spearman": 0.6980320975496904,
+       "ssim": 0.7706771970409576
+      },
+      "gradcam_constrained": {
+       "spearman": 0.6149644629866813,
+       "absolute_spearman": 0.6149644629866813,
+       "ssim": 0.9788950495951099
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.6254985977484955,
+       "absolute_spearman": 0.6254985977484955,
+       "ssim": 0.9782726159469424
+      }
+     }
+    },
+    {
+     "stage": "rpn",
+     "binding": {
+      "targets": 3,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.17860368258382853,
+       "absolute_spearman": 0.17860368258382853,
+       "ssim": 0.10034920984098362
+      },
+      "gradcampp_raw": {
+       "spearman": 0.8817529881574998,
+       "absolute_spearman": 0.8817529881574998,
+       "ssim": 0.8533456324584991
+      },
+      "gradcam_constrained": {
+       "spearman": 0.46752944927246926,
+       "absolute_spearman": 0.46752944927246926,
+       "ssim": 0.974795326200049
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.4118545091733866,
+       "absolute_spearman": 0.4118545091733866,
+       "ssim": 0.9684006574534659
+      }
+     }
+    },
+    {
+     "stage": "fpn",
+     "binding": {
+      "targets": 3,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.09036113799096904,
+       "absolute_spearman": 0.09036113799096904,
+       "ssim": 0.04093028073556382
+      },
+      "gradcampp_raw": {
+       "spearman": 0.900562253897489,
+       "absolute_spearman": 0.900562253897489,
+       "ssim": 0.8342210449291131
+      },
+      "gradcam_constrained": {
+       "spearman": 0.41955865260475567,
+       "absolute_spearman": 0.41955865260475567,
+       "ssim": 0.9810652714344278
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.41235393475239734,
+       "absolute_spearman": 0.41235393475239734,
+       "ssim": 0.9773283138225921
+      }
+     }
+    },
+    {
+     "stage": "layer4",
+     "binding": {
+      "targets": 3,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.1266493532959942,
+       "absolute_spearman": 0.1266493532959942,
+       "ssim": 0.13859704964256908
+      },
+      "gradcampp_raw": {
+       "spearman": 0.48532094211172394,
+       "absolute_spearman": 0.48532094211172394,
+       "ssim": 0.644433851340291
+      },
+      "gradcam_constrained": {
+       "spearman": 0.3648423788835302,
+       "absolute_spearman": 0.3648423788835302,
+       "ssim": 0.9835905764080879
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.3521763624539298,
+       "absolute_spearman": 0.3521763624539298,
+       "ssim": 0.9782780276114321
+      }
+     }
+    },
+    {
+     "stage": "layer3",
+     "binding": {
+      "targets": 3,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.03846229928708749,
+       "absolute_spearman": 0.03846229928708749,
+       "ssim": 0.044626656142535685
+      },
+      "gradcampp_raw": {
+       "spearman": 0.30336314981715645,
+       "absolute_spearman": 0.30336314981715645,
+       "ssim": 0.6328700133658414
+      },
+      "gradcam_constrained": {
+       "spearman": 0.3853765353397951,
+       "absolute_spearman": 0.3853765353397951,
+       "ssim": 0.9780858999596624
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.3717789938943184,
+       "absolute_spearman": 0.3717789938943184,
+       "ssim": 0.9744285840503109
+      }
+     }
+    },
+    {
+     "stage": "layer2",
+     "binding": {
+      "targets": 1,
+      "binding": "top_foreground_detection_fallback"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.07274102142637368,
+       "absolute_spearman": 0.07274102142637368,
+       "ssim": 0.06802426525170632
+      },
+      "gradcampp_raw": {
+       "spearman": 0.039972866653287094,
+       "absolute_spearman": 0.039972866653287094,
+       "ssim": 0.628425593503767
+      },
+      "gradcam_constrained": {
+       "spearman": -0.0009113594768735476,
+       "absolute_spearman": 0.0009113594768735476,
+       "ssim": 0.984959162289226
+      },
+      "gradcampp_constrained": {
+       "spearman": -0.0031489448907817746,
+       "absolute_spearman": 0.0031489448907817746,
+       "ssim": 0.9791954051754296
+      }
+     }
+    },
+    {
+     "stage": "layer1_and_stem",
+     "binding": {
+      "targets": 1,
+      "binding": "top_foreground_detection_fallback"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.08060605809209433,
+       "absolute_spearman": 0.08060605809209433,
+       "ssim": 0.05225161910134485
+      },
+      "gradcampp_raw": {
+       "spearman": 0.0033816919075153593,
+       "absolute_spearman": 0.0033816919075153593,
+       "ssim": 0.5246613705903305
+      },
+      "gradcam_constrained": {
+       "spearman": -0.01534045622742948,
+       "absolute_spearman": 0.01534045622742948,
+       "ssim": 0.9621800193412142
+      },
+      "gradcampp_constrained": {
+       "spearman": -0.016755774148441302,
+       "absolute_spearman": 0.016755774148441302,
+       "ssim": 0.9571586328431273
+      }
+     }
+    }
+   ],
+   "seconds": 276.1
+  },
+  {
+   "image_id": 2,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 6,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "original": {
+    "saved_gradcam": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      153,
+      255
+     ],
+     "peak_inside_reference_lesion": true,
+     "energy_fraction_inside_reference_lesion": 0.6047099828720093
+    },
+    "saved_gradcampp": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      152,
+      274
+     ],
+     "peak_inside_reference_lesion": true,
+     "energy_fraction_inside_reference_lesion": 0.3880789279937744
+    },
+    "raw_gradcam": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      194,
+      215
+     ],
+     "peak_inside_reference_lesion": false,
+     "energy_fraction_inside_reference_lesion": 0.06098185107111931
+    },
+    "raw_gradcampp": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      173,
+      358
+     ],
+     "peak_inside_reference_lesion": false,
+     "energy_fraction_inside_reference_lesion": 0.02011163905262947
+    }
+   },
+   "stages": [
+    {
+     "stage": "roi_predictors",
+     "binding": {
+      "targets": 6,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.1300932204414497,
+       "absolute_spearman": 0.1300932204414497,
+       "ssim": 0.06119157894097402
+      },
+      "gradcampp_raw": {
+       "spearman": 0.8526882489760362,
+       "absolute_spearman": 0.8526882489760362,
+       "ssim": 0.9184396078374448
+      },
+      "gradcam_constrained": {
+       "spearman": 0.3747620036293911,
+       "absolute_spearman": 0.3747620036293911,
+       "ssim": 0.9727622972270836
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.321445405793,
+       "absolute_spearman": 0.321445405793,
+       "ssim": 0.9558509419067702
+      }
+     }
+    },
+    {
+     "stage": "roi_heads",
+     "binding": {
+      "targets": 6,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.3238892311729621,
+       "absolute_spearman": 0.3238892311729621,
+       "ssim": 0.03343447006898408
+      },
+      "gradcampp_raw": {
+       "spearman": 0.6084630211848183,
+       "absolute_spearman": 0.6084630211848183,
+       "ssim": 0.7833126112974043
+      },
+      "gradcam_constrained": {
+       "spearman": 0.5551837769406902,
+       "absolute_spearman": 0.5551837769406902,
+       "ssim": 0.9778565981936036
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.4890441097082621,
+       "absolute_spearman": 0.4890441097082621,
+       "ssim": 0.9674648854100996
+      }
+     }
+    },
+    {
+     "stage": "rpn",
+     "binding": {
+      "targets": 5,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.48925376310164465,
+       "absolute_spearman": 0.48925376310164465,
+       "ssim": 0.03471010801817023
+      },
+      "gradcampp_raw": {
+       "spearman": 0.6171028378850449,
+       "absolute_spearman": 0.6171028378850449,
+       "ssim": 0.8338261563831324
+      },
+      "gradcam_constrained": {
+       "spearman": 0.41801228564259124,
+       "absolute_spearman": 0.41801228564259124,
+       "ssim": 0.9763334956671461
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.3575886903106359,
+       "absolute_spearman": 0.3575886903106359,
+       "ssim": 0.9637465913991499
+      }
+     }
+    },
+    {
+     "stage": "fpn",
+     "binding": {
+      "targets": 5,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.15262318912971407,
+       "absolute_spearman": 0.15262318912971407,
+       "ssim": 0.054638613845207185
+      },
+      "gradcampp_raw": {
+       "spearman": 0.8318144431705834,
+       "absolute_spearman": 0.8318144431705834,
+       "ssim": 0.8985159024511814
+      },
+      "gradcam_constrained": {
+       "spearman": 0.3723407113259096,
+       "absolute_spearman": 0.3723407113259096,
+       "ssim": 0.9645584110061863
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.35606992117560704,
+       "absolute_spearman": 0.35606992117560704,
+       "ssim": 0.9579417094527489
+      }
+     }
+    },
+    {
+     "stage": "layer4",
+     "binding": {
+      "targets": 6,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.07688582585639206,
+       "absolute_spearman": 0.07688582585639206,
+       "ssim": 0.06401583106274482
+      },
+      "gradcampp_raw": {
+       "spearman": 0.6180248866842445,
+       "absolute_spearman": 0.6180248866842445,
+       "ssim": 0.7704208614312642
+      },
+      "gradcam_constrained": {
+       "spearman": 0.37862069854841296,
+       "absolute_spearman": 0.37862069854841296,
+       "ssim": 0.9459346597577569
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.3771869730709976,
+       "absolute_spearman": 0.3771869730709976,
+       "ssim": 0.9321889930419403
+      }
+     }
+    },
+    {
+     "stage": "layer3",
+     "binding": {
+      "targets": 2,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.04540946412090644,
+       "absolute_spearman": 0.04540946412090644,
+       "ssim": 0.04454232030760886
+      },
+      "gradcampp_raw": {
+       "spearman": 0.3437119301026944,
+       "absolute_spearman": 0.3437119301026944,
+       "ssim": 0.6383635556844935
+      },
+      "gradcam_constrained": {
+       "spearman": 0.3571676029785994,
+       "absolute_spearman": 0.3571676029785994,
+       "ssim": 0.9727215404253893
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.3092601454297189,
+       "absolute_spearman": 0.3092601454297189,
+       "ssim": 0.9606481354190595
+      }
+     }
+    },
+    {
+     "stage": "layer2",
+     "binding": {
+      "targets": 5,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.07419201194319325,
+       "absolute_spearman": 0.07419201194319325,
+       "ssim": 0.045454603793184854
+      },
+      "gradcampp_raw": {
+       "spearman": 0.10134695872826549,
+       "absolute_spearman": 0.10134695872826549,
+       "ssim": 0.7009572669125056
+      },
+      "gradcam_constrained": {
+       "spearman": 0.2523154682273079,
+       "absolute_spearman": 0.2523154682273079,
+       "ssim": 0.939659371962335
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.26827019290412146,
+       "absolute_spearman": 0.26827019290412146,
+       "ssim": 0.9307435338361061
+      }
+     }
+    },
+    {
+     "stage": "layer1_and_stem",
+     "binding": {
+      "targets": 2,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.051074586563705525,
+       "absolute_spearman": 0.051074586563705525,
+       "ssim": 0.046281510775007084
+      },
+      "gradcampp_raw": {
+       "spearman": 0.1554147180111493,
+       "absolute_spearman": 0.1554147180111493,
+       "ssim": 0.5783678534273446
+      },
+      "gradcam_constrained": {
+       "spearman": 0.18268838870097998,
+       "absolute_spearman": 0.18268838870097998,
+       "ssim": 0.953700187075636
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.21634420382593414,
+       "absolute_spearman": 0.21634420382593414,
+       "ssim": 0.9434285009490798
+      }
+     }
+    }
+   ],
+   "seconds": 432.8
+  },
+  {
+   "image_id": 3,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 7,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "original": {
+    "saved_gradcam": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      133,
+      235
+     ],
+     "peak_inside_reference_lesion": true,
+     "energy_fraction_inside_reference_lesion": 0.950895369052887
+    },
+    "saved_gradcampp": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      70,
+      317
+     ],
+     "peak_inside_reference_lesion": true,
+     "energy_fraction_inside_reference_lesion": 0.9379224181175232
+    },
+    "raw_gradcam": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      133,
+      235
+     ],
+     "peak_inside_reference_lesion": true,
+     "energy_fraction_inside_reference_lesion": 0.24810558557510376
+    },
+    "raw_gradcampp": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      92,
+      256
+     ],
+     "peak_inside_reference_lesion": true,
+     "energy_fraction_inside_reference_lesion": 0.06121528521180153
+    }
+   },
+   "stages": [
+    {
+     "stage": "roi_predictors",
+     "binding": {
+      "targets": 7,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.010430927745776917,
+       "absolute_spearman": 0.010430927745776917,
+       "ssim": 0.03468144667363843
+      },
+      "gradcampp_raw": {
+       "spearman": 0.9267381416870005,
+       "absolute_spearman": 0.9267381416870005,
+       "ssim": 0.9325321983079919
+      },
+      "gradcam_constrained": {
+       "spearman": 0.383785641189739,
+       "absolute_spearman": 0.383785641189739,
+       "ssim": 0.9754332457644083
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.4050407664416663,
+       "absolute_spearman": 0.4050407664416663,
+       "ssim": 0.969847547720202
+      }
+     }
+    },
+    {
+     "stage": "roi_heads",
+     "binding": {
+      "targets": 7,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.30033904885638585,
+       "absolute_spearman": 0.30033904885638585,
+       "ssim": 0.021865810071577174
+      },
+      "gradcampp_raw": {
+       "spearman": 0.7739051137074096,
+       "absolute_spearman": 0.7739051137074096,
+       "ssim": 0.8348373097891941
+      },
+      "gradcam_constrained": {
+       "spearman": 0.44325305009605187,
+       "absolute_spearman": 0.44325305009605187,
+       "ssim": 0.9667472739774059
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.4692122313990914,
+       "absolute_spearman": 0.4692122313990914,
+       "ssim": 0.9599242753440871
+      }
+     }
+    },
+    {
+     "stage": "rpn",
+     "binding": {
+      "targets": 7,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.4164373983622078,
+       "absolute_spearman": 0.4164373983622078,
+       "ssim": 0.5413776069776071
+      },
+      "gradcampp_raw": {
+       "spearman": 0.9325692705325355,
+       "absolute_spearman": 0.9325692705325355,
+       "ssim": 0.9379233919489353
+      },
+      "gradcam_constrained": {
+       "spearman": 0.42337038114776,
+       "absolute_spearman": 0.42337038114776,
+       "ssim": 0.97421296117925
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.46810258299505375,
+       "absolute_spearman": 0.46810258299505375,
+       "ssim": 0.9514056321817097
+      }
+     }
+    },
+    {
+     "stage": "fpn",
+     "binding": {
+      "targets": 6,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.17066607630565253,
+       "absolute_spearman": 0.17066607630565253,
+       "ssim": 0.04756490566501158
+      },
+      "gradcampp_raw": {
+       "spearman": 0.8867365369363878,
+       "absolute_spearman": 0.8867365369363878,
+       "ssim": 0.9071027387273944
+      },
+      "gradcam_constrained": {
+       "spearman": 0.30313698200771816,
+       "absolute_spearman": 0.30313698200771816,
+       "ssim": 0.9657016406853154
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.32408758494985823,
+       "absolute_spearman": 0.32408758494985823,
+       "ssim": 0.9629805260161408
+      }
+     }
+    },
+    {
+     "stage": "layer4",
+     "binding": {
+      "targets": 7,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.06083251629038354,
+       "absolute_spearman": 0.06083251629038354,
+       "ssim": 0.17516083825180162
+      },
+      "gradcampp_raw": {
+       "spearman": 0.6186162330781342,
+       "absolute_spearman": 0.6186162330781342,
+       "ssim": 0.6271618775885908
+      },
+      "gradcam_constrained": {
+       "spearman": 0.28525682166830446,
+       "absolute_spearman": 0.28525682166830446,
+       "ssim": 0.9700799043657404
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.3693212660501995,
+       "absolute_spearman": 0.3693212660501995,
+       "ssim": 0.9602259644553461
+      }
+     }
+    },
+    {
+     "stage": "layer3",
+     "binding": {
+      "targets": 7,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.02392384754170838,
+       "absolute_spearman": 0.02392384754170838,
+       "ssim": 0.035009208121950366
+      },
+      "gradcampp_raw": {
+       "spearman": 0.46563037885796577,
+       "absolute_spearman": 0.46563037885796577,
+       "ssim": 0.5663796938418029
+      },
+      "gradcam_constrained": {
+       "spearman": 0.2957385594129999,
+       "absolute_spearman": 0.2957385594129999,
+       "ssim": 0.9687116642442559
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.30051978509649835,
+       "absolute_spearman": 0.30051978509649835,
+       "ssim": 0.9620428263937129
+      }
+     }
+    },
+    {
+     "stage": "layer2",
+     "binding": {
+      "targets": 2,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.0874815525212965,
+       "absolute_spearman": 0.0874815525212965,
+       "ssim": 0.07173405338823635
+      },
+      "gradcampp_raw": {
+       "spearman": 0.38857091420298195,
+       "absolute_spearman": 0.38857091420298195,
+       "ssim": 0.6939770083109204
+      },
+      "gradcam_constrained": {
+       "spearman": 0.2289197500843165,
+       "absolute_spearman": 0.2289197500843165,
+       "ssim": 0.9797191997069256
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.22906436392467958,
+       "absolute_spearman": 0.22906436392467958,
+       "ssim": 0.9744573634878515
+      }
+     }
+    },
+    {
+     "stage": "layer1_and_stem",
+     "binding": {
+      "targets": 2,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.13356973582624593,
+       "absolute_spearman": 0.13356973582624593,
+       "ssim": 0.04178918609407591
+      },
+      "gradcampp_raw": {
+       "spearman": 0.27763024769411077,
+       "absolute_spearman": 0.27763024769411077,
+       "ssim": 0.5940538975774243
+      },
+      "gradcam_constrained": {
+       "spearman": 0.20779984779561797,
+       "absolute_spearman": 0.20779984779561797,
+       "ssim": 0.9399156073996386
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.2107920805053411,
+       "absolute_spearman": 0.2107920805053411,
+       "ssim": 0.9355072679429219
+      }
+     }
+    }
+   ],
+   "seconds": 584.1
+  },
+  {
+   "image_id": 4,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 3,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "original": {
+    "saved_gradcam": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      215,
+      112
+     ],
+     "peak_inside_reference_lesion": true,
+     "energy_fraction_inside_reference_lesion": 0.4587421715259552
+    },
+    "saved_gradcampp": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      272,
+      276
+     ],
+     "peak_inside_reference_lesion": false,
+     "energy_fraction_inside_reference_lesion": 0.34501633048057556
+    },
+    "raw_gradcam": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      214,
+      112
+     ],
+     "peak_inside_reference_lesion": true,
+     "energy_fraction_inside_reference_lesion": 0.22063307464122772
+    },
+    "raw_gradcampp": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      71,
+      132
+     ],
+     "peak_inside_reference_lesion": false,
+     "energy_fraction_inside_reference_lesion": 0.016266370192170143
+    }
+   },
+   "stages": [
+    {
+     "stage": "roi_predictors",
+     "binding": {
+      "targets": 3,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.1484705333802548,
+       "absolute_spearman": 0.1484705333802548,
+       "ssim": 0.11612134080913833
+      },
+      "gradcampp_raw": {
+       "spearman": 0.7818165819222604,
+       "absolute_spearman": 0.7818165819222604,
+       "ssim": 0.9052028749380578
+      },
+      "gradcam_constrained": {
+       "spearman": 0.3865553640928851,
+       "absolute_spearman": 0.3865553640928851,
+       "ssim": 0.9887686540991438
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.45088211193870864,
+       "absolute_spearman": 0.45088211193870864,
+       "ssim": 0.9823073893714609
+      }
+     }
+    },
+    {
+     "stage": "roi_heads",
+     "binding": {
+      "targets": 3,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.2431324054852846,
+       "absolute_spearman": 0.2431324054852846,
+       "ssim": 0.7186069779313407
+      },
+      "gradcampp_raw": {
+       "spearman": 0.7878974111216421,
+       "absolute_spearman": 0.7878974111216421,
+       "ssim": 0.9153056639652286
+      },
+      "gradcam_constrained": {
+       "spearman": 0.3514257191007676,
+       "absolute_spearman": 0.3514257191007676,
+       "ssim": 0.9840627467622762
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.4964982764749329,
+       "absolute_spearman": 0.4964982764749329,
+       "ssim": 0.9773733924683163
+      }
+     }
+    },
+    {
+     "stage": "rpn",
+     "binding": {
+      "targets": 3,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.057282371833947805,
+       "absolute_spearman": 0.057282371833947805,
+       "ssim": 0.24869024211063978
+      },
+      "gradcampp_raw": {
+       "spearman": 0.7216985075806968,
+       "absolute_spearman": 0.7216985075806968,
+       "ssim": 0.8851941128966434
+      },
+      "gradcam_constrained": {
+       "spearman": 0.35394616279389113,
+       "absolute_spearman": 0.35394616279389113,
+       "ssim": 0.9897359196497147
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.4639449272046239,
+       "absolute_spearman": 0.4639449272046239,
+       "ssim": 0.9843836305363074
+      }
+     }
+    },
+    {
+     "stage": "fpn",
+     "binding": {
+      "targets": 2,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.07108489032518359,
+       "absolute_spearman": 0.07108489032518359,
+       "ssim": 0.027908744304510198
+      },
+      "gradcampp_raw": {
+       "spearman": 0.7448050325173142,
+       "absolute_spearman": 0.7448050325173142,
+       "ssim": 0.8850749142886609
+      },
+      "gradcam_constrained": {
+       "spearman": 0.16706694502734362,
+       "absolute_spearman": 0.16706694502734362,
+       "ssim": 0.9660405566511014
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.3081824703266952,
+       "absolute_spearman": 0.3081824703266952,
+       "ssim": 0.9632510702843862
+      }
+     }
+    },
+    {
+     "stage": "layer4",
+     "binding": {
+      "targets": 2,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.2777053047619823,
+       "absolute_spearman": 0.2777053047619823,
+       "ssim": 0.23509442357139299
+      },
+      "gradcampp_raw": {
+       "spearman": 0.5237938331853045,
+       "absolute_spearman": 0.5237938331853045,
+       "ssim": 0.7224791323112778
+      },
+      "gradcam_constrained": {
+       "spearman": 0.18602097334157414,
+       "absolute_spearman": 0.18602097334157414,
+       "ssim": 0.9896016837021602
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.32080814497977184,
+       "absolute_spearman": 0.32080814497977184,
+       "ssim": 0.9847526620867034
+      }
+     }
+    },
+    {
+     "stage": "layer3",
+     "binding": {
+      "targets": 2,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.047588071849660754,
+       "absolute_spearman": 0.047588071849660754,
+       "ssim": 0.03257344966482973
+      },
+      "gradcampp_raw": {
+       "spearman": 0.31477303314222876,
+       "absolute_spearman": 0.31477303314222876,
+       "ssim": 0.6865889942491289
+      },
+      "gradcam_constrained": {
+       "spearman": 0.05572555394053059,
+       "absolute_spearman": 0.05572555394053059,
+       "ssim": 0.9832928405797665
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.23163129275834002,
+       "absolute_spearman": 0.23163129275834002,
+       "ssim": 0.9799605281752948
+      }
+     }
+    },
+    {
+     "stage": "layer2",
+     "binding": {
+      "targets": 1,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.11868059379392779,
+       "absolute_spearman": 0.11868059379392779,
+       "ssim": 0.026213794037047766
+      },
+      "gradcampp_raw": {
+       "spearman": 0.04137104159213158,
+       "absolute_spearman": 0.04137104159213158,
+       "ssim": 0.6413540510546751
+      },
+      "gradcam_constrained": {
+       "spearman": 0.14330751751457063,
+       "absolute_spearman": 0.14330751751457063,
+       "ssim": 0.9912078048674008
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.2689996197071725,
+       "absolute_spearman": 0.2689996197071725,
+       "ssim": 0.9855872326943811
+      }
+     }
+    },
+    {
+     "stage": "layer1_and_stem",
+     "binding": {
+      "targets": 2,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.03536619751493778,
+       "absolute_spearman": 0.03536619751493778,
+       "ssim": 0.04471733233515793
+      },
+      "gradcampp_raw": {
+       "spearman": 0.023032821684375527,
+       "absolute_spearman": 0.023032821684375527,
+       "ssim": 0.5513841110372952
+      },
+      "gradcam_constrained": {
+       "spearman": 0.2657862506009908,
+       "absolute_spearman": 0.2657862506009908,
+       "ssim": 0.9581400477421391
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.2883453907277166,
+       "absolute_spearman": 0.2883453907277166,
+       "ssim": 0.9554928443582189
+      }
+     }
+    }
+   ],
+   "seconds": 2262.7
+  },
+  {
+   "image_id": 5,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 4,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "original": {
+    "saved_gradcam": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      255,
+      194
+     ],
+     "peak_inside_reference_lesion": true,
+     "energy_fraction_inside_reference_lesion": 0.6798607707023621
+    },
+    "saved_gradcampp": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      235,
+      194
+     ],
+     "peak_inside_reference_lesion": true,
+     "energy_fraction_inside_reference_lesion": 0.5776358246803284
+    },
+    "raw_gradcam": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      132,
+      133
+     ],
+     "peak_inside_reference_lesion": false,
+     "energy_fraction_inside_reference_lesion": 0.12490585446357727
+    },
+    "raw_gradcampp": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      235,
+      194
+     ],
+     "peak_inside_reference_lesion": true,
+     "energy_fraction_inside_reference_lesion": 0.026405178010463715
+    }
+   },
+   "stages": [
+    {
+     "stage": "roi_predictors",
+     "binding": {
+      "targets": 4,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.37963400103232,
+       "absolute_spearman": 0.37963400103232,
+       "ssim": 0.01739091508729483
+      },
+      "gradcampp_raw": {
+       "spearman": 0.8787527953567422,
+       "absolute_spearman": 0.8787527953567422,
+       "ssim": 0.8984323690920419
+      },
+      "gradcam_constrained": {
+       "spearman": 0.3310617739291772,
+       "absolute_spearman": 0.3310617739291772,
+       "ssim": 0.9734167279067605
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.3896581967411937,
+       "absolute_spearman": 0.3896581967411937,
+       "ssim": 0.970517487980542
+      }
+     }
+    },
+    {
+     "stage": "roi_heads",
+     "binding": {
+      "targets": 4,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.15054783235175181,
+       "absolute_spearman": 0.15054783235175181,
+       "ssim": 0.20906613965497858
+      },
+      "gradcampp_raw": {
+       "spearman": 0.8967192955306794,
+       "absolute_spearman": 0.8967192955306794,
+       "ssim": 0.9538508846674694
+      },
+      "gradcam_constrained": {
+       "spearman": 0.4390445868703377,
+       "absolute_spearman": 0.4390445868703377,
+       "ssim": 0.9695622479553829
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.5550783999272111,
+       "absolute_spearman": 0.5550783999272111,
+       "ssim": 0.9670338092803872
+      }
+     }
+    },
+    {
+     "stage": "rpn",
+     "binding": {
+      "targets": 4,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.02892025001915892,
+       "absolute_spearman": 0.02892025001915892,
+       "ssim": 0.3633508803112352
+      },
+      "gradcampp_raw": {
+       "spearman": 0.8436517436320328,
+       "absolute_spearman": 0.8436517436320328,
+       "ssim": 0.9305004012948627
+      },
+      "gradcam_constrained": {
+       "spearman": 0.43783851018867304,
+       "absolute_spearman": 0.43783851018867304,
+       "ssim": 0.9847726762535729
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.4604791460539625,
+       "absolute_spearman": 0.4604791460539625,
+       "ssim": 0.9816474854101193
+      }
+     }
+    },
+    {
+     "stage": "fpn",
+     "binding": {
+      "targets": 4,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.16226043718792577,
+       "absolute_spearman": 0.16226043718792577,
+       "ssim": 0.14029082640946955
+      },
+      "gradcampp_raw": {
+       "spearman": 0.8816530838820291,
+       "absolute_spearman": 0.8816530838820291,
+       "ssim": 0.9280734075328239
+      },
+      "gradcam_constrained": {
+       "spearman": 0.5464033986358409,
+       "absolute_spearman": 0.5464033986358409,
+       "ssim": 0.977642978382179
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.5452657894731189,
+       "absolute_spearman": 0.5452657894731189,
+       "ssim": 0.9764776372744546
+      }
+     }
+    },
+    {
+     "stage": "layer4",
+     "binding": {
+      "targets": 3,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.1439764521990236,
+       "absolute_spearman": 0.1439764521990236,
+       "ssim": 0.5459701579738652
+      },
+      "gradcampp_raw": {
+       "spearman": 0.607317324881006,
+       "absolute_spearman": 0.607317324881006,
+       "ssim": 0.7179027500687903
+      },
+      "gradcam_constrained": {
+       "spearman": 0.31322822780958376,
+       "absolute_spearman": 0.31322822780958376,
+       "ssim": 0.9811015666925378
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.3735545777569931,
+       "absolute_spearman": 0.3735545777569931,
+       "ssim": 0.9793895325643742
+      }
+     }
+    },
+    {
+     "stage": "layer3",
+     "binding": {
+      "targets": 4,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.05980182788270753,
+       "absolute_spearman": 0.05980182788270753,
+       "ssim": 0.07305383347197977
+      },
+      "gradcampp_raw": {
+       "spearman": 0.4148100804385889,
+       "absolute_spearman": 0.4148100804385889,
+       "ssim": 0.6658423145719192
+      },
+      "gradcam_constrained": {
+       "spearman": 0.4510170738777103,
+       "absolute_spearman": 0.4510170738777103,
+       "ssim": 0.9795685180033054
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.48380791708471305,
+       "absolute_spearman": 0.48380791708471305,
+       "ssim": 0.9770687747440732
+      }
+     }
+    },
+    {
+     "stage": "layer2",
+     "binding": {
+      "targets": 1,
+      "binding": "top_foreground_detection_fallback"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.09098492305361784,
+       "absolute_spearman": 0.09098492305361784,
+       "ssim": 0.03004493179111157
+      },
+      "gradcampp_raw": {
+       "spearman": 0.048070534491498465,
+       "absolute_spearman": 0.048070534491498465,
+       "ssim": 0.6481439284367854
+      },
+      "gradcam_constrained": {
+       "spearman": -0.003652696972883975,
+       "absolute_spearman": 0.003652696972883975,
+       "ssim": 0.9833329157227472
+      },
+      "gradcampp_constrained": {
+       "spearman": -0.0041157856002334604,
+       "absolute_spearman": 0.0041157856002334604,
+       "ssim": 0.9791898202760438
+      }
+     }
+    },
+    {
+     "stage": "layer1_and_stem",
+     "binding": {
+      "targets": 4,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.14566344178681231,
+       "absolute_spearman": 0.14566344178681231,
+       "ssim": 0.05357365578616892
+      },
+      "gradcampp_raw": {
+       "spearman": -0.10398669036903985,
+       "absolute_spearman": 0.10398669036903985,
+       "ssim": 0.48425570633418663
+      },
+      "gradcam_constrained": {
+       "spearman": 0.3577045039867977,
+       "absolute_spearman": 0.3577045039867977,
+       "ssim": 0.9216858196123405
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.4029654219848053,
+       "absolute_spearman": 0.4029654219848053,
+       "ssim": 0.9230505704587344
+      }
+     }
+    }
+   ],
+   "seconds": 5052.1
+  },
+  {
+   "image_id": 6,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 2,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "original": {
+    "saved_gradcam": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      235,
+      151
+     ],
+     "peak_inside_reference_lesion": true,
+     "energy_fraction_inside_reference_lesion": 0.8892202973365784
+    },
+    "saved_gradcampp": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      235,
+      151
+     ],
+     "peak_inside_reference_lesion": true,
+     "energy_fraction_inside_reference_lesion": 0.8958354592323303
+    },
+    "raw_gradcam": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      235,
+      153
+     ],
+     "peak_inside_reference_lesion": false,
+     "energy_fraction_inside_reference_lesion": 0.13962876796722412
+    },
+    "raw_gradcampp": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      235,
+      153
+     ],
+     "peak_inside_reference_lesion": false,
+     "energy_fraction_inside_reference_lesion": 0.026552662253379822
+    }
+   },
+   "stages": [
+    {
+     "stage": "roi_predictors",
+     "binding": {
+      "targets": 1,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.5331982867178547,
+       "absolute_spearman": 0.5331982867178547,
+       "ssim": 0.8120063223358555
+      },
+      "gradcampp_raw": {
+       "spearman": 0.9458641351566136,
+       "absolute_spearman": 0.9458641351566136,
+       "ssim": 0.977031245016226
+      },
+      "gradcam_constrained": {
+       "spearman": 0.23469771214249582,
+       "absolute_spearman": 0.23469771214249582,
+       "ssim": 0.9857583421508846
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.22244790628580496,
+       "absolute_spearman": 0.22244790628580496,
+       "ssim": 0.9812769315084667
+      }
+     }
+    },
+    {
+     "stage": "roi_heads",
+     "binding": {
+      "targets": 2,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.2744380038584688,
+       "absolute_spearman": 0.2744380038584688,
+       "ssim": 0.40635566201123896
+      },
+      "gradcampp_raw": {
+       "spearman": 0.8513155766302313,
+       "absolute_spearman": 0.8513155766302313,
+       "ssim": 0.9014201157093042
+      },
+      "gradcam_constrained": {
+       "spearman": 0.4000323450790216,
+       "absolute_spearman": 0.4000323450790216,
+       "ssim": 0.9756710625130266
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.3818745439688088,
+       "absolute_spearman": 0.3818745439688088,
+       "ssim": 0.9728513618528306
+      }
+     }
+    },
+    {
+     "stage": "rpn",
+     "binding": {
+      "targets": 2,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.020067418005787933,
+       "absolute_spearman": 0.020067418005787933,
+       "ssim": 0.3957950737907202
+      },
+      "gradcampp_raw": {
+       "spearman": 0.8774103229402975,
+       "absolute_spearman": 0.8774103229402975,
+       "ssim": 0.8829735260707305
+      },
+      "gradcam_constrained": {
+       "spearman": 0.38553450227170283,
+       "absolute_spearman": 0.38553450227170283,
+       "ssim": 0.9875888597600657
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.35559600165795635,
+       "absolute_spearman": 0.35559600165795635,
+       "ssim": 0.9860264348077555
+      }
+     }
+    },
+    {
+     "stage": "fpn",
+     "binding": {
+      "targets": 2,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.0317519998813694,
+       "absolute_spearman": 0.0317519998813694,
+       "ssim": 0.37725425900483245
+      },
+      "gradcampp_raw": {
+       "spearman": 0.8799595260528522,
+       "absolute_spearman": 0.8799595260528522,
+       "ssim": 0.8486827164328661
+      },
+      "gradcam_constrained": {
+       "spearman": 0.37390462644485445,
+       "absolute_spearman": 0.37390462644485445,
+       "ssim": 0.985163133605903
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.3623686953090826,
+       "absolute_spearman": 0.3623686953090826,
+       "ssim": 0.9843823406647452
+      }
+     }
+    },
+    {
+     "stage": "layer4",
+     "binding": {
+      "targets": 2,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.21384888363939472,
+       "absolute_spearman": 0.21384888363939472,
+       "ssim": 0.16748651947298854
+      },
+      "gradcampp_raw": {
+       "spearman": 0.5457926236377554,
+       "absolute_spearman": 0.5457926236377554,
+       "ssim": 0.7212425237941318
+      },
+      "gradcam_constrained": {
+       "spearman": 0.3387362974148371,
+       "absolute_spearman": 0.3387362974148371,
+       "ssim": 0.9851127268847542
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.32987346884898405,
+       "absolute_spearman": 0.32987346884898405,
+       "ssim": 0.9839083335285794
+      }
+     }
+    },
+    {
+     "stage": "layer3",
+     "binding": {
+      "targets": 2,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.03971038503076479,
+       "absolute_spearman": 0.03971038503076479,
+       "ssim": 0.19830330705974353
+      },
+      "gradcampp_raw": {
+       "spearman": 0.32244356165707816,
+       "absolute_spearman": 0.32244356165707816,
+       "ssim": 0.581536327102259
+      },
+      "gradcam_constrained": {
+       "spearman": 0.36270001277088415,
+       "absolute_spearman": 0.36270001277088415,
+       "ssim": 0.9867253788611637
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.3466294559664743,
+       "absolute_spearman": 0.3466294559664743,
+       "ssim": 0.9836164537566385
+      }
+     }
+    },
+    {
+     "stage": "layer2",
+     "binding": {
+      "targets": 1,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.12002854067744467,
+       "absolute_spearman": 0.12002854067744467,
+       "ssim": 0.02522755385233556
+      },
+      "gradcampp_raw": {
+       "spearman": -0.17559786375065758,
+       "absolute_spearman": 0.17559786375065758,
+       "ssim": 0.5216745303592752
+      },
+      "gradcam_constrained": {
+       "spearman": 0.2672499300487923,
+       "absolute_spearman": 0.2672499300487923,
+       "ssim": 0.9884226073422148
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.2557590060800598,
+       "absolute_spearman": 0.2557590060800598,
+       "ssim": 0.9865481407565122
+      }
+     }
+    },
+    {
+     "stage": "layer1_and_stem",
+     "binding": {
+      "targets": 2,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.04121450679846174,
+       "absolute_spearman": 0.04121450679846174,
+       "ssim": 0.8473656470942322
+      },
+      "gradcampp_raw": {
+       "spearman": -0.3519132473055396,
+       "absolute_spearman": 0.3519132473055396,
+       "ssim": 0.4515424296299786
+      },
+      "gradcam_constrained": {
+       "spearman": null,
+       "absolute_spearman": null,
+       "ssim": 0.9889123698479666
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.2677353567767454,
+       "absolute_spearman": 0.2677353567767454,
+       "ssim": 0.9828474583542705
+      }
+     }
+    }
+   ],
+   "seconds": 1135.2
+  },
+  {
+   "image_id": 7,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 1,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "original": {
+    "saved_gradcam": {
+     "available": true,
+     "all_zero": true,
+     "peak_xy": [
+      0,
+      0
+     ],
+     "peak_inside_reference_lesion": false,
+     "energy_fraction_inside_reference_lesion": null
+    },
+    "saved_gradcampp": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      276,
+      153
+     ],
+     "peak_inside_reference_lesion": true,
+     "energy_fraction_inside_reference_lesion": 0.885735273361206
+    },
+    "raw_gradcam": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      112,
+      92
+     ],
+     "peak_inside_reference_lesion": false,
+     "energy_fraction_inside_reference_lesion": 0.0
+    },
+    "raw_gradcampp": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      112,
+      112
+     ],
+     "peak_inside_reference_lesion": false,
+     "energy_fraction_inside_reference_lesion": 0.011488339863717556
+    }
+   },
+   "stages": [
+    {
+     "stage": "roi_predictors",
+     "binding": {
+      "targets": 1,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.0663448967310596,
+       "absolute_spearman": 0.0663448967310596,
+       "ssim": 0.22011759076613727
+      },
+      "gradcampp_raw": {
+       "spearman": 0.711062804425124,
+       "absolute_spearman": 0.711062804425124,
+       "ssim": 0.8475442022387651
+      },
+      "gradcam_constrained": {
+       "spearman": null,
+       "absolute_spearman": null,
+       "ssim": 0.9956194543520291
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.3036737589768692,
+       "absolute_spearman": 0.3036737589768692,
+       "ssim": 0.9913429561941403
+      }
+     }
+    },
+    {
+     "stage": "roi_heads",
+     "binding": {
+      "targets": 1,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.15378443481522328,
+       "absolute_spearman": 0.15378443481522328,
+       "ssim": 0.8060096555907567
+      },
+      "gradcampp_raw": {
+       "spearman": 0.780308487450369,
+       "absolute_spearman": 0.780308487450369,
+       "ssim": 0.8819251487628786
+      },
+      "gradcam_constrained": {
+       "spearman": null,
+       "absolute_spearman": null,
+       "ssim": 0.9908941598151425
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.4771790972258261,
+       "absolute_spearman": 0.4771790972258261,
+       "ssim": 0.986579474486924
+      }
+     }
+    },
+    {
+     "stage": "rpn",
+     "binding": {
+      "targets": 1,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.02346297855909306,
+       "absolute_spearman": 0.02346297855909306,
+       "ssim": 0.5704555915565703
+      },
+      "gradcampp_raw": {
+       "spearman": 0.6121584419466393,
+       "absolute_spearman": 0.6121584419466393,
+       "ssim": 0.8385953300267631
+      },
+      "gradcam_constrained": {
+       "spearman": null,
+       "absolute_spearman": null,
+       "ssim": 0.9941819456937309
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.4931951604649015,
+       "absolute_spearman": 0.4931951604649015,
+       "ssim": 0.9905701566935469
+      }
+     }
+    },
+    {
+     "stage": "fpn",
+     "binding": {
+      "targets": 1,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.007368673138414218,
+       "absolute_spearman": 0.007368673138414218,
+       "ssim": 0.32858389527841725
+      },
+      "gradcampp_raw": {
+       "spearman": 0.54467117549003,
+       "absolute_spearman": 0.54467117549003,
+       "ssim": 0.8105793449551248
+      },
+      "gradcam_constrained": {
+       "spearman": null,
+       "absolute_spearman": null,
+       "ssim": 0.9925785353367398
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.28191510571564615,
+       "absolute_spearman": 0.28191510571564615,
+       "ssim": 0.988595369004901
+      }
+     }
+    },
+    {
+     "stage": "layer4",
+     "binding": {
+      "targets": 1,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.06794511686707226,
+       "absolute_spearman": 0.06794511686707226,
+       "ssim": 0.14568678498356225
+      },
+      "gradcampp_raw": {
+       "spearman": 0.4834059537788642,
+       "absolute_spearman": 0.4834059537788642,
+       "ssim": 0.7229157593917652
+      },
+      "gradcam_constrained": {
+       "spearman": null,
+       "absolute_spearman": null,
+       "ssim": 0.9920609637288682
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.497091589399769,
+       "absolute_spearman": 0.497091589399769,
+       "ssim": 0.9902496903431277
+      }
+     }
+    },
+    {
+     "stage": "layer3",
+     "binding": {
+      "targets": 1,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.083273159322395,
+       "absolute_spearman": 0.083273159322395,
+       "ssim": 0.029760876394072575
+      },
+      "gradcampp_raw": {
+       "spearman": 0.37778850028233174,
+       "absolute_spearman": 0.37778850028233174,
+       "ssim": 0.626410749310407
+      },
+      "gradcam_constrained": {
+       "spearman": null,
+       "absolute_spearman": null,
+       "ssim": 0.9911954992517417
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.4648373722393583,
+       "absolute_spearman": 0.4648373722393583,
+       "ssim": 0.9893907340768282
+      }
+     }
+    },
+    {
+     "stage": "layer2",
+     "binding": {
+      "targets": 1,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.017837405817171074,
+       "absolute_spearman": 0.017837405817171074,
+       "ssim": 0.001587386591169831
+      },
+      "gradcampp_raw": {
+       "spearman": 0.08574072007670891,
+       "absolute_spearman": 0.08574072007670891,
+       "ssim": 0.5853639731689596
+      },
+      "gradcam_constrained": {
+       "spearman": null,
+       "absolute_spearman": null,
+       "ssim": 0.9737239793483718
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.3802586915376768,
+       "absolute_spearman": 0.3802586915376768,
+       "ssim": 0.9737445478931724
+      }
+     }
+    },
+    {
+     "stage": "layer1_and_stem",
+     "binding": {
+      "targets": 1,
+      "binding": "top_foreground_detection_fallback"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.004904632021406777,
+       "absolute_spearman": 0.004904632021406777,
+       "ssim": 0.541810512822369
+      },
+      "gradcampp_raw": {
+       "spearman": -0.09332689255532946,
+       "absolute_spearman": 0.09332689255532946,
+       "ssim": 0.5444377742970476
+      },
+      "gradcam_constrained": {
+       "spearman": null,
+       "absolute_spearman": null,
+       "ssim": 0.9959669195937526
+      },
+      "gradcampp_constrained": {
+       "spearman": -0.006682929890159476,
+       "absolute_spearman": 0.006682929890159476,
+       "ssim": 0.9790985091268332
+      }
+     }
+    }
+   ],
+   "seconds": 2490.3
+  },
+  {
+   "image_id": 17,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 5,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "original": {
+    "saved_gradcam": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      317,
+      159
+     ],
+     "peak_inside_reference_lesion": false,
+     "energy_fraction_inside_reference_lesion": 0.5179555416107178
+    },
+    "saved_gradcampp": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      245,
+      174
+     ],
+     "peak_inside_reference_lesion": false,
+     "energy_fraction_inside_reference_lesion": 0.4738221764564514
+    },
+    "raw_gradcam": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      296,
+      133
+     ],
+     "peak_inside_reference_lesion": false,
+     "energy_fraction_inside_reference_lesion": 0.1285892128944397
+    },
+    "raw_gradcampp": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      358,
+      256
+     ],
+     "peak_inside_reference_lesion": false,
+     "energy_fraction_inside_reference_lesion": 0.025798846036195755
+    }
+   },
+   "stages": [
+    {
+     "stage": "roi_predictors",
+     "binding": {
+      "targets": 5,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.02717626305455032,
+       "absolute_spearman": 0.02717626305455032,
+       "ssim": 0.08549430306615793
+      },
+      "gradcampp_raw": {
+       "spearman": 0.7894138684256918,
+       "absolute_spearman": 0.7894138684256918,
+       "ssim": 0.8363252380957122
+      },
+      "gradcam_constrained": {
+       "spearman": 0.3885324258406302,
+       "absolute_spearman": 0.3885324258406302,
+       "ssim": 0.9822598197594858
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.4283059640668337,
+       "absolute_spearman": 0.4283059640668337,
+       "ssim": 0.9706677273018764
+      }
+     }
+    },
+    {
+     "stage": "roi_heads",
+     "binding": {
+      "targets": 5,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.2631282906498505,
+       "absolute_spearman": 0.2631282906498505,
+       "ssim": 0.062264551996774706
+      },
+      "gradcampp_raw": {
+       "spearman": 0.6936207947558612,
+       "absolute_spearman": 0.6936207947558612,
+       "ssim": 0.7975362579180718
+      },
+      "gradcam_constrained": {
+       "spearman": 0.3883076333112186,
+       "absolute_spearman": 0.3883076333112186,
+       "ssim": 0.9778779182817973
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.5961097459029747,
+       "absolute_spearman": 0.5961097459029747,
+       "ssim": 0.9719985224920418
+      }
+     }
+    },
+    {
+     "stage": "rpn",
+     "binding": {
+      "targets": 5,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.20425315772484057,
+       "absolute_spearman": 0.20425315772484057,
+       "ssim": 0.07189627320671452
+      },
+      "gradcampp_raw": {
+       "spearman": 0.7835525929689329,
+       "absolute_spearman": 0.7835525929689329,
+       "ssim": 0.8376721594499066
+      },
+      "gradcam_constrained": {
+       "spearman": 0.137838765545837,
+       "absolute_spearman": 0.137838765545837,
+       "ssim": 0.9783611718467414
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.31707213673429274,
+       "absolute_spearman": 0.31707213673429274,
+       "ssim": 0.9699496686150537
+      }
+     }
+    },
+    {
+     "stage": "fpn",
+     "binding": {
+      "targets": 4,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.07731650969577718,
+       "absolute_spearman": 0.07731650969577718,
+       "ssim": 0.05214412296573075
+      },
+      "gradcampp_raw": {
+       "spearman": 0.7913851807327029,
+       "absolute_spearman": 0.7913851807327029,
+       "ssim": 0.7469963062031731
+      },
+      "gradcam_constrained": {
+       "spearman": 0.26710500200402815,
+       "absolute_spearman": 0.26710500200402815,
+       "ssim": 0.9739425699237576
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.341373781530025,
+       "absolute_spearman": 0.341373781530025,
+       "ssim": 0.9654851974528063
+      }
+     }
+    },
+    {
+     "stage": "layer4",
+     "binding": {
+      "targets": 4,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.07756352314136421,
+       "absolute_spearman": 0.07756352314136421,
+       "ssim": 0.07502088702124089
+      },
+      "gradcampp_raw": {
+       "spearman": 0.5553428916196019,
+       "absolute_spearman": 0.5553428916196019,
+       "ssim": 0.6902427339601866
+      },
+      "gradcam_constrained": {
+       "spearman": 0.11052627078213732,
+       "absolute_spearman": 0.11052627078213732,
+       "ssim": 0.9777268273918189
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.3231421386878089,
+       "absolute_spearman": 0.3231421386878089,
+       "ssim": 0.9670329318640046
+      }
+     }
+    },
+    {
+     "stage": "layer3",
+     "binding": {
+      "targets": 5,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.0844715800173754,
+       "absolute_spearman": 0.0844715800173754,
+       "ssim": 0.02869258385148262
+      },
+      "gradcampp_raw": {
+       "spearman": 0.3396158335986026,
+       "absolute_spearman": 0.3396158335986026,
+       "ssim": 0.6378406065769652
+      },
+      "gradcam_constrained": {
+       "spearman": 0.3034805536323034,
+       "absolute_spearman": 0.3034805536323034,
+       "ssim": 0.9744584550863744
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.437617628310181,
+       "absolute_spearman": 0.437617628310181,
+       "ssim": 0.9660202950808678
+      }
+     }
+    },
+    {
+     "stage": "layer2",
+     "binding": {
+      "targets": 4,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.013364189979920905,
+       "absolute_spearman": 0.013364189979920905,
+       "ssim": 0.01591901672628214
+      },
+      "gradcampp_raw": {
+       "spearman": 0.17806370146081107,
+       "absolute_spearman": 0.17806370146081107,
+       "ssim": 0.6669368757575695
+      },
+      "gradcam_constrained": {
+       "spearman": 0.40747249882715114,
+       "absolute_spearman": 0.40747249882715114,
+       "ssim": 0.9691194578693021
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.35811817033621396,
+       "absolute_spearman": 0.35811817033621396,
+       "ssim": 0.9615600380534632
+      }
+     }
+    },
+    {
+     "stage": "layer1_and_stem",
+     "binding": {
+      "targets": 5,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.16480309456331682,
+       "absolute_spearman": 0.16480309456331682,
+       "ssim": 0.03174151598319508
+      },
+      "gradcampp_raw": {
+       "spearman": 0.03146850696286166,
+       "absolute_spearman": 0.03146850696286166,
+       "ssim": 0.5158593002395008
+      },
+      "gradcam_constrained": {
+       "spearman": 0.32222198730808715,
+       "absolute_spearman": 0.32222198730808715,
+       "ssim": 0.9298157652297517
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.39752297057849584,
+       "absolute_spearman": 0.39752297057849584,
+       "ssim": 0.9294035054745324
+      }
+     }
+    }
+   ],
+   "seconds": 7016.9
+  },
+  {
+   "image_id": 18,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 1,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "original": {
+    "saved_gradcam": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      252,
+      95
+     ],
+     "peak_inside_reference_lesion": false,
+     "energy_fraction_inside_reference_lesion": 0.7657346129417419
+    },
+    "saved_gradcampp": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      253,
+      97
+     ],
+     "peak_inside_reference_lesion": false,
+     "energy_fraction_inside_reference_lesion": 0.8555147647857666
+    },
+    "raw_gradcam": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      399,
+      194
+     ],
+     "peak_inside_reference_lesion": false,
+     "energy_fraction_inside_reference_lesion": 0.03849140554666519
+    },
+    "raw_gradcampp": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      71,
+      92
+     ],
+     "peak_inside_reference_lesion": false,
+     "energy_fraction_inside_reference_lesion": 0.007168981246650219
+    }
+   },
+   "stages": [
+    {
+     "stage": "roi_predictors",
+     "binding": {
+      "targets": 1,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.19811966857880228,
+       "absolute_spearman": 0.19811966857880228,
+       "ssim": 0.7503877455009635
+      },
+      "gradcampp_raw": {
+       "spearman": 0.8753404704088802,
+       "absolute_spearman": 0.8753404704088802,
+       "ssim": 0.9103923995637301
+      },
+      "gradcam_constrained": {
+       "spearman": 0.11221688420598254,
+       "absolute_spearman": 0.11221688420598254,
+       "ssim": 0.9929701037349881
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.3711546431933499,
+       "absolute_spearman": 0.3711546431933499,
+       "ssim": 0.9908958913123569
+      }
+     }
+    },
+    {
+     "stage": "roi_heads",
+     "binding": {
+      "targets": 1,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.09917537814300173,
+       "absolute_spearman": 0.09917537814300173,
+       "ssim": 0.4172961387845864
+      },
+      "gradcampp_raw": {
+       "spearman": 0.7677275790686106,
+       "absolute_spearman": 0.7677275790686106,
+       "ssim": 0.8526570683723338
+      },
+      "gradcam_constrained": {
+       "spearman": 0.02667339665363688,
+       "absolute_spearman": 0.02667339665363688,
+       "ssim": 0.994788955157497
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.5556286101630831,
+       "absolute_spearman": 0.5556286101630831,
+       "ssim": 0.994617379811741
+      }
+     }
+    },
+    {
+     "stage": "rpn",
+     "binding": {
+      "targets": 1,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.174224060158504,
+       "absolute_spearman": 0.174224060158504,
+       "ssim": 0.09599063752558322
+      },
+      "gradcampp_raw": {
+       "spearman": 0.7225154467431434,
+       "absolute_spearman": 0.7225154467431434,
+       "ssim": 0.8202511323742319
+      },
+      "gradcam_constrained": {
+       "spearman": -0.0018261055941217782,
+       "absolute_spearman": 0.0018261055941217782,
+       "ssim": 0.9930908726001676
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.2851579778201753,
+       "absolute_spearman": 0.2851579778201753,
+       "ssim": 0.9902855622676636
+      }
+     }
+    },
+    {
+     "stage": "fpn",
+     "binding": {
+      "targets": 1,
+      "binding": "top_foreground_detection_fallback"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.1039035178023748,
+       "absolute_spearman": 0.1039035178023748,
+       "ssim": 0.21513454150725198
+      },
+      "gradcampp_raw": {
+       "spearman": 0.8261294970391909,
+       "absolute_spearman": 0.8261294970391909,
+       "ssim": 0.8724277930822861
+      },
+      "gradcam_constrained": {
+       "spearman": -0.0021342582169378735,
+       "absolute_spearman": 0.0021342582169378735,
+       "ssim": 0.9900394299521922
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.016608957532060643,
+       "absolute_spearman": 0.016608957532060643,
+       "ssim": 0.9867020103550586
+      }
+     }
+    },
+    {
+     "stage": "layer4",
+     "binding": {
+      "targets": 1,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.07561111197884483,
+       "absolute_spearman": 0.07561111197884483,
+       "ssim": 0.4400224415466414
+      },
+      "gradcampp_raw": {
+       "spearman": 0.7177145169538899,
+       "absolute_spearman": 0.7177145169538899,
+       "ssim": 0.7927429167778948
+      },
+      "gradcam_constrained": {
+       "spearman": -0.002056151039213968,
+       "absolute_spearman": 0.002056151039213968,
+       "ssim": 0.9907547772941908
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.4062702879929163,
+       "absolute_spearman": 0.4062702879929163,
+       "ssim": 0.9907306760281005
+      }
+     }
+    },
+    {
+     "stage": "layer3",
+     "binding": {
+      "targets": 1,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.11492117695080203,
+       "absolute_spearman": 0.11492117695080203,
+       "ssim": 0.10699277380308705
+      },
+      "gradcampp_raw": {
+       "spearman": 0.5823005621508592,
+       "absolute_spearman": 0.5823005621508592,
+       "ssim": 0.6602818851736965
+      },
+      "gradcam_constrained": {
+       "spearman": -0.0010908973961726702,
+       "absolute_spearman": 0.0010908973961726702,
+       "ssim": 0.9957508014697884
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.3797347815685814,
+       "absolute_spearman": 0.3797347815685814,
+       "ssim": 0.9942401227026347
+      }
+     }
+    },
+    {
+     "stage": "layer2",
+     "binding": {
+      "targets": 1,
+      "binding": "top_foreground_detection_fallback"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.005311544258762002,
+       "absolute_spearman": 0.005311544258762002,
+       "ssim": 0.004503213410059067
+      },
+      "gradcampp_raw": {
+       "spearman": 0.4549689214047056,
+       "absolute_spearman": 0.4549689214047056,
+       "ssim": 0.7033641868765421
+      },
+      "gradcam_constrained": {
+       "spearman": -0.0010375672352191346,
+       "absolute_spearman": 0.0010375672352191346,
+       "ssim": 0.9959359105581023
+      },
+      "gradcampp_constrained": {
+       "spearman": -0.002127409527672943,
+       "absolute_spearman": 0.002127409527672943,
+       "ssim": 0.9921800807974743
+      }
+     }
+    },
+    {
+     "stage": "layer1_and_stem",
+     "binding": {
+      "targets": 1,
+      "binding": "top_foreground_detection_fallback"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.14107334693932452,
+       "absolute_spearman": 0.14107334693932452,
+       "ssim": 0.37509651803022254
+      },
+      "gradcampp_raw": {
+       "spearman": 0.41412271155827307,
+       "absolute_spearman": 0.41412271155827307,
+       "ssim": 0.4385071530942892
+      },
+      "gradcam_constrained": {
+       "spearman": null,
+       "absolute_spearman": null,
+       "ssim": 0.9985091109196935
+      },
+      "gradcampp_constrained": {
+       "spearman": -0.0029766501319120745,
+       "absolute_spearman": 0.0029766501319120745,
+       "ssim": 0.9906364456964749
+      }
+     }
+    }
+   ],
+   "seconds": 2626.9
+  },
+  {
+   "image_id": 25,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 2,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "original": {
+    "saved_gradcam": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      266,
+      214
+     ],
+     "peak_inside_reference_lesion": true,
+     "energy_fraction_inside_reference_lesion": 0.3318343758583069
+    },
+    "saved_gradcampp": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      235,
+      178
+     ],
+     "peak_inside_reference_lesion": false,
+     "energy_fraction_inside_reference_lesion": 0.12838836014270782
+    },
+    "raw_gradcam": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      296,
+      317
+     ],
+     "peak_inside_reference_lesion": false,
+     "energy_fraction_inside_reference_lesion": 0.024751579388976097
+    },
+    "raw_gradcampp": {
+     "available": true,
+     "all_zero": false,
+     "peak_xy": [
+      235,
+      174
+     ],
+     "peak_inside_reference_lesion": false,
+     "energy_fraction_inside_reference_lesion": 0.006064567714929581
+    }
+   },
+   "stages": [
+    {
+     "stage": "roi_predictors",
+     "binding": {
+      "targets": 2,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.302445434826297,
+       "absolute_spearman": 0.302445434826297,
+       "ssim": 0.2225716970732885
+      },
+      "gradcampp_raw": {
+       "spearman": 0.8025418731894082,
+       "absolute_spearman": 0.8025418731894082,
+       "ssim": 0.7571486445168961
+      },
+      "gradcam_constrained": {
+       "spearman": 0.39739708645417493,
+       "absolute_spearman": 0.39739708645417493,
+       "ssim": 0.9887682066746266
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.39582781883719326,
+       "absolute_spearman": 0.39582781883719326,
+       "ssim": 0.9875842079731485
+      }
+     }
+    },
+    {
+     "stage": "roi_heads",
+     "binding": {
+      "targets": 2,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.29828928372244784,
+       "absolute_spearman": 0.29828928372244784,
+       "ssim": 0.09799566782418612
+      },
+      "gradcampp_raw": {
+       "spearman": 0.5327755752862513,
+       "absolute_spearman": 0.5327755752862513,
+       "ssim": 0.6604472325647266
+      },
+      "gradcam_constrained": {
+       "spearman": 0.5487354391410263,
+       "absolute_spearman": 0.5487354391410263,
+       "ssim": 0.9904948874775266
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.5142218701757766,
+       "absolute_spearman": 0.5142218701757766,
+       "ssim": 0.9889174310813494
+      }
+     }
+    },
+    {
+     "stage": "rpn",
+     "binding": {
+      "targets": 2,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.3333222382640092,
+       "absolute_spearman": 0.3333222382640092,
+       "ssim": 0.0664162324128921
+      },
+      "gradcampp_raw": {
+       "spearman": 0.4685546727388624,
+       "absolute_spearman": 0.4685546727388624,
+       "ssim": 0.6574316120247714
+      },
+      "gradcam_constrained": {
+       "spearman": 0.5214345172704565,
+       "absolute_spearman": 0.5214345172704565,
+       "ssim": 0.9898364288318295
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.47351768117970783,
+       "absolute_spearman": 0.47351768117970783,
+       "ssim": 0.9884198054446987
+      }
+     }
+    },
+    {
+     "stage": "fpn",
+     "binding": {
+      "targets": 1,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.6007225636345431,
+       "absolute_spearman": 0.6007225636345431,
+       "ssim": 0.8872730122490571
+      },
+      "gradcampp_raw": {
+       "spearman": 0.7202401732558571,
+       "absolute_spearman": 0.7202401732558571,
+       "ssim": 0.7891748180829785
+      },
+      "gradcam_constrained": {
+       "spearman": 0.289987487596997,
+       "absolute_spearman": 0.289987487596997,
+       "ssim": 0.9841161888492264
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.4060050916021447,
+       "absolute_spearman": 0.4060050916021447,
+       "ssim": 0.9756922424297083
+      }
+     }
+    },
+    {
+     "stage": "layer4",
+     "binding": {
+      "targets": 1,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.08540811026800592,
+       "absolute_spearman": 0.08540811026800592,
+       "ssim": 0.715453827684616
+      },
+      "gradcampp_raw": {
+       "spearman": 0.527137043605887,
+       "absolute_spearman": 0.527137043605887,
+       "ssim": 0.6952837545949202
+      },
+      "gradcam_constrained": {
+       "spearman": -0.0035215550800221465,
+       "absolute_spearman": 0.0035215550800221465,
+       "ssim": 0.9883122542405289
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.3130511282590541,
+       "absolute_spearman": 0.3130511282590541,
+       "ssim": 0.9864245577877084
+      }
+     }
+    },
+    {
+     "stage": "layer3",
+     "binding": {
+      "targets": 1,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": 0.006206588002378842,
+       "absolute_spearman": 0.006206588002378842,
+       "ssim": 0.34622765494529856
+      },
+      "gradcampp_raw": {
+       "spearman": 0.2719128538284571,
+       "absolute_spearman": 0.2719128538284571,
+       "ssim": 0.628081400918749
+      },
+      "gradcam_constrained": {
+       "spearman": 0.2286094810147331,
+       "absolute_spearman": 0.2286094810147331,
+       "ssim": 0.9908970290817851
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.3461584894430832,
+       "absolute_spearman": 0.3461584894430832,
+       "ssim": 0.9902758262907436
+      }
+     }
+    },
+    {
+     "stage": "layer2",
+     "binding": {
+      "targets": 1,
+      "binding": "top_foreground_detection_fallback"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.006290603282308388,
+       "absolute_spearman": 0.006290603282308388,
+       "ssim": 0.02053849183849786
+      },
+      "gradcampp_raw": {
+       "spearman": -0.06335027798563615,
+       "absolute_spearman": 0.06335027798563615,
+       "ssim": 0.5806633194671322
+      },
+      "gradcam_constrained": {
+       "spearman": -0.003759966575088035,
+       "absolute_spearman": 0.003759966575088035,
+       "ssim": 0.9876681359880681
+      },
+      "gradcampp_constrained": {
+       "spearman": -0.003769589572260358,
+       "absolute_spearman": 0.003769589572260358,
+       "ssim": 0.9870264056090188
+      }
+     }
+    },
+    {
+     "stage": "layer1_and_stem",
+     "binding": {
+      "targets": 1,
+      "binding": "matched_original_candidates"
+     },
+     "similarity": {
+      "gradcam_raw": {
+       "spearman": -0.10899521420793327,
+       "absolute_spearman": 0.10899521420793327,
+       "ssim": 0.03189217673968707
+      },
+      "gradcampp_raw": {
+       "spearman": -0.22167917163770767,
+       "absolute_spearman": 0.22167917163770767,
+       "ssim": 0.47842409399397295
+      },
+      "gradcam_constrained": {
+       "spearman": 0.30473669305694095,
+       "absolute_spearman": 0.30473669305694095,
+       "ssim": 0.9709187286188428
+      },
+      "gradcampp_constrained": {
+       "spearman": 0.3068613414283062,
+       "absolute_spearman": 0.3068613414283062,
+       "ssim": 0.9713329425355776
+      }
+     }
+    }
+   ],
+   "seconds": 1818.5
+  }
+ ]
+}

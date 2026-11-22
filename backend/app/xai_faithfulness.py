@@ -16,6 +16,48 @@ PROTOCOL = {
 }
 
 
+SSIM_WINDOW = 7
+SSIM_C1 = 0.01 ** 2
+SSIM_C2 = 0.03 ** 2
+
+
+def structural_similarity(first, second, *, window=SSIM_WINDOW):
+    """Mean SSIM (Wang et al. 2004, uniform window) for two maps scaled to 0..1."""
+    from scipy.ndimage import uniform_filter
+
+    first = np.asarray(first, dtype=np.float64)
+    second = np.asarray(second, dtype=np.float64)
+    if first.shape != second.shape or first.ndim != 2:
+        raise ValueError('SSIM requires two 2D maps in the same frame')
+    if not (np.isfinite(first).all() and np.isfinite(second).all()):
+        raise ValueError('SSIM requires finite maps')
+    mean_a = uniform_filter(first, window)
+    mean_b = uniform_filter(second, window)
+    var_a = uniform_filter(first * first, window) - mean_a ** 2
+    var_b = uniform_filter(second * second, window) - mean_b ** 2
+    cov = uniform_filter(first * second, window) - mean_a * mean_b
+    numerator = (2 * mean_a * mean_b + SSIM_C1) * (2 * cov + SSIM_C2)
+    denominator = (mean_a ** 2 + mean_b ** 2 + SSIM_C1) * (var_a + var_b + SSIM_C2)
+    return float(np.mean(numerator / denominator))
+
+
+def map_similarity(original, randomized):
+    """Rank correlation and SSIM between an attribution and its randomized-model counterpart.
+
+    A constant map has no rank order, so its Spearman value is reported as None
+    instead of a misleading NaN or zero.
+    """
+    original = np.asarray(original, dtype=np.float64)
+    randomized = np.asarray(randomized, dtype=np.float64)
+    if original.shape != randomized.shape:
+        raise ValueError('Randomized attribution geometry differs')
+    constant = np.ptp(original) == 0 or np.ptp(randomized) == 0
+    correlation = None if constant else float(spearmanr(original.ravel(), randomized.ravel()).statistic)
+    return {'spearman': correlation,
+            'absolute_spearman': None if correlation is None else abs(correlation),
+            'ssim': structural_similarity(original, randomized)}
+
+
 def _cells(shape, grid):
     height, width = shape[-2:]
     ys = np.linspace(0, height, grid + 1, dtype=int)
