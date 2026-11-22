@@ -11,6 +11,8 @@ import { utcDate } from "./lib/time";
 type VolumeRun = { id: string; status: string; error: string | null; created_at: string;model_key?:string;
   input_kind: 'medical_study' | 'synthetic_fixture' | 'unspecified';
   preview_url?: string | null; artifacts: Record<string,string>; result: null | { model_id: string; duration_seconds: number;
+    preprocessing?: { version?: string; roi?: { fov_mm: number } | null };
+    postprocessing?: { method: string; max_median_distance_mm: number; removed_voxels: number; components: { component: number; voxels: number; median_distance_mm: number; kept: boolean }[] } | null;
   coarse_foreground_voxels: number; source_shape: number[]; limitations: string[];
   slices: { axis: string; coarse_index: number; artifact: string }[] } };
 
@@ -186,6 +188,7 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
           {selected.input_kind === 'unspecified' && <p className="message warning">Legacy source provenance is unspecified. Verify the original volume before interpreting this result.</p>}
           <p className="volume-run-meta">{selected.result.duration_seconds.toFixed(2)} s · {selected.result.source_shape.join(' × ')} voxels · {selected.result.coarse_foreground_voxels.toLocaleString()} predicted coarse-grid voxels</p>
           {selected.result.coarse_foreground_voxels === 0 && <p className="message warning">No vessel overlay was produced by this model. This is not a healthy/normal finding; check source eligibility and image quality and obtain expert review.</p>}
+          {selected.result.preprocessing?.roi && <p className="message info">Whole-chest scan: the model read a {selected.result.preprocessing.roi.fov_mm} mm cube centred on the heart (its training field of view).{selected.result.postprocessing ? ` ${selected.result.postprocessing.components.filter(c => !c.kept).length} predicted component(s), ${selected.result.postprocessing.removed_voxels.toLocaleString()} voxels, lay more than ${selected.result.postprocessing.max_median_distance_mm} mm from the cardiac chambers and were removed as off-heart; the unfiltered model mask is kept in the downloads.` : ''}</p>}
           <section className="volume-findings-summary" aria-labelledby="volume-findings-title">
             <div className="volume-findings-heading"><div><p className="eyebrow">SAVED 3D CASE</p><h4 id="volume-findings-title">Analysis findings</h4></div><span className="cv-chip ok">{selected.status}</span></div>
             <dl className="volume-summary-grid">
@@ -213,6 +216,7 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
             <figcaption>{slice.axis} · coarse slice {slice.coarse_index}</figcaption></figure>)}</div></details>
           <div className="cv-actions" role="group" aria-label="Model output downloads"><span className="cv-actions-label">Model outputs</span>
             <Button variant="outline" size="sm" onClick={() => void download('mask_source.nii.gz')}><Download size={14} /> Source-grid mask (NIfTI)</Button>
+            {selected.result?.postprocessing && <Button variant="outline" size="sm" onClick={() => void download('mask_source_raw.nii.gz')}><Download size={14} /> Unfiltered model mask</Button>}
             <Button variant="outline" size="sm" onClick={() => void download('probability_coarse.nii.gz')}><Download size={14} /> Probability volume</Button>
             <Button variant="outline" size="sm" onClick={() => void download('result.json')}><FileJson size={14} /> Result JSON</Button></div>
           <section className="volume-measurement-report" aria-label="3D measurement report">

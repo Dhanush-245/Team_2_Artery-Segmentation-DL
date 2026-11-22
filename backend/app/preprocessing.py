@@ -1,7 +1,8 @@
 from io import BytesIO
 import math
-import shutil
 import subprocess
+import sys
+from pathlib import Path
 
 import numpy as np
 from PIL import Image as PILImage, ImageFilter, ImageOps, UnidentifiedImageError
@@ -159,14 +160,12 @@ def prepare_image(raw: bytes, filename: str, roi_box: tuple[int, int, int, int] 
         page = 0 if page_index is None else page_index
         if page < 0 or page > 999:
             raise InvalidImage("PDF page index must be between 0 and 999")
-        converter = shutil.which("pdftoppm")
-        if not converter:
-            raise InvalidImage("PDF conversion requires Poppler's pdftoppm on the server")
         try:
+            # Rendered by PDFium in a separate, time-limited process (app/pdf_render.py).
             result = subprocess.run(
-                [converter, "-f", str(page + 1), "-l", str(page + 1),
-                 "-singlefile", "-scale-to", "2048", "-png", "-"],
+                [sys.executable, "-m", "app.pdf_render", str(page)],
                 input=raw, capture_output=True, timeout=20, check=False,
+                cwd=str(Path(__file__).resolve().parents[1]),
             )
             if result.returncode or not result.stdout:
                 raise InvalidImage("PDF page could not be rendered; check the page index and file")

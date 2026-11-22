@@ -191,3 +191,9 @@ def test_multiframe_dicom_selection_spacing_and_identifier_rejection():
     dataset.save_as(buffer, enforce_file_format=True)
     with pytest.raises(InvalidImage, match="identifying DICOM tags"):
         prepare_image(buffer.getvalue(), "sample.dcm", frame_index=0)
+
+
+def test_corrupt_pdf_is_rejected_without_crashing_the_app():
+    corrupt = b"%PDF-1.7\n" + bytes(range(256)) * 40 + b"\n%%EOF"
+    with pytest.raises(InvalidImage, match="PDF page"):
+        prepare_image(corrupt, "broken.pdf", page_index=0)

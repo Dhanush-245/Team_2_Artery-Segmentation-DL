@@ -1,0 +1,1400 @@
+{
+ "scanner": "aquasec/trivy:0.65.0",
+ "image": "git-publish-app (python:3.13-slim-trixie)",
+ "before_poppler_removal": [
+  {
+   "pkg": "bsdutils",
+   "installed": "1:2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-76642",
+   "status": "affected"
+  },
+  {
+   "pkg": "bsdutils",
+   "installed": "1:2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78408",
+   "status": "affected"
+  },
+  {
+   "pkg": "bsdutils",
+   "installed": "1:2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78409",
+   "status": "affected"
+  },
+  {
+   "pkg": "bsdutils",
+   "installed": "1:2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78410",
+   "status": "affected"
+  },
+  {
+   "pkg": "dirmngr",
+   "installed": "2.4.7-21+deb13u1+b5",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-24882",
+   "status": "affected"
+  },
+  {
+   "pkg": "gnupg",
+   "installed": "2.4.7-21+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-24882",
+   "status": "affected"
+  },
+  {
+   "pkg": "gnupg-l10n",
+   "installed": "2.4.7-21+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-24882",
+   "status": "affected"
+  },
+  {
+   "pkg": "gpg",
+   "installed": "2.4.7-21+deb13u1+b5",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-24882",
+   "status": "affected"
+  },
+  {
+   "pkg": "gpg-agent",
+   "installed": "2.4.7-21+deb13u1+b5",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-24882",
+   "status": "affected"
+  },
+  {
+   "pkg": "gpgconf",
+   "installed": "2.4.7-21+deb13u1+b5",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-24882",
+   "status": "affected"
+  },
+  {
+   "pkg": "gpgsm",
+   "installed": "2.4.7-21+deb13u1+b5",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-24882",
+   "status": "affected"
+  },
+  {
+   "pkg": "libacl1",
+   "installed": "2.3.2-2+b1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-54369",
+   "status": "affected"
+  },
+  {
+   "pkg": "libblkid1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-76642",
+   "status": "affected"
+  },
+  {
+   "pkg": "libblkid1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78408",
+   "status": "affected"
+  },
+  {
+   "pkg": "libblkid1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78409",
+   "status": "affected"
+  },
+  {
+   "pkg": "libblkid1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78410",
+   "status": "affected"
+  },
+  {
+   "pkg": "libcurl3t64-gnutls",
+   "installed": "8.14.1-2+deb13u7",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-12064",
+   "status": "affected"
+  },
+  {
+   "pkg": "libcurl3t64-gnutls",
+   "installed": "8.14.1-2+deb13u7",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-8458",
+   "status": "affected"
+  },
+  {
+   "pkg": "libexpat1",
+   "installed": "2.9.0-1~deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-113351",
+   "status": "affected"
+  },
+  {
+   "pkg": "libexpat1",
+   "installed": "2.9.0-1~deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-115506",
+   "status": "affected"
+  },
+  {
+   "pkg": "libexpat1",
+   "installed": "2.9.0-1~deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-117610",
+   "status": "affected"
+  },
+  {
+   "pkg": "libexpat1",
+   "installed": "2.9.0-1~deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-118370",
+   "status": "affected"
+  },
+  {
+   "pkg": "libgssapi-krb5-2",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-107364",
+   "status": "affected"
+  },
+  {
+   "pkg": "libgssapi-krb5-2",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112315",
+   "status": "affected"
+  },
+  {
+   "pkg": "libgssapi-krb5-2",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112316",
+   "status": "affected"
+  },
+  {
+   "pkg": "libgssapi-krb5-2",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112317",
+   "status": "affected"
+  },
+  {
+   "pkg": "libgssapi-krb5-2",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112318",
+   "status": "affected"
+  },
+  {
+   "pkg": "libgssapi-krb5-2",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112319",
+   "status": "affected"
+  },
+  {
+   "pkg": "libgssapi-krb5-2",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112320",
+   "status": "affected"
+  },
+  {
+   "pkg": "libgssapi-krb5-2",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112321",
+   "status": "affected"
+  },
+  {
+   "pkg": "libgssapi-krb5-2",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112322",
+   "status": "affected"
+  },
+  {
+   "pkg": "libgssapi-krb5-2",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112323",
+   "status": "affected"
+  },
+  {
+   "pkg": "libgssapi-krb5-2",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-118380",
+   "status": "affected"
+  },
+  {
+   "pkg": "libgssapi-krb5-2",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-119079",
+   "status": "affected"
+  },
+  {
+   "pkg": "libgssapi-krb5-2",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-71199",
+   "status": "affected"
+  },
+  {
+   "pkg": "libgssapi-krb5-2",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-71200",
+   "status": "affected"
+  },
+  {
+   "pkg": "libk5crypto3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-107364",
+   "status": "affected"
+  },
+  {
+   "pkg": "libk5crypto3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112315",
+   "status": "affected"
+  },
+  {
+   "pkg": "libk5crypto3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112316",
+   "status": "affected"
+  },
+  {
+   "pkg": "libk5crypto3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112317",
+   "status": "affected"
+  },
+  {
+   "pkg": "libk5crypto3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112318",
+   "status": "affected"
+  },
+  {
+   "pkg": "libk5crypto3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112319",
+   "status": "affected"
+  },
+  {
+   "pkg": "libk5crypto3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112320",
+   "status": "affected"
+  },
+  {
+   "pkg": "libk5crypto3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112321",
+   "status": "affected"
+  },
+  {
+   "pkg": "libk5crypto3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112322",
+   "status": "affected"
+  },
+  {
+   "pkg": "libk5crypto3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112323",
+   "status": "affected"
+  },
+  {
+   "pkg": "libk5crypto3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-118380",
+   "status": "affected"
+  },
+  {
+   "pkg": "libk5crypto3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-119079",
+   "status": "affected"
+  },
+  {
+   "pkg": "libk5crypto3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-71199",
+   "status": "affected"
+  },
+  {
+   "pkg": "libk5crypto3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-71200",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5-3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-107364",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5-3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112315",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5-3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112316",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5-3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112317",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5-3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112318",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5-3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112319",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5-3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112320",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5-3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112321",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5-3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112322",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5-3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112323",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5-3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-118380",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5-3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-119079",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5-3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-71199",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5-3",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-71200",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5support0",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-107364",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5support0",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112315",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5support0",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112316",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5support0",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112317",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5support0",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112318",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5support0",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112319",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5support0",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112320",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5support0",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112321",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5support0",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112322",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5support0",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-112323",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5support0",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-118380",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5support0",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-119079",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5support0",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-71199",
+   "status": "affected"
+  },
+  {
+   "pkg": "libkrb5support0",
+   "installed": "1.21.3-5+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-71200",
+   "status": "affected"
+  },
+  {
+   "pkg": "liblastlog2-2",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-76642",
+   "status": "affected"
+  },
+  {
+   "pkg": "liblastlog2-2",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78408",
+   "status": "affected"
+  },
+  {
+   "pkg": "liblastlog2-2",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78409",
+   "status": "affected"
+  },
+  {
+   "pkg": "liblastlog2-2",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78410",
+   "status": "affected"
+  },
+  {
+   "pkg": "libmount1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-76642",
+   "status": "affected"
+  },
+  {
+   "pkg": "libmount1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78408",
+   "status": "affected"
+  },
+  {
+   "pkg": "libmount1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78409",
+   "status": "affected"
+  },
+  {
+   "pkg": "libmount1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78410",
+   "status": "affected"
+  },
+  {
+   "pkg": "libncursesw6",
+   "installed": "6.5+20250216-2",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2025-69720",
+   "status": "affected"
+  },
+  {
+   "pkg": "libsmartcols1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-76642",
+   "status": "affected"
+  },
+  {
+   "pkg": "libsmartcols1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78408",
+   "status": "affected"
+  },
+  {
+   "pkg": "libsmartcols1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78409",
+   "status": "affected"
+  },
+  {
+   "pkg": "libsmartcols1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78410",
+   "status": "affected"
+  },
+  {
+   "pkg": "libsqlite3-0",
+   "installed": "3.46.1-7+deb13u2",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-119373",
+   "status": "affected"
+  },
+  {
+   "pkg": "libsqlite3-0",
+   "installed": "3.46.1-7+deb13u2",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-119374",
+   "status": "affected"
+  },
+  {
+   "pkg": "libsqlite3-0",
+   "installed": "3.46.1-7+deb13u2",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-119379",
+   "status": "affected"
+  },
+  {
+   "pkg": "libssl3t64",
+   "installed": "3.5.7-1~deb13u3",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-124709",
+   "status": "affected"
+  },
+  {
+   "pkg": "libsystemd0",
+   "installed": "257.13-1~deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-16742",
+   "status": "affected"
+  },
+  {
+   "pkg": "libtiff6",
+   "installed": "4.7.0-3+deb13u3",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-36849",
+   "status": "will_not_fix"
+  },
+  {
+   "pkg": "libtiff6",
+   "installed": "4.7.0-3+deb13u3",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-52490",
+   "status": "affected"
+  },
+  {
+   "pkg": "libtinfo6",
+   "installed": "6.5+20250216-2",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2025-69720",
+   "status": "affected"
+  },
+  {
+   "pkg": "libudev1",
+   "installed": "257.13-1~deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-16742",
+   "status": "affected"
+  },
+  {
+   "pkg": "libuuid1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-76642",
+   "status": "affected"
+  },
+  {
+   "pkg": "libuuid1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78408",
+   "status": "affected"
+  },
+  {
+   "pkg": "libuuid1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78409",
+   "status": "affected"
+  },
+  {
+   "pkg": "libuuid1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78410",
+   "status": "affected"
+  },
+  {
+   "pkg": "libx11-6",
+   "installed": "2:1.8.12-1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-88806",
+   "status": "affected"
+  },
+  {
+   "pkg": "libx11-data",
+   "installed": "2:1.8.12-1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-88806",
+   "status": "affected"
+  },
+  {
+   "pkg": "libxrender1",
+   "installed": "1:0.9.12-1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-88807",
+   "status": "affected"
+  },
+  {
+   "pkg": "login",
+   "installed": "1:4.16.0-2+really2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-76642",
+   "status": "affected"
+  },
+  {
+   "pkg": "login",
+   "installed": "1:4.16.0-2+really2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78408",
+   "status": "affected"
+  },
+  {
+   "pkg": "login",
+   "installed": "1:4.16.0-2+really2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78409",
+   "status": "affected"
+  },
+  {
+   "pkg": "login",
+   "installed": "1:4.16.0-2+really2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78410",
+   "status": "affected"
+  },
+  {
+   "pkg": "mount",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-76642",
+   "status": "affected"
+  },
+  {
+   "pkg": "mount",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78408",
+   "status": "affected"
+  },
+  {
+   "pkg": "mount",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78409",
+   "status": "affected"
+  },
+  {
+   "pkg": "mount",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78410",
+   "status": "affected"
+  },
+  {
+   "pkg": "ncurses-base",
+   "installed": "6.5+20250216-2",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2025-69720",
+   "status": "affected"
+  },
+  {
+   "pkg": "ncurses-bin",
+   "installed": "6.5+20250216-2",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2025-69720",
+   "status": "affected"
+  },
+  {
+   "pkg": "openssl",
+   "installed": "3.5.7-1~deb13u3",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-124709",
+   "status": "affected"
+  },
+  {
+   "pkg": "openssl-provider-legacy",
+   "installed": "3.5.7-1~deb13u3",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-124709",
+   "status": "affected"
+  },
+  {
+   "pkg": "perl-base",
+   "installed": "5.40.1-6+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-9538",
+   "status": "fix_deferred"
+  },
+  {
+   "pkg": "util-linux",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-76642",
+   "status": "affected"
+  },
+  {
+   "pkg": "util-linux",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78408",
+   "status": "affected"
+  },
+  {
+   "pkg": "util-linux",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78409",
+   "status": "affected"
+  },
+  {
+   "pkg": "util-linux",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78410",
+   "status": "affected"
+  }
+ ],
+ "after_poppler_removal": [
+  {
+   "pkg": "bsdutils",
+   "installed": "1:2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-76642",
+   "status": "affected"
+  },
+  {
+   "pkg": "bsdutils",
+   "installed": "1:2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78408",
+   "status": "affected"
+  },
+  {
+   "pkg": "bsdutils",
+   "installed": "1:2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78409",
+   "status": "affected"
+  },
+  {
+   "pkg": "bsdutils",
+   "installed": "1:2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78410",
+   "status": "affected"
+  },
+  {
+   "pkg": "libacl1",
+   "installed": "2.3.2-2+b1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-54369",
+   "status": "affected"
+  },
+  {
+   "pkg": "libblkid1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-76642",
+   "status": "affected"
+  },
+  {
+   "pkg": "libblkid1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78408",
+   "status": "affected"
+  },
+  {
+   "pkg": "libblkid1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78409",
+   "status": "affected"
+  },
+  {
+   "pkg": "libblkid1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78410",
+   "status": "affected"
+  },
+  {
+   "pkg": "liblastlog2-2",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-76642",
+   "status": "affected"
+  },
+  {
+   "pkg": "liblastlog2-2",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78408",
+   "status": "affected"
+  },
+  {
+   "pkg": "liblastlog2-2",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78409",
+   "status": "affected"
+  },
+  {
+   "pkg": "liblastlog2-2",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78410",
+   "status": "affected"
+  },
+  {
+   "pkg": "libmount1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-76642",
+   "status": "affected"
+  },
+  {
+   "pkg": "libmount1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78408",
+   "status": "affected"
+  },
+  {
+   "pkg": "libmount1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78409",
+   "status": "affected"
+  },
+  {
+   "pkg": "libmount1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78410",
+   "status": "affected"
+  },
+  {
+   "pkg": "libncursesw6",
+   "installed": "6.5+20250216-2",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2025-69720",
+   "status": "affected"
+  },
+  {
+   "pkg": "libsmartcols1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-76642",
+   "status": "affected"
+  },
+  {
+   "pkg": "libsmartcols1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78408",
+   "status": "affected"
+  },
+  {
+   "pkg": "libsmartcols1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78409",
+   "status": "affected"
+  },
+  {
+   "pkg": "libsmartcols1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78410",
+   "status": "affected"
+  },
+  {
+   "pkg": "libsqlite3-0",
+   "installed": "3.46.1-7+deb13u2",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-119373",
+   "status": "affected"
+  },
+  {
+   "pkg": "libsqlite3-0",
+   "installed": "3.46.1-7+deb13u2",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-119374",
+   "status": "affected"
+  },
+  {
+   "pkg": "libsqlite3-0",
+   "installed": "3.46.1-7+deb13u2",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-119379",
+   "status": "affected"
+  },
+  {
+   "pkg": "libssl3t64",
+   "installed": "3.5.9-1~deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-124709",
+   "status": "affected"
+  },
+  {
+   "pkg": "libsystemd0",
+   "installed": "257.13-1~deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-16742",
+   "status": "affected"
+  },
+  {
+   "pkg": "libtinfo6",
+   "installed": "6.5+20250216-2",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2025-69720",
+   "status": "affected"
+  },
+  {
+   "pkg": "libudev1",
+   "installed": "257.13-1~deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-16742",
+   "status": "affected"
+  },
+  {
+   "pkg": "libuuid1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-76642",
+   "status": "affected"
+  },
+  {
+   "pkg": "libuuid1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78408",
+   "status": "affected"
+  },
+  {
+   "pkg": "libuuid1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78409",
+   "status": "affected"
+  },
+  {
+   "pkg": "libuuid1",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78410",
+   "status": "affected"
+  },
+  {
+   "pkg": "login",
+   "installed": "1:4.16.0-2+really2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-76642",
+   "status": "affected"
+  },
+  {
+   "pkg": "login",
+   "installed": "1:4.16.0-2+really2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78408",
+   "status": "affected"
+  },
+  {
+   "pkg": "login",
+   "installed": "1:4.16.0-2+really2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78409",
+   "status": "affected"
+  },
+  {
+   "pkg": "login",
+   "installed": "1:4.16.0-2+really2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78410",
+   "status": "affected"
+  },
+  {
+   "pkg": "mount",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-76642",
+   "status": "affected"
+  },
+  {
+   "pkg": "mount",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78408",
+   "status": "affected"
+  },
+  {
+   "pkg": "mount",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78409",
+   "status": "affected"
+  },
+  {
+   "pkg": "mount",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78410",
+   "status": "affected"
+  },
+  {
+   "pkg": "ncurses-base",
+   "installed": "6.5+20250216-2",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2025-69720",
+   "status": "affected"
+  },
+  {
+   "pkg": "ncurses-bin",
+   "installed": "6.5+20250216-2",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2025-69720",
+   "status": "affected"
+  },
+  {
+   "pkg": "openssl",
+   "installed": "3.5.9-1~deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-124709",
+   "status": "affected"
+  },
+  {
+   "pkg": "openssl-provider-legacy",
+   "installed": "3.5.9-1~deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-124709",
+   "status": "affected"
+  },
+  {
+   "pkg": "perl-base",
+   "installed": "5.40.1-6+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-9538",
+   "status": "fix_deferred"
+  },
+  {
+   "pkg": "util-linux",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-76642",
+   "status": "affected"
+  },
+  {
+   "pkg": "util-linux",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78408",
+   "status": "affected"
+  },
+  {
+   "pkg": "util-linux",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78409",
+   "status": "affected"
+  },
+  {
+   "pkg": "util-linux",
+   "installed": "2.41.5-0+deb13u1",
+   "fixed": null,
+   "severity": "HIGH",
+   "id": "CVE-2026-78410",
+   "status": "affected"
+  }
+ ]
+}

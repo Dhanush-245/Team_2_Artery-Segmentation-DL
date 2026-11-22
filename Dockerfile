@@ -11,7 +11,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONPATH=/app/backend \
     COROVISION_ENV=production COROVISION_TRAINED_RELEASE=/models/trained_release \
     COROVISION_MODEL_PROVIDER=preserved COROVISION_INFERENCE_WORKER=1
 WORKDIR /app
-RUN apt-get update && apt-get upgrade -y --no-install-recommends && apt-get install -y --no-install-recommends libglib2.0-0t64 libgomp1 poppler-utils zlib1g \
+RUN apt-get update && apt-get upgrade -y --no-install-recommends && apt-get install -y --no-install-recommends libglib2.0-0t64 libgomp1 zlib1g \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --gid 10001 corovision && useradd --uid 10001 --gid 10001 --create-home corovision \
     && mkdir -p /data/storage /models && chown -R 10001:10001 /data /models

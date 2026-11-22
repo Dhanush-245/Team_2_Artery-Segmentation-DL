@@ -215,3 +215,18 @@ def test_cropped_restore_is_empty_outside_the_crop():
     coarse_affine = source.affine @ shift @ np.diag([*((np.array([20, 20, 10]) - 1) / 127), 1.])
     restored = np.asarray(volume.restore_mask(np.ones((128, 128, 128), np.uint8), coarse_affine, source, cropped=True).dataobj)
     assert restored[25, 25, 15] == 1 and restored[5, 5, 5] == 0 and restored[55, 55, 25] == 0
+
+
+def test_epicardial_filter_keeps_components_on_the_heart_only():
+    import numpy as np
+    from app import volume_inference as volume
+    values = np.full((120, 120, 60), -900, np.float32)
+    zz, yy, xx = np.ogrid[:120, :120, :60]
+    values[((zz - 60) ** 2 + (yy - 60) ** 2 + (xx - 30) ** 2) < 30 ** 2] = 350          # cardiac chamber, 30 mm radius
+    mask = np.zeros(values.shape, bool)
+    mask[88:92, 58:62, 20:40] = True     # vessel 28-32 mm from the centre: on the chamber surface
+    mask[60:64, 112:116, 10:50] = True   # tube ~52 mm from the centre: far from the heart
+    kept, record = volume.epicardial_filter(mask, values, (1.0, 1.0, 1.0))
+    assert kept[90, 60, 30] and not kept[62, 114, 30]
+    assert record['removed_voxels'] == int(mask[60:64, 112:116, 10:50].sum())
+    assert [row['kept'] for row in record['components']].count(True) == 1

@@ -188,6 +188,46 @@ def locate_heart_roi(values, zooms):
                 centre_canonical_voxel=np.round(centre, 1).tolist(), max_blood_depth_mm=round(float(depth.max()), 1))
 
 
+EPICARDIAL_MAX_MEDIAN_MM = 20.0
+EPICARDIAL_METHOD = 'chamber-distance-median-20mm-v1'
+
+
+def epicardial_filter(mask, source_values, zooms):
+    """Keep predicted components lying on the heart (median distance to cardiac chambers <= 20 mm).
+
+    Chambers: contrast blood pool (150-600 HU) at >= 8 mm depth that is connected to the deepest
+    blood-pool core, at half resolution. Applied only to heart-cropped whole-chest runs; returns the
+    filtered mask and a record of every component kept or removed.
+    """
+    from scipy import ndimage
+    zooms = np.asarray(zooms[:3], dtype=float)
+    small = source_values[::2, ::2, ::2]
+    blood = ndimage.binary_opening((small > 150) & (small < 600), iterations=1)
+    if not blood.any() or not mask.any():
+        return mask, None
+    depth = ndimage.distance_transform_edt(blood, sampling=zooms * 2)
+    core = depth >= 0.6 * float(depth.max())
+    labels, count = ndimage.label(core)
+    if not count:
+        return mask, None
+    heart = labels == int(np.argmax(ndimage.sum(core, labels, range(1, count + 1)))) + 1
+    chambers = ndimage.binary_propagation(heart, mask=depth >= 8)
+    distance = ndimage.distance_transform_edt(~chambers, sampling=zooms * 2)
+    components, n = ndimage.label(mask, structure=np.ones((3, 3, 3)))
+    kept = np.zeros_like(mask, dtype=bool)
+    rows = []
+    limit = np.array(distance.shape) - 1
+    for index in range(1, n + 1):
+        points = np.argwhere(components == index)
+        d = distance[tuple(np.minimum(points // 2, limit).T)]
+        keep = float(np.median(d)) <= EPICARDIAL_MAX_MEDIAN_MM
+        if keep:
+            kept[components == index] = True
+        rows.append(dict(component=index, voxels=int(len(points)), median_distance_mm=round(float(np.median(d)), 1), kept=keep))
+    return kept, dict(method=EPICARDIAL_METHOD, max_median_distance_mm=EPICARDIAL_MAX_MEDIAN_MM, components=rows,
+                      removed_voxels=int(mask.sum() - kept.sum()))
+
+
 def prepare_input(path, roi='auto'):
     """roi: 'auto' locates a heart crop for whole-chest scans; None uses the full volume; a dict reproduces a saved crop."""
     image = inspect_input(path)
@@ -254,6 +294,12 @@ def run_inference(source_path, output, model_key='imagecas'):
         mask = logits.argmax(1)[0].numpy().astype(np.uint8)
     output.mkdir(parents=True, exist_ok=True)
     restored = restore_mask(mask, coarse_affine, source, cropped=bool(roi))
+    postprocessing = None
+    if roi:
+        raw_values = np.asarray(restored.dataobj) > 0
+        nib.save(restored, output/'mask_source_raw.nii.gz')
+        filtered, postprocessing = epicardial_filter(raw_values, np.asarray(source.dataobj, dtype=np.float32), source.header.get_zooms())
+        restored = nib.Nifti1Image(filtered.astype(np.uint8), source.affine, restored.header)
     nib.save(restored, output/'mask_source.nii.gz')
     coarse = nib.Nifti1Image(probability, coarse_affine)
     coarse.header.set_xyzt_units('mm')
@@ -280,6 +326,7 @@ def run_inference(source_path, output, model_key='imagecas'):
             'canonical_shape':list(canonical.shape), 'coarse_affine_ras_mm':coarse_affine.tolist(),
             'coarse_foreground_voxels':int(mask.sum()),
             'source_grid_foreground_voxels':int(np.asarray(restored.dataobj).sum()),
+            'postprocessing': postprocessing,
             'duration_seconds':round(time.monotonic()-started,3), 'device':'cpu',
             'slices':slices, 'clinical_validated':False, 'severity':None,
             'limitations':model_status(model_key)['limitations'] + (["Aorta training references were AI pseudo-labels; only 12 aligned source pairs."] if model_key=='aorta_aligned' else []) + [

@@ -22,8 +22,6 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - name: Install PDF conversion dependency
-        run: sudo apt-get update && sudo apt-get install --yes poppler-utils
       - name: Install backend dependencies
         run: pip install -r backend/requirements-ai.txt ruff==0.6.9
       - name: Backend lint (syntax errors and undefined names)

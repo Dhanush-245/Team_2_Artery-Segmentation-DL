@@ -200,7 +200,8 @@ def install(app, *, get_db, current_user, accessible_case, case_out, storage: Pa
         db.commit()
         folder = run_folder(storage, row.id)
         crop = (result.get('preprocessing') or {}).get('roi')
-        threading.Thread(target=generate, args=(record, next(folder.glob('source.nii*')), folder / 'outputs' / 'mask_source.nii.gz', crop), daemon=True).start()
+        model_mask = folder / 'outputs' / ('mask_source_raw.nii.gz' if (folder / 'outputs' / 'mask_source_raw.nii.gz').is_file() else 'mask_source.nii.gz')
+        threading.Thread(target=generate, args=(record, next(folder.glob('source.nii*')), model_mask, crop), daemon=True).start()
         return record
 
     def own(case_id, run_id, record_id, user, db):

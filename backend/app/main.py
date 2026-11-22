@@ -1421,7 +1421,7 @@ def volume_run_out(row):
             'input_kind':'synthetic_fixture' if row.source_sha256 in SYNTHETIC_FIXTURE_HASHES else row.input_kind or 'unspecified',
             'preview_url': base+'/artifacts/preview-3d.json' if row.status == 'completed' else None,
             'artifacts': {name:base+'/artifacts/'+name for name in
-                          ['mask_source.nii.gz','probability_coarse.nii.gz','overlay_0.png','overlay_1.png','overlay_2.png','result.json']}
+                          ['mask_source.nii.gz','mask_source_raw.nii.gz','probability_coarse.nii.gz','overlay_0.png','overlay_1.png','overlay_2.png','result.json']}
                          if row.status == 'completed' else {}}
 
 
@@ -1593,7 +1593,7 @@ def volume_artifact(case_id: str, run_id: str, name: str,
                     user: User = Depends(require_case_role), db: Session = Depends(get_db)):
     accessible_case(case_id, user, db)
     row = db.get(VolumeAnalysis, run_id)
-    allowed = {'mask_source.nii.gz','probability_coarse.nii.gz','overlay_0.png','overlay_1.png','overlay_2.png','result.json','preview-3d.json'}
+    allowed = {'mask_source.nii.gz','mask_source_raw.nii.gz','probability_coarse.nii.gz','overlay_0.png','overlay_1.png','overlay_2.png','result.json','preview-3d.json'}
     if row is None or row.case_id != case_id or row.status != 'completed' or name not in allowed:
         raise HTTPException(404, 'Volume artifact not found')
     path = STORAGE/'volumes'/row.id/'outputs'/('mask_source.nii.gz' if name == 'preview-3d.json' else name)
@@ -1661,7 +1661,7 @@ def volume_evidence(case_id: str, run_id: str, user: User = Depends(require_case
     members = {'analysis.json': json.dumps(document, allow_nan=False).encode(),
         'geometry.json': json.dumps(document['experimental_geometry'], allow_nan=False).encode(),
         'measurements.csv': csv_text(document).encode(), 'report.pdf': pdf_bytes(document)}
-    for name in ['mask_source.nii.gz','probability_coarse.nii.gz','overlay_0.png','overlay_1.png','overlay_2.png','result.json']:
+    for name in ['mask_source.nii.gz','mask_source_raw.nii.gz','probability_coarse.nii.gz','overlay_0.png','overlay_1.png','overlay_2.png','result.json']:
         if (folder/name).is_file():
             members[name] = (folder/name).read_bytes()
     members['xai_explanations.json'] = json.dumps(document.get('explainable_ai') or [], indent=2).encode()
