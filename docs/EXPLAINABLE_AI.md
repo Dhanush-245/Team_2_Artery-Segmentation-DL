@@ -71,12 +71,12 @@ Mask-constrained variants are optional. They follow the predicted mask by design
 | Methods | Grad-CAM 3D and Grad-CAM++ 3D at decoder block `dec[1]` (64³, trilinear to 128³); occlusion on a 4×4×4 block grid |
 | Native geometry | The 128³ map is restored to the saved source grid with the run's coarse affine and `resample_from_to`, the same path as the saved vessel mask. Each record re-derives the model mask through that path and compares it with `mask_source.nii.gz` (Dice must be ≥ 0.999). |
 | Slice overlay | The slice viewer samples each displayed slice from the 128³ map through the affines (identical to the full native resample, tested to < 1e-5) after checking the map's SHA-256 |
-| Verification | 3D deletion/insertion: 4×4×4 blocks, volume-mean baseline, target relative to its unperturbed value, ranked vs one fixed random order, same 0.01 gates. Model randomization NOT_TESTED. |
+| Verification | 3D deletion/insertion: 4×4×4 blocks, volume-mean baseline, target relative to its unperturbed value, ranked vs one fixed random order, same 0.01 gates. Cascading model randomization was run once on the demo case (`reports/xai_faithfulness_20261122`). |
 | Storage | `STORAGE/volumes/<run>/xai/<identity>.json`, `.attr.nii.gz` (native uint8) and `.coarse.npy` (float16), hashed |
 | Reports | 3D PDF section "Explainable AI — Research Interpretation"; evidence ZIP adds `xai_explanations.json` and the coarse maps |
 
-**Observed on the public CTA demo case (DOCKER-PUBLIC-CTA).**
+**Observed on the public CTA demo case (DOCKER-PUBLIC-CTA), heart-cropped run.**
 - **Alignment:** PASS, mask Dice 1.000 on the 512×512×321 grid.
-- **Model output:** the model labels only 342 vessel voxels at 128³, and they lie posterior to the body contour rather than in the coronary tree.
-- **Attribution:** Grad-CAM peaks on those voxels, with 5.6% of its energy inside them. Grad-CAM++ is diffuse.
-- **What this shows:** the 3D model fails on this external scan. The explanation shows that failure; it does not hide it.
+- **Deletion/insertion (Grad-CAM 3D):** FAIL / FAIL (advantages −0.133 / −0.289). Ranked removal changed the target less than random removal.
+- **Model randomization:** Grad-CAM 3D PARTIAL (head-only ρ 0.32; deeper stages decorrelate). Grad-CAM++ 3D FAIL (ρ 0.85).
+- **What this shows:** on n = 1 volume, the 3D maps are research saliency only and are not faithful by the predeclared test. The dashboard lists this as study `m3-02-3d-demo-20261122`.

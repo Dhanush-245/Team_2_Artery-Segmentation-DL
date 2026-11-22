@@ -160,7 +160,8 @@ def xai_section(report, snapshot, xai_images, cell, table, Image, ImageReader):
                             Paragraph_caption(report, ' · '.join(name[4:].rsplit('_', 2)[:2]).replace('vessel_mask', 'vessel mask'))])
         if figures:
             report.story.append(table([figures], [width] * len(figures), header=False))
-    overall = '; '.join(f"{c['target']}: {c.get('overall', '')}" for c in STUDY_EVIDENCE[-1]['checks'])
+    study = next(e for e in STUDY_EVIDENCE if e['id'] == 'm3-02-faithfulness-20261122')
+    overall = '; '.join(f"{c['target']}: {c.get('overall', '')}" for c in study['checks'])
     report.paragraph('Study-level faithfulness (M3-02, ARCADE validation): ' + overall + '. Heatmaps show where a model target was sensitive; '
                      'they are not lesion labels, severity or disease probability, and clinical validity is not assessed.')
 

@@ -164,3 +164,19 @@ The 23 remaining sampled validation images were measured on an uncontended host 
 | mask-constrained Grad-CAM++ (saved app map) | PASS | FAIL | PARTIAL |
 
 Scope: ARCADE stenosis validation split only, frozen checkpoint f0bc898c, saved operating point. Development-exposed data; no independent cohort; clinical explainability not assessed. Product consequence: the case Explainable AI step defaults to raw (unconstrained) maps and offers the mask constraint as an option.
+
+## 3D volumetric attribution — single-case sanity checks (22 Nov 2026)
+
+Case: DOCKER-PUBLIC-CTA (public 3D Slicer CTACardio), heart-cropped run, retained ImageCAS 3D U-Net (`b77271b1…`).
+Target: mean vessel-minus-background logit over the model's vessel voxels at 128³. **n = 1 volume**, so these are
+sanity checks, not a study.
+
+| Check | Grad-CAM 3D | Grad-CAM++ 3D |
+|---|---|---|
+| Deletion / insertion (4×4×4 blocks, protocol 3D-v1; app run 56048fbd) | FAIL / FAIL (advantages −0.133 / −0.289) | not run |
+| Cascading randomization, head only (Spearman ρ) | 0.319 (not decorrelated) | 0.853 (not decorrelated) |
+| Cascading randomization, deeper stages | −0.21 … 0.22 (decorrelated at most stages) | constant map at most stages (ρ undefined); 0.30–0.32 where defined |
+| Result | **PARTIAL** (randomization), **FAIL** (deletion/insertion) | **FAIL** |
+
+Full per-stage values: `randomization_3d_demo_cta.json`. The 3D explanation is therefore shown as research saliency
+only; it is not faithful on the demo case by the predeclared deletion/insertion test.

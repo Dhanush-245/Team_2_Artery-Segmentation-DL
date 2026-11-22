@@ -44,6 +44,14 @@ STUDY_EVIDENCE = [
          randomization='PARTIAL',
          randomization_note='Only raw Grad-CAM decorrelates from randomized detectors (cascading median |rho| <= 0.2; full randomization 22/25).',
          overall='PARTIAL'),
+    dict(id='m3-02-3d-demo-20261122', date='2026-11-22', method='3D Grad-CAM / Grad-CAM++ (ImageCAS U-Net)',
+         cohort='one public CTA volume (heart-cropped demo case); sanity checks only', checks=[
+             dict(target='Grad-CAM 3D', deletion='FAIL', insertion='FAIL', randomization='PARTIAL', overall='FAIL'),
+             dict(target='Grad-CAM++ 3D', randomization='FAIL', overall='FAIL')],
+         randomization='PARTIAL',
+         randomization_note='Grad-CAM 3D decorrelates only after decoder layers are randomized (head-only rho 0.32); Grad-CAM++ 3D stays similar (rho 0.85).',
+         deletion_insertion='FAIL', deletion_insertion_note='n = 1 volume; ranked block removal changed the target less than random removal.',
+         overall='FAIL'),
 ]
 
 
