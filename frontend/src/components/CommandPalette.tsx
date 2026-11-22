@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import type { CaseRecord } from "../caseTypes";
 import type { SidebarView } from "./watermelon/macos-sidebar";
 import { SECTION_META } from "../sectionMeta";
+import { caseStatusLabel } from "../caseTypes";
 
 export type PaletteCommand = { id: string; group: "Sections" | "Cases" | "Actions"; label: string; hint?: string; run: () => void };
 
@@ -22,7 +23,7 @@ export function buildCommands(options: {
   return [
     ...options.sections.map((view): PaletteCommand => ({ id: `section:${view}`, group: "Sections", label: SECTION_META[view].title, hint: SECTION_META[view].description, run: () => options.openSection(view) })),
     ...options.actions,
-    ...options.cases.map((item): PaletteCommand => ({ id: `case:${item.id}`, group: "Cases", label: item.case_code, hint: `${item.modality} · ${item.anatomy} · ${item.status}`, run: () => options.openCase(item.id) })),
+    ...options.cases.map((item): PaletteCommand => ({ id: `case:${item.id}`, group: "Cases", label: item.case_code, hint: `${item.modality} · ${item.anatomy} · ${caseStatusLabel(item)}`, run: () => options.openCase(item.id) })),
   ];
 }
 

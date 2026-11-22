@@ -14,10 +14,11 @@ function LatestAnalysisCard() {
   const { selectedImage, selectedAnalysis, overlay, analysis } = run;
   if (!selectedImage) return null;
   return <Card className="panel analysis-panel">
-    <div className="viewer-heading"><h3>AI vessel analysis</h3><span>Research only</span></div>
-    <p className="caption">Selected source: {selectedImage.original_name}. Choose a different image under Assets & preparation to inspect its history.</p>
-    <p className="muted">This research analysis brings together the artery outline, vessel measurements and possible narrowing.</p>
-    <Button type="button" onClick={() => setActiveView("analysis")}>{selectedAnalysis ? "View combined findings" : "Open analysis"}</Button>
+    <div className="viewer-heading">
+      <div className="cv-panel-head"><span className="eyebrow">LATEST 2D ANALYSIS</span><h3>AI vessel analysis</h3><p className="muted">Artery outline, vessel measurements and possible narrowing for {selectedImage.original_name}.</p></div>
+      <span className="cv-chip info">Research only</span>
+    </div>
+    <div className="cv-actions"><span className="cv-actions-label">Source image</span><span className="caption">Choose a different image under Assets &amp; preparation to inspect its history.</span><Button type="button" size="sm" className="primary" onClick={() => setActiveView("analysis")}>{selectedAnalysis ? "View combined findings" : "Open analysis"}</Button></div>
     {overlay && <div className="analysis-overlay"><img src={overlay} alt="Research artery and stenosis mask overlay" /><p className="caption">Cyan: predicted artery · Coral: predicted stenosis</p></div>}
     {analysis && <div className="analysis-details">
       <p><strong>Model:</strong> {analysis.model_version}</p>

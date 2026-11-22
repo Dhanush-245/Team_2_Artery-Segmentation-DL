@@ -174,23 +174,14 @@ export default function AdminPanel({ token, currentUser, section = "users" }: { 
         <div className="user-list">
           {!loading && users.filter(item => `${item.display_name} ${item.email} ${item.role} ${item.status}`.toLowerCase().includes(search.toLowerCase())).length === 0 && <p>No accounts match this search.</p>}
           {users.filter(item => `${item.display_name} ${item.email} ${item.role} ${item.status}`.toLowerCase().includes(search.toLowerCase())).map((item) => (
-            <div className="user-row" key={item.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", padding: "0.85rem 0", borderBottom: "1px solid #f0f0f2" }}>
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <div className="user-row" key={item.id}>
+              <div className="user-row-main">
+                <div className="user-row-title">
                   <strong>{item.display_name || item.email}</strong>
-                  {item.id === currentUser.id && <span style={{ fontSize: "0.72rem", background: "#f4f4f5", padding: "0.15rem 0.45rem", borderRadius: "6px" }}>You</span>}
-                  <span style={{
-                    fontSize: "0.72rem",
-                    fontWeight: 650,
-                    padding: "0.15rem 0.5rem",
-                    borderRadius: "6px",
-                    background: item.status === "active" ? "#ecfdf5" : item.status === "suspended" ? "#fef2f2" : "#fef9c3",
-                    color: item.status === "active" ? "#047857" : item.status === "suspended" ? "#b91c1c" : "#854d0e",
-                  }}>
-                    {item.status || "active"}
-                  </span>
+                  {item.id === currentUser.id && <span className="cv-chip muted">You</span>}
+                  <span className={`cv-chip ${item.status === "suspended" ? "bad" : item.status === "active" || !item.status ? "ok" : "warn"}`}>{item.status || "active"}</span>
                 </div>
-                <span style={{ fontSize: "0.82rem", color: "#71717a" }}>{item.email}</span>
+                <span className="muted user-row-email">{item.email}</span>
                 {(["doctor", "clinician", "admin"].includes(item.role)) && <label className="approval-toggle"><input type="checkbox" checked={!!item.can_approve_reports} disabled={busyId === item.id} onChange={(event) => changeReportApproval(item.id, event.target.checked)} /> Authorized to approve reports</label>}
               </div>
 

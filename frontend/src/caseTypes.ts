@@ -177,3 +177,9 @@ export type StructuredResearchResult = {
   limitations: string[]; artifacts: Record<string, string>;
   explanation: { version: string; method: string; sections: { title: string; text: string; source_refs: string[] }[] };
 };
+
+/** Readable case status: the workflow stage when known, otherwise the first part of a combined "stage:detail" status. */
+export function caseStatusLabel(record: { status: string; workflow_status?: string }): string {
+  const raw = record.workflow_status || record.status.split(":")[0] || record.status;
+  return raw.replaceAll("_", " ");
+}

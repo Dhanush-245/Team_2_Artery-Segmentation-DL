@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Download, FileJson, FileSpreadsheet, FileText, Package } from 'lucide-react';
 import { apiUrl } from './api';
 import { Button } from './components/prismui/button';
 import VolumeOrbit from './VolumeOrbit';
@@ -153,11 +154,11 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
       <thead><tr><th>Date</th><th>Run</th><th>Status</th><th>Model</th><th>Duration</th></tr></thead>
       <tbody>{runs.map(run => <tr key={run.id}><td>{utcDate(run.created_at).toLocaleString()}</td><td>{run.id}</td><td>{run.status}</td><td>{run.result?.model_id ?? run.model_key ?? 'Unavailable'}</td><td>{run.result ? `${run.result.duration_seconds.toFixed(2)} s` : 'Unavailable'}</td></tr>)}</tbody>
     </table>}
-    {onOpenAnalysis && <Button onClick={onOpenAnalysis}>Open analysis viewer</Button>}
+    {onOpenAnalysis && <Button variant="outline" size="sm" onClick={onOpenAnalysis}>Open analysis viewer</Button>}
   </section>;
   return <section className="volume-inference" aria-labelledby="volume-inference-title">
-    <header><p className="eyebrow">VOLUME ANALYSIS</p><h3 id="volume-inference-title">{anatomy==='aorta'?'Aortic CT':'Coronary CTA'} segmentation</h3>
-      <p>View a 3D vessel mask and slice previews. CoroVision selects the research pipeline from the case anatomy. Small vessels may be missed.</p></header>
+    <header className="cv-panel-head"><p className="eyebrow">VOLUME ANALYSIS</p><h3 id="volume-inference-title">{anatomy==='aorta'?'Aortic CT':'Coronary CTA'} segmentation</h3>
+      <p className="muted">3D vessel mask, slice views, surface reconstruction and research measurements. The pipeline follows the case anatomy; small vessels may be missed.</p></header>
     {!readOnly && <form onSubmit={start} className="volume-run-form" aria-busy={busy}>
       <label>Original de-identified {anatomy==='aorta'?'CT/CTA':'coronary CTA'} volume<input type="file" accept=".nii,.nii.gz,.zip" required={!dicomFiles.length} disabled={busy} aria-describedby={error ? 'volume-input-help volume-error' : 'volume-input-help'} onChange={e => { setFile(e.target.files?.[0] || null); setError(''); }} /></label>
       <p id="volume-input-help">NIfTI or a ZIP containing exactly one de-identified CT DICOM series · up to {Math.floor(limits.max_file_bytes/1024/1024)} MiB and {(limits.max_source_voxels/1_000_000).toFixed(0)} million native voxels. DICOM reconstruction checks series identity, slice ordering, orientation and spacing before inference. NIfTI headers must specify millimetres. JPEG/PNG images and 4D sequences are not 3D CT volumes.</p>
@@ -171,17 +172,19 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
     </form>}
     {error && <p id="volume-error" role="alert" className="message error">{error}</p>}
     <section className="volume-saved-results" aria-label="Saved 3D results">
-      <h4>Saved 3D analyses</h4>
       {!runs.length ? <p className="muted">No 3D analyses yet. Use Upload or prepare a volume above to add a CT, CTA or MRA study; results appear here when the run completes.</p> : <>
-        <label>Analysis run<select value={selected?.id || ''} onChange={e => { setChosen(e.target.value); setViewingRun(''); }}>{runs.map(run => <option key={run.id} value={run.id}>{utcDate(run.created_at).toLocaleString()} · {run.status} · {run.id.slice(0,8)}</option>)}</select></label>
-        <p role="status">Status: {selected?.status}{selected?.error ? ` — ${selected.error}` : ''}</p>
+        <div className="volume-run-bar">
+          <label>Saved analysis run<select value={selected?.id || ''} onChange={e => { setChosen(e.target.value); setViewingRun(''); }}>{runs.map(run => <option key={run.id} value={run.id}>{utcDate(run.created_at).toLocaleString()} · {run.status} · {run.id.slice(0,8)}</option>)}</select></label>
+          <span role="status" className={`cv-chip ${selected?.status === 'completed' ? 'ok' : selected?.status === 'failed' ? 'bad' : 'warn'}`}>{selected?.status}</span>
+        </div>
+        {selected?.error && <p role="alert" className="message error">{selected.error}</p>}
         {selected?.result && <>
           {selected.input_kind === 'synthetic_fixture' && <div className="message warning" role="note"><strong>Synthetic geometry test — not a medical scan.</strong><p>This saved run used an artificial gradient, not coronary CTA anatomy. Grey slices and an empty vessel mask do not demonstrate medical segmentation. Upload a real, de-identified CTA from Assets & preparation.</p></div>}
           {selected.input_kind === 'unspecified' && <p className="message warning">Legacy source provenance is unspecified. Verify the original volume before interpreting this result.</p>}
           <p className="volume-run-meta">{selected.result.duration_seconds.toFixed(2)} s · {selected.result.source_shape.join(' × ')} voxels · {selected.result.coarse_foreground_voxels.toLocaleString()} predicted coarse-grid voxels</p>
           {selected.result.coarse_foreground_voxels === 0 && <p className="message warning">No vessel overlay was produced by this model. This is not a healthy/normal finding; check source eligibility and image quality and obtain expert review.</p>}
           <section className="volume-findings-summary" aria-labelledby="volume-findings-title">
-            <div className="volume-findings-heading"><div><p className="eyebrow">SAVED 3D CASE</p><h4 id="volume-findings-title">Analysis findings</h4></div><strong className="volume-result-status">{selected.status}</strong></div>
+            <div className="volume-findings-heading"><div><p className="eyebrow">SAVED 3D CASE</p><h4 id="volume-findings-title">Analysis findings</h4></div><span className="cv-chip ok">{selected.status}</span></div>
             <dl className="volume-summary-grid">
               <div><dt>Model</dt><dd>{selected.result.model_id}</dd></div>
               <div><dt>Source volume</dt><dd>{selected.result.source_shape.join(' × ')} voxels</dd></div>
@@ -204,9 +207,12 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
           <div className="volume-slices">{selected.result.slices.map(slice => <figure key={slice.artifact}>
             {previews[slice.artifact] ? <img src={previews[slice.artifact]} alt={`Predicted coronary overlay on ${slice.axis} slice ${slice.coarse_index}`} /> : <p>Loading saved preview…</p>}
             <figcaption>{slice.axis} · coarse slice {slice.coarse_index}</figcaption></figure>)}</div></details>
-          <div className="volume-downloads"><Button onClick={() => void download('mask_source.nii.gz')}>Download source-grid mask</Button><Button onClick={() => void download('probability_coarse.nii.gz')}>Download coarse probability volume</Button><Button onClick={() => void download('result.json')}>Download result JSON</Button></div>
+          <div className="cv-actions" role="group" aria-label="Model output downloads"><span className="cv-actions-label">Model outputs</span>
+            <Button variant="outline" size="sm" onClick={() => void download('mask_source.nii.gz')}><Download size={14} /> Source-grid mask (NIfTI)</Button>
+            <Button variant="outline" size="sm" onClick={() => void download('probability_coarse.nii.gz')}><Download size={14} /> Probability volume</Button>
+            <Button variant="outline" size="sm" onClick={() => void download('result.json')}><FileJson size={14} /> Result JSON</Button></div>
           <section className="volume-measurement-report" aria-label="3D measurement report">
-            <div className="volume-section-heading"><h4>Measurement details</h4><Button onClick={()=>void download('evidence.zip')}>Download evidence ZIP</Button></div>
+            <div className="volume-section-heading"><div><p className="eyebrow">MEASUREMENTS</p><h4>Vessel geometry and narrowing</h4></div><Button variant="outline" size="sm" onClick={()=>void download('evidence.zip')}><Package size={14} /> Evidence ZIP</Button></div>
             {reportError ? <p role="alert">{reportError}</p> : !report ? <p role="status">Loading saved-run report…</p> : <>
               {report.experimental_geometry && <section aria-label="Experimental 3D geometry">
                 <VolumeMeasurementPanel candidates={report.experimental_geometry.candidates ?? []} />
@@ -239,15 +245,19 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
                 <thead><tr><th scope="col">Minimum lumen</th><th scope="col">Reference lumen</th><th scope="col">Narrowing</th><th scope="col">Research severity</th></tr></thead>
                 <tbody><tr><td>Unavailable</td><td>Unavailable</td><td>Unavailable</td><td>{report.stages.severity?.status.replaceAll('_', ' ') ?? 'Unavailable'}</td></tr></tbody>
               </table>}
+              <h5 className="cv-subtitle">Pipeline stages</h5>
               <dl className="volume-stage-grid">{Object.entries(report.stages).map(([name,item])=>{
                 const withheld = geometry?.status === 'abstained' && name !== 'segmentation';
                 const status = withheld ? 'not assessable' : item.status.replaceAll('_',' ');
                 return <div key={name}>
                   <dt>{name.replaceAll('_',' ')}</dt>
-                  <dd>{status}</dd>
+                  <dd><span className={`cv-chip ${status.includes('review') ? 'warn' : status.includes('not assessable') || status.includes('blocked') ? 'muted' : 'info'}`}>{status}</span></dd>
                 </div>;
               })}</dl>
-              <div className="volume-downloads"><Button onClick={()=>void download('research-report.json')}>Export 3D research JSON</Button><Button onClick={()=>void download('research-report.csv')}>Export 3D stage CSV</Button><Button onClick={()=>void download('research-report.pdf')}>Export 3D research PDF</Button></div>
+              <div className="cv-actions" role="group" aria-label="3D research report exports"><span className="cv-actions-label">Research report</span>
+                <Button size="sm" onClick={()=>void download('research-report.pdf')}><FileText size={14} /> PDF</Button>
+                <Button variant="outline" size="sm" onClick={()=>void download('research-report.json')}><FileJson size={14} /> JSON</Button>
+                <Button variant="outline" size="sm" onClick={()=>void download('research-report.csv')}><FileSpreadsheet size={14} /> CSV</Button></div>
             </>}
           </section>
           <details><summary>Model limitations and provenance</summary><p>Run: {selected.id} · Model: {selected.result.model_id}. The vessel mask is mapped back to the original volume grid.</p><ul>{(selected.result.limitations ?? []).map(value => <li key={value}>{value}</li>)}</ul></details>

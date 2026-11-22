@@ -15,6 +15,7 @@ import { DEFAULT_SECTION, SECTION_PATHS, sectionPath } from "../routes";
 import { SECTION_META } from "../sectionMeta";
 import { useDocumentTitle } from "./SectionHeader";
 import { useWorkspace } from "./WorkspaceContext";
+import { caseStatusLabel } from "../caseTypes";
 
 const ViewerWorkspace = lazy(() => import("../ViewerWorkspace"));
 
@@ -39,7 +40,7 @@ function SidebarCaseList() {
         {visibleCases.map((item) => (
           <button key={item.id} className={`case-item ${selectedId === item.id ? "active" : ""}`} onClick={() => openCaseFromList(item.id)}>
             <strong>{item.case_code}</strong>
-            <span>{item.modality} · {item.anatomy} · {item.status}</span><small>{(item.intended_tasks || [item.intended_task]).map(taskLabel).join(", ")}</small>
+            <span>{item.modality} · {item.anatomy} · {caseStatusLabel(item)}</span><small>{(item.intended_tasks || [item.intended_task]).map(taskLabel).join(", ")}</small>
           </button>
         ))}
       </div>

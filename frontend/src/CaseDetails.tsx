@@ -4,10 +4,11 @@ import type { CaseRecord } from "./caseTypes";
 import { Button } from "./components/prismui/button";
 import { Card } from "./components/prismui/card";
 import { Input } from "./components/prismui/input";
-import { Stethoscope, CheckCircle2, AlertCircle, FileDown, ShieldAlert } from "lucide-react";
+import { CheckCircle2, AlertCircle, FileDown, ShieldAlert } from "lucide-react";
 import { taskLabel } from "./caseConfiguration";
 import { reviewLabels } from "./reviewLabels";
 import { utcDate } from "./lib/time";
+import { caseStatusLabel } from "./caseTypes";
 
 const histories = ["hypertension", "diabetes", "prior_mi", "prior_pci", "hyperlipidemia", "none", "unknown"];
 const risks = ["smoking", "family_history", "obesity", "sedentary", "hypertension", "diabetes", "none", "unknown"];
@@ -191,15 +192,15 @@ export default function CaseDetails({
                 {exportBusy ? "Exporting…" : "Export Report"}
               </Button>
             )}
-            <span>{caseRecord.status}</span>
+            <span className="cv-chip info">{caseStatusLabel(caseRecord)}</span>
           </div>
         </div>
         <p className="caption">Case code: {caseRecord.case_code} · Anatomy: {caseRecord.anatomy} · Tasks: {(caseRecord.intended_tasks || [caseRecord.intended_task]).map(taskLabel).join(", ")} · Model: {modelVersion || "No analysis yet"}</p>
         <p className="privacy-note">Use only public or de-identified studies. Patient ID must be a pseudonym; do not enter names, contact details, or dates of birth.</p>
         
         {isReadOnly && (
-          <div style={{ background: "#f4f4f5", padding: "0.6rem 0.8rem", borderRadius: "8px", margin: "0.8rem 0", fontSize: "0.84rem", color: "#52525b" }}>
-            <strong>Read-only case access:</strong> You can inspect study parameters but cannot modify clinical metadata.
+          <div className="message info">
+            <strong>Read-only case access:</strong> You can inspect study parameters but cannot change case details.
           </div>
         )}
 
@@ -233,39 +234,21 @@ export default function CaseDetails({
       {/* Clinical Review & Approval Section */}
       {section === "reviews" && <Card className="panel clinical-review-panel">
         <div className="viewer-heading">
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <Stethoscope size={20} color="#0284c7" />
-            <h3 style={{ margin: 0 }}>{labels.title}</h3>
-          </div>
-          {caseRecord.latest_review ? (
-            <span style={{
-              background: caseRecord.latest_review.decision === "approved" ? "#ecfdf5" : caseRecord.latest_review.decision === "rejected" ? "#fef2f2" : "#fef9c3",
-              color: caseRecord.latest_review.decision === "approved" ? "#047857" : caseRecord.latest_review.decision === "rejected" ? "#b91c1c" : "#854d0e",
-              fontWeight: 700, padding: "0.2rem 0.6rem", borderRadius: "100px", fontSize: "0.78rem",
-            }}>
-              {caseRecord.latest_review.decision.toUpperCase()}
-            </span>
-          ) : (
-            <span style={{ color: "#71717a", fontSize: "0.82rem" }}>Pending Review</span>
-          )}
+          <div className="cv-panel-head"><span className="eyebrow">EXPERT REVIEW</span><h3>{labels.title}</h3></div>
+          {caseRecord.latest_review
+            ? <span className={`cv-chip ${caseRecord.latest_review.decision === "approved" ? "ok" : caseRecord.latest_review.decision === "rejected" ? "bad" : "warn"}`}>{display(caseRecord.latest_review.decision)}</span>
+            : <span className="cv-chip muted">Pending review</span>}
         </div>
 
         {syntheticDemo && <p className="message warning"><strong>Demonstration-only reviewer workspace.</strong> This case contains generated geometry, not a patient study. Any review entry is an interface demonstration and cannot be interpreted as expert advice, diagnosis, severity validation, or clinical approval.</p>}
 
         {caseRecord.latest_review && (
-          <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "0.85rem", borderRadius: "10px", margin: "0.8rem 0" }}>
-            <p style={{ margin: "0 0 0.4rem 0", fontSize: "0.88rem" }}>
-              <strong>Decision:</strong> {display(caseRecord.latest_review.decision)} · <strong>Assessed Severity:</strong> {display(caseRecord.latest_review.stenosis_severity || "unspecified")}
-            </p>
-            {caseRecord.latest_review.notes && (
-              <p style={{ margin: "0 0 0.4rem 0", fontSize: "0.84rem", color: "#334155" }}>
-                <em>"{caseRecord.latest_review.notes}"</em>
-              </p>
-            )}
-            <small style={{ color: "#64748b" }}>
-              Reviewed by {caseRecord.latest_review.reviewer_name || "Clinical reviewer"} on {utcDate(caseRecord.latest_review.created_at).toLocaleString()}
-            </small>
-          </div>
+          <dl className="review-summary">
+            <div><dt>Decision</dt><dd>{display(caseRecord.latest_review.decision)}</dd></div>
+            <div><dt>Assessed severity</dt><dd>{display(caseRecord.latest_review.stenosis_severity || "unspecified")}</dd></div>
+            <div><dt>Reviewer</dt><dd>{caseRecord.latest_review.reviewer_name || "Reviewer"} · {utcDate(caseRecord.latest_review.created_at).toLocaleString()}</dd></div>
+            {caseRecord.latest_review.notes && <div className="review-summary-notes"><dt>Notes</dt><dd>{caseRecord.latest_review.notes}</dd></div>}
+          </dl>
         )}
 
         {isDoctor && caseRecord.permissions?.can_review ? (
@@ -275,7 +258,7 @@ export default function CaseDetails({
               {labels.decision}
                 <select value={decision} onChange={(e) => setDecision(e.target.value as any)}>
                   <option value="approved">Accepted for research review</option>
-                  <option value="needs_followup">Needs Clinical Follow-up</option>
+                  <option value="needs_followup">Needs follow-up</option>
                   <option value="rejected">Rejected — Artifact or scan inadequate</option>
                   <option value="reviewed">Reviewed — Observation only</option>
                 </select>
@@ -307,14 +290,14 @@ export default function CaseDetails({
             {reviewError && <p className="message error" role="alert">{reviewError}</p>}
             {reviewMessage && <p className="message success" role="status">{reviewMessage}</p>}
 
-            <Button className="primary" disabled={reviewBusy} style={{ marginTop: "0.8rem" }}>
+            <Button className="primary" disabled={reviewBusy}>
               {reviewBusy ? "Submitting…" : labels.submit}
             </Button>
           </form>
         ) : (
           !caseRecord.latest_review && (
-            <p style={{ fontSize: "0.84rem", color: "#71717a", marginTop: "0.5rem" }}>
-              Clinical review requires a <strong>Doctor or Clinician</strong> role and review access to this case.
+            <p className="muted">
+              Expert review requires a <strong>Doctor or Clinician</strong> role and review access to this case.
             </p>
           )
         )}

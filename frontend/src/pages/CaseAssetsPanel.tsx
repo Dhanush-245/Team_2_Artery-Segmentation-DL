@@ -8,6 +8,7 @@ import type { CaseRecord } from "../caseTypes";
 import { standardPipelines } from "../preprocessingPipelines";
 import ScreenShareSelect from "../ScreenShareSelect";
 import { useWorkspace } from "../workspace/WorkspaceContext";
+import { caseStatusLabel } from "../caseTypes";
 
 const VolumeIntake = lazy(() => import("../VolumeIntake"));
 const VolumeInference = lazy(() => import("../VolumeInference"));
@@ -25,7 +26,7 @@ export function volumeInferenceEligible(record: CaseRecord) {
 function CaseMetadata({ record }: { record: CaseRecord }) {
   return <div className="metadata">
     <div><span>Modality</span><strong>{record.modality}</strong></div>
-    <div><span>Status</span><strong>{record.status}</strong></div>
+    <div><span>Workflow</span><strong><span className="cv-chip info">{caseStatusLabel(record)}</span></strong></div>
     <div><span>Images</span><strong>{record.images.length}</strong></div>
   </div>;
 }
