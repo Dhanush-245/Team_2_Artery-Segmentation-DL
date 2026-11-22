@@ -135,6 +135,17 @@ def pdf_bytes(document):
             style=TableStyle([('BACKGROUND',(0,0),(-1,0),colors.HexColor('#eaf0f5')),('GRID',(0,0),(-1,-1),.5,colors.HexColor('#ccd8e4')),('VALIGN',(0,0),(-1,-1),'TOP'),('PADDING',(0,0),(-1,-1),6)])))
     else:
         report.paragraph('Unavailable — no candidate passed the recorded geometry rules.')
+    estimates = (geometry or {}).get('exploratory_estimates') or []
+    if estimates:
+        report.section('Exploratory lumen estimates by path (research demonstration)')
+        rows = [[cell(value, report.table_header) for value in ['Path', 'MLD / RVD', 'Narrowing', 'Research band', 'Length', 'Candidate status']]]
+        for row in estimates:
+            rows.append([cell(row['path_id']), cell(f"{row['minimum_diameter_mm']:.2f} / {row['reference_diameter_mm']:.2f} mm"),
+                cell(f"{row['narrowing_percent']:.1f}%"), cell(str(row['research_band']).capitalize()), cell(f"{row['length_mm']:.1f} mm"),
+                cell(f"Eligible ({row['eligible_candidate']})" if row.get('eligible_candidate') else str(row.get('withheld_reason') or '').replace('_', ' '))])
+        report.story.append(Table(rows, colWidths=[44,104,66,78,58,144], repeatRows=1,
+            style=TableStyle([('BACKGROUND',(0,0),(-1,0),colors.HexColor('#f1ecfb')),('GRID',(0,0),(-1,-1),.5,colors.HexColor('#ccd8e4')),('VALIGN',(0,0),(-1,-1),'TOP'),('PADDING',(0,0),(-1,-1),5)])))
+        report.paragraph('MLD is the narrowest predicted-mask width along each path and RVD the median width elsewhere on the same path. These exploratory estimates are shown for research demonstration and are not eligible, validated measurements.')
 
     report.story.append(PageBreak())
     report.section('Methods, limitations and review')

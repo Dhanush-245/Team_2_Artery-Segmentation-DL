@@ -12,6 +12,10 @@ type VolumeRun = { id: string; status: string; error: string | null; created_at:
   coarse_foreground_voxels: number; source_shape: number[]; limitations: string[];
   slices: { axis: string; coarse_index: number; artifact: string }[] } };
 
+type ExploratoryEstimate = { path_id: string; component_id: number; length_mm: number; minimum_diameter_mm: number; reference_diameter_mm: number;
+  narrowing_percent: number; research_band: string; eligible_candidate: string | null; withheld_reason: string | null; location_ras_mm: number[] };
+const BAND_LABEL: Record<string, string> = { none: 'No narrowing', minimal: 'Minimal', mild: 'Mild', moderate: 'Moderate', severe: 'Severe' };
+
 type Props = {caseId: string; token: string; readOnly?: boolean; anatomy?: string; historyOnly?: boolean; onOpenAnalysis?: () => void};
 
 export default function VolumeInference(props: Props) {
@@ -32,7 +36,7 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
   const [uploadPercent, setUploadPercent] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [previews, setPreviews] = useState<Record<string,string>>({});
-  const [report, setReport] = useState<null | {experimental_geometry?: {status?:string;reasons?:string[];paths?: {id:string;length_mm:number}[];candidates?:{id:string;path_id:string;minimum_area_mm2?:number;reference_area_mm2?:number;area_narrowing_percent?:number;minimum_diameter_mm:number;reference_diameter_mm:number;narrowing_percent:number;severity:string;location_ras_mm:number[]}[];limitations?:string[]}; analysis_run_id:string; model_id:string; explanation:{text:string}; stages:Record<string,{status:string;reason:string}>}>(null);
+  const [report, setReport] = useState<null | {experimental_geometry?: {status?:string;reasons?:string[];exploratory_estimates?:ExploratoryEstimate[];paths?: {id:string;length_mm:number}[];candidates?:{id:string;path_id:string;minimum_area_mm2?:number;reference_area_mm2?:number;area_narrowing_percent?:number;minimum_diameter_mm:number;reference_diameter_mm:number;narrowing_percent:number;severity:string;location_ras_mm:number[]}[];limitations?:string[]}; analysis_run_id:string; model_id:string; explanation:{text:string}; stages:Record<string,{status:string;reason:string}>}>(null);
   const [reportError,setReportError] = useState('');
   const selected = runs.find(r => r.id === chosen) || runs[0];
   const active = runs.some(r => ['queued','running'].includes(r.status));
@@ -138,6 +142,8 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
   const geometry = report?.experimental_geometry;
   const candidates = geometry?.candidates ?? [];
   const primaryCandidate = candidates[0];
+  const estimates = geometry?.exploratory_estimates ?? [];
+  const topEstimate = estimates[0];
   const geometryReason = geometry?.reasons?.[0]?.replaceAll('_',' ') ?? '';
 
   if (historyOnly) return <section className="volume-inference" aria-label="3D analysis history">
@@ -182,9 +188,9 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
               <div><dt>Segmentation</dt><dd>Saved prediction · review required</dd></div>
               <div><dt>Vessel geometry</dt><dd>{geometryReason ? `Not assessable · ${geometryReason}` : geometry ? `${geometry.paths?.length ?? 0} extracted paths` : 'Loading assessment…'}</dd></div>
               <div><dt>Stenosis candidates</dt><dd>{candidates.length ? `${candidates.length} experimental candidate${candidates.length === 1 ? '' : 's'}` : 'None eligible'}</dd></div>
-              <div><dt>Estimated narrowing</dt><dd>{primaryCandidate ? `${primaryCandidate.narrowing_percent.toFixed(2)}%` : 'Not assessable'}</dd></div>
-              <div className="volume-severity-result"><dt>Severity grading</dt><dd>{primaryCandidate ? primaryCandidate.severity : 'Not assessable'}</dd></div>
-              <div><dt>Reason</dt><dd>{primaryCandidate ? 'Experimental mask-geometry result; expert review required.' : geometryReason ? `Measurement withheld because the saved prediction is ${geometryReason}.` : 'No eligible 3D narrowing measurement is available.'}</dd></div>
+              <div><dt>Estimated narrowing</dt><dd>{primaryCandidate ? `${primaryCandidate.narrowing_percent.toFixed(2)}%` : topEstimate ? <>{topEstimate.narrowing_percent.toFixed(1)}% <span className="research-tag">research estimate · {topEstimate.path_id}</span></> : 'Not assessable'}</dd></div>
+              <div className="volume-severity-result"><dt>Severity grading</dt><dd>{primaryCandidate ? primaryCandidate.severity : topEstimate ? <>{BAND_LABEL[topEstimate.research_band] ?? topEstimate.research_band} <span className="research-tag">research estimate</span></> : 'Not assessable'}</dd></div>
+              <div><dt>Reason</dt><dd>{primaryCandidate ? 'Experimental mask-geometry result; expert review required.' : geometryReason ? `Measurement withheld because the saved prediction is ${geometryReason}.` : topEstimate ? `No path passed the strict candidate rules; the values shown are the narrowest per-path mask-width estimate (MLD ${topEstimate.minimum_diameter_mm.toFixed(2)} mm vs RVD ${topEstimate.reference_diameter_mm.toFixed(2)} mm).` : 'No eligible 3D narrowing measurement is available.'}</dd></div>
             </dl>
           </section>
           {selected.preview_url && selected.result.coarse_foreground_voxels > 0 && <section aria-label="Interactive vessel mask">
@@ -208,7 +214,20 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
                 <table className="stenosis-summary"><thead><tr><th>Candidate / path</th><th>Minimum width</th><th>Reference width</th><th>Narrowing</th><th>Experimental grade</th><th>RAS location (mm)</th></tr></thead>
                   <tbody>{(report.experimental_geometry.candidates ?? []).map(candidate=><tr key={candidate.id}><td>{candidate.id} / {candidate.path_id}</td><td>{candidate.minimum_diameter_mm.toFixed(2)} mm<br/>{candidate.minimum_area_mm2?.toFixed(2)} mm²</td><td>{candidate.reference_diameter_mm.toFixed(2)} mm<br/>{candidate.reference_area_mm2?.toFixed(2)} mm²</td><td>Diameter {candidate.narrowing_percent.toFixed(2)}%<br/>Area {candidate.area_narrowing_percent?.toFixed(2)}%</td><td>{candidate.severity}</td><td>{candidate.location_ras_mm.map(value=>value.toFixed(2)).join(', ')}</td></tr>)}</tbody>
                 </table>
-                {!(report.experimental_geometry.candidates ?? []).length && <p>No candidate met the experimental path-length and narrowing rules.</p>}
+                {!(report.experimental_geometry.candidates ?? []).length && <p className="muted">No path met the strict candidate rules (length, stable bilateral reference, ≥ 25 % narrowing). Exploratory per-path estimates are listed below.</p>}
+                {estimates.length > 0 && <div className="volume-estimates">
+                  <div className="volume-subsection-heading"><h4>Lumen estimates by path <span className="research-tag">exploratory research estimate</span></h4><span>{estimates.length} narrowest of {(report.experimental_geometry.paths ?? []).length} paths</span></div>
+                  <div className="table-scroll"><table className="stenosis-summary">
+                    <thead><tr><th>Path</th><th>MLD</th><th>RVD</th><th>Narrowing</th><th>Research band</th><th>Length</th><th>RAS location (mm)</th><th>Candidate status</th></tr></thead>
+                    <tbody>{estimates.map(row => <tr key={row.path_id}>
+                      <td>{row.path_id}</td><td>{row.minimum_diameter_mm.toFixed(2)} mm</td><td>{row.reference_diameter_mm.toFixed(2)} mm</td>
+                      <td><div className="narrowing-cell"><div className="narrowing-bar"><i style={{ width: `${Math.min(100, row.narrowing_percent)}%` }} /></div>{row.narrowing_percent.toFixed(1)}%</div></td>
+                      <td><span className={`band band-${row.research_band}`}>{BAND_LABEL[row.research_band] ?? row.research_band}</span></td>
+                      <td>{row.length_mm.toFixed(1)} mm</td><td>{row.location_ras_mm.map(v => v.toFixed(1)).join(', ')}</td>
+                      <td>{row.eligible_candidate ? `Eligible (${row.eligible_candidate})` : (row.withheld_reason ?? '').replaceAll('_', ' ')}</td></tr>)}</tbody>
+                  </table></div>
+                  <p className="caption">MLD is the narrowest mask width along the path; RVD is the median width elsewhere on the same path. Bands: minimal &lt; 25 %, mild 25–49 %, moderate 50–69 %, severe ≥ 70 %. Research demonstration only, from predicted-mask geometry.</p>
+                </div>}
                 {(report.experimental_geometry.limitations?.length
                   ? report.experimental_geometry.limitations
                   : (report.experimental_geometry.reasons ?? []).map(reason => `Measurement withheld: ${reason.replaceAll('_',' ')}.`)

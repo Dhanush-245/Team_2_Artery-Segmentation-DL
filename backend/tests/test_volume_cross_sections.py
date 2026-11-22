@@ -87,3 +87,24 @@ def test_short_path_without_reference_window_is_retained_without_crashing(tmp_pa
     assert result['status'] == 'experimental_mask_geometry'
     assert result['paths']
     assert result['candidates'] == []
+
+
+def test_exploratory_estimates_report_lumen_and_narrowing_for_each_path(tmp_path):
+    from app.volume_measurements import research_band
+    grid = np.indices((40, 40, 80))
+    radius = np.where(np.abs(grid[2] - 40) < 4, 2.5, 5.0)     # a 50 % diameter narrowing mid-tube
+    mask = ((grid[0] - 20) ** 2 + (grid[1] - 20) ** 2 <= radius ** 2) & (grid[2] > 5) & (grid[2] < 74)
+    image = nib.Nifti1Image(mask.astype(np.uint8), np.diag([.5, .5, .5, 1]))
+    image.header.set_xyzt_units('mm')
+    path = tmp_path / 'stenosis.nii.gz'
+    nib.save(image, path)
+    result = measure(path)
+    rows = result['exploratory_estimates']
+    assert rows, 'every traced path should get an exploratory estimate'
+    top = rows[0]
+    assert top['evidence_class'] == 'EXPLORATORY_RESEARCH_ESTIMATE'
+    assert 0 < top['minimum_diameter_mm'] < top['reference_diameter_mm']
+    assert 30 <= top['narrowing_percent'] <= 70
+    assert top['research_band'] in {'mild', 'moderate'}
+    assert top['eligible_candidate'] or top['withheld_reason']
+    assert [research_band(v) for v in (0, 10, 30, 60, 80)] == ['none', 'minimal', 'mild', 'moderate', 'severe']

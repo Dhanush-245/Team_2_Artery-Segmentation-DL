@@ -10,7 +10,7 @@ import numpy as np
 from scipy.ndimage import distance_transform_edt, convolve, map_coordinates, label
 from skimage.morphology import skeletonize
 
-METHOD = 'lee-skeleton-local-bilateral-sections-v5'
+METHOD = 'lee-skeleton-local-bilateral-sections-v6'
 REFERENCE_GUARD = 7
 REFERENCE_SAMPLES = 4
 REFERENCE_MAX_CV = .20
@@ -55,7 +55,7 @@ def saved_measurement(path):
     """Reuse geometry only when both its source hash and method match."""
     path = Path(path)
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
-    cache = path.parent / f'geometry-sections-v5-{digest}.json'
+    cache = path.parent / f'geometry-sections-v6-{digest}.json'
     if cache.is_file():
         result = json.loads(cache.read_text())
         if (result.get('mask_sha256') == digest
@@ -134,12 +134,14 @@ def measure(path):
     cropped_affine = image.affine.copy()
     cropped_affine[:3,3] = nib.affines.apply_affine(image.affine,origin-1)
     candidates = []
+    withheld = {}  # path id -> why the path is not an eligible candidate
     for path_record in paths:
         widths = np.array(path_record['mask_width_mm'])
         world = np.asarray(path_record['points_ras_mm'])
         eligible_start = REFERENCE_GUARD + REFERENCE_SAMPLES + 2
         eligible_stop = len(widths) - REFERENCE_GUARD - REFERENCE_SAMPLES - 2
         if eligible_start >= eligible_stop:
+            withheld[path_record['id']] = 'path_too_short_for_bilateral_reference'
             continue
         eligible = range(eligible_start, eligible_stop)
         index = min(eligible, key=lambda sample: widths[sample])
@@ -151,6 +153,7 @@ def measure(path):
         profile_cv = float(np.std(reference_profile) / np.mean(reference_profile))
         side_difference = float(abs(proximal_width-distal_width) / max(proximal_width, distal_width))
         if profile_cv > REFERENCE_MAX_CV or side_difference > REFERENCE_MAX_SIDE_DIFFERENCE:
+            withheld[path_record['id']] = 'reference_segment_unstable'
             continue
         proximal_index = proximal[len(proximal)//2]
         distal_index = distal[len(distal)//2]
@@ -161,14 +164,17 @@ def measure(path):
 
         sections = [section(index, .25), section(proximal_index, .25), section(distal_index, .25)]
         if any(value['status'] != 'experimental_section' for value in sections):
+            withheld[path_record['id']] = 'cross_section_not_resolved'
             continue
         minimum = sections[0]['equivalent_diameter_mm']
         reference = float(np.mean([sections[1]['equivalent_diameter_mm'],
                                    sections[2]['equivalent_diameter_mm']]))
         if reference <= 0:
+            withheld[path_record['id']] = 'reference_not_measurable'
             continue
         narrowing = float(max(0, (1-minimum/reference)*100))
         if narrowing < 25:
+            withheld[path_record['id']] = 'narrowing_below_25_percent'
             continue
         sensitivity = []
         for step in SECTION_STEPS_MM:
@@ -180,6 +186,7 @@ def measure(path):
             sensitivity.append(dict(step_mm=step,
                 narrowing_percent=float(max(0, (1-sampled[0]['equivalent_diameter_mm']/local_reference)*100))))
         if len(sensitivity) != len(SECTION_STEPS_MM):
+            withheld[path_record['id']] = 'section_sensitivity_incomplete'
             continue
         sensitivity_range = [min(value['narrowing_percent'] for value in sensitivity),
                              max(value['narrowing_percent'] for value in sensitivity)]
@@ -204,6 +211,7 @@ def measure(path):
                              narrowing_range_percent=sensitivity_range),
             uncertainty_status=uncertainty_status, abstention_reasons=abstention_reasons))
     return dict(status='experimental_mask_geometry', method=METHOD,
+        exploratory_estimates=exploratory_estimates(paths, candidates, withheld),
         mask_sha256=hashlib.sha256(Path(path).read_bytes()).hexdigest(),
         paths=paths, candidates=candidates, unit='mm', clinical_validated=False,
         component_count=int(component_count), component_sizes_voxels=component_sizes,
@@ -214,3 +222,48 @@ def measure(path):
                     'Local references use stable proximal and distal same-path windows separated from the minimum.',
                     'Reference side disagreement or variation above policy limits withholds the candidate.',
                     'Severity is withheld when section-grid sensitivity crosses an experimental 25/50/70 percent boundary.'])
+
+
+EXPLORATORY_BANDS = ((0, 'none'), (25, 'minimal'), (50, 'mild'), (70, 'moderate'), (float('inf'), 'severe'))
+
+
+def research_band(percent):
+    """Five-band research label for a narrowing percentage (demonstration only)."""
+    if percent <= 0:
+        return 'none'
+    return next(name for upper, name in EXPLORATORY_BANDS[1:] if percent < upper)
+
+
+def exploratory_estimates(paths, candidates, withheld, limit=12):
+    """Per-path lumen estimates shown for demonstration, separate from eligible candidates.
+
+    MLD is the narrowest EDT width away from the path ends; RVD is the median width of
+    the path outside a guard window around that minimum. These are mask-geometry
+    research estimates, not validated lumen measurements.
+    """
+    candidate_paths = {item['path_id']: item['id'] for item in candidates}
+    rows = []
+    for record in paths:
+        widths = np.asarray(record['mask_width_mm'], dtype=float)
+        if len(widths) < 7:
+            continue
+        inner = np.arange(2, len(widths) - 2)
+        index = int(inner[np.argmin(widths[inner])])
+        guard = max(2, min(REFERENCE_GUARD, len(widths) // 6))
+        outside = np.r_[np.arange(0, max(0, index - guard)), np.arange(min(len(widths), index + guard + 1), len(widths))]
+        if not len(outside):
+            continue
+        reference = float(np.median(widths[outside]))
+        minimum = float(widths[index])
+        if reference <= 0:
+            continue
+        narrowing = float(max(0.0, (1 - minimum / reference) * 100))
+        rows.append(dict(path_id=record['id'], component_id=record['component_id'], length_mm=record['length_mm'],
+                         minimum_diameter_mm=round(minimum, 3), reference_diameter_mm=round(reference, 3),
+                         narrowing_percent=round(narrowing, 2), research_band=research_band(narrowing),
+                         location_ras_mm=record['points_ras_mm'][index],
+                         eligible_candidate=candidate_paths.get(record['id']),
+                         withheld_reason=None if record['id'] in candidate_paths else withheld.get(record['id'], 'not_assessed'),
+                         method='edt_width_profile_min_vs_median', evidence_class='EXPLORATORY_RESEARCH_ESTIMATE'))
+    rows.sort(key=lambda row: row['narrowing_percent'], reverse=True)
+    return rows[:limit]
