@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=False)
 
-from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -1643,6 +1643,35 @@ def volume_mpr(case_id: str, run_id: str, axis: int = 2, index: int = 0,
     return Response(payload, media_type='image/png', headers={'Cache-Control':'no-store'})
 
 
+@app.get('/api/cases/{case_id}/volumes/analyses/{run_id}/cpr.png')
+def volume_cpr(case_id: str, run_id: str, path_id: str = Query(pattern=r'^P\d{1,5}$'), rotation: float = 0,
+               window: float = 800, level: float = 300, opacity: float = .45,
+               user: User = Depends(require_case_role), db: Session = Depends(get_db)):
+    """Straightened curved planar reformation along one saved centreline path."""
+    from fastapi.responses import Response
+    accessible_case(case_id, user, db)
+    row = db.get(VolumeAnalysis, run_id)
+    if row is None or row.case_id != case_id or row.status != 'completed':
+        raise HTTPException(404, 'Completed volume analysis unavailable')
+    folder = STORAGE/'volumes'/row.id
+    source = next(folder.glob('source.nii*'), None)
+    mask = folder/'outputs'/'mask_source.nii.gz'
+    if source is None or not mask.is_file():
+        raise HTTPException(404, 'Saved source and mask pair unavailable')
+    from .volume_measurements import saved_measurement
+    path_record = next((item for item in saved_measurement(mask).get('paths') or [] if item['id'] == path_id), None)
+    if path_record is None:
+        raise HTTPException(404, 'Path not found in the saved geometry')
+    try:
+        from .volume_cpr import render_cpr
+        payload = render_cpr(source, mask, path_record['points_ras_mm'], window=window, level=level,
+                             opacity=opacity, rotation_deg=rotation)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    return Response(payload, media_type='image/png', headers={'Cache-Control': 'no-store',
+                    'X-CPR-Length-mm': f"{path_record['length_mm']:.3f}"})
+
+
 @app.get('/api/cases/{case_id}/volumes/analyses/{run_id}/evidence.zip')
 def volume_evidence(case_id: str, run_id: str, user: User = Depends(require_case_role), db: Session = Depends(get_db)):
     research_report_access(case_id, user, db)
@@ -1658,6 +1687,8 @@ def volume_evidence(case_id: str, run_id: str, user: User = Depends(require_case
     volume = volume_run_out(row)
     volume['experimental_geometry'] = saved_measurement(folder/'mask_source.nii.gz')
     volume['xai'] = volume_xai_for_report(row.id)
+    from .volume_geometry_review import for_report as geometry_review_for_report, records as geometry_review_records
+    volume['geometry_review'] = geometry_review_for_report(STORAGE, row.id)
     document = snapshot(volume)
     members = {'analysis.json': json.dumps(document, allow_nan=False).encode(),
         'geometry.json': json.dumps(document['experimental_geometry'], allow_nan=False).encode(),
@@ -1666,14 +1697,16 @@ def volume_evidence(case_id: str, run_id: str, user: User = Depends(require_case
         if (folder/name).is_file():
             members[name] = (folder/name).read_bytes()
     members['xai_explanations.json'] = json.dumps(document.get('explainable_ai') or [], indent=2).encode()
+    review_history = geometry_review_records(STORAGE, row.id)
+    if review_history:
+        members['geometry_review.json'] = json.dumps(review_history, indent=2).encode()
     for item in document.get('explainable_ai') or []:
         coarse = STORAGE/'volumes'/row.id/'xai'/f"{item['id']}.coarse.npy"
         if item.get('status') == 'ready' and coarse.is_file() and hashlib.sha256(coarse.read_bytes()).hexdigest() == (item.get('artifact_sha256') or {}).get('coarse'):
             members[f"xai/{item['identity']['method']}_{item['id'][:8]}.coarse128.npy"] = coarse.read_bytes()
     manifest = dict(case_id=case_id, run_id=run_id,
         files={name: hashlib.sha256(value).hexdigest() for name,value in members.items()},
-        unavailable={'interactive_cpr':'Curved planar reformation is not implemented',
-                     'native_attribution':'Native-grid attribution volumes are kept in the application (hash in xai_explanations.json) to keep this archive small'})
+        unavailable={'native_attribution':'Native-grid attribution volumes are kept in the application (hash in xai_explanations.json) to keep this archive small'})
     stream = BytesIO()
     with ZipFile(stream, 'w', ZIP_DEFLATED) as archive:
         for name,value in members.items():
@@ -1703,6 +1736,8 @@ def volume_research_report(case_id: str, run_id: str, format: Literal['json', 'c
         if row.status == 'completed' and mask_path.is_file():
             volume['experimental_geometry'] = saved_measurement(mask_path)
         volume['xai'] = volume_xai_for_report(row.id)
+        from .volume_geometry_review import for_report as geometry_review_for_report
+        volume['geometry_review'] = geometry_review_for_report(STORAGE, row.id)
         document = snapshot(volume)
     except ValueError as exc:
         raise HTTPException(409, str(exc)) from exc
@@ -2995,6 +3030,9 @@ install_reference_measurements(app, get_db=get_db, current_user=require_case_rol
 from .xai_api import install as install_xai  # noqa: E402
 install_xai(app, get_db=get_db, current_user=require_case_role, accessible_case=accessible_case, case_out=case_out,
             storage=STORAGE, audit=audit, Image=Image, AnalysisEvent=AnalysisEvent, Case=Case, event_out=event_out)
+from .volume_geometry_review import install as install_geometry_review  # noqa: E402
+install_geometry_review(app, get_db=get_db, current_user=require_case_role, accessible_case=accessible_case,
+                        storage=STORAGE, audit=audit, VolumeAnalysis=VolumeAnalysis, reviewer_roles=ROLE_CLINICAL_REVIEWERS)
 from .volume_xai_api import install as install_volume_xai  # noqa: E402
 install_volume_xai(app, get_db=get_db, current_user=require_case_role, accessible_case=accessible_case, case_out=case_out,
                    storage=STORAGE, audit=audit, VolumeAnalysis=VolumeAnalysis)

@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Download, Loader2 } from "lucide-react";
 import { apiUrl } from "./api";
 
 /** Window/level presets in Hounsfield units (width, centre). */
-const PRESETS = [
+export const WINDOW_PRESETS = [
   { id: "cta", label: "Coronary CTA", window: 800, level: 300 },
   { id: "soft", label: "Soft tissue", window: 400, level: 40 },
   { id: "lung", label: "Lung", window: 1500, level: -600 },
@@ -58,7 +58,7 @@ export default function VolumeMprViewer({ caseId, runId, token, shape, heatId, h
     if (event.key === "ArrowLeft" || event.key === "ArrowDown") { event.preventDefault(); step(event.shiftKey ? -10 : -1); }
     if (event.key === "ArrowRight" || event.key === "ArrowUp") { event.preventDefault(); step(event.shiftKey ? 10 : 1); }
   };
-  const preset = PRESETS.find(p => p.window === win && p.level === level)?.id ?? "custom";
+  const preset = WINDOW_PRESETS.find(p => p.window === win && p.level === level)?.id ?? "custom";
 
   return (
     <section className="volume-mpr" aria-labelledby="volume-mpr-title">
@@ -81,8 +81,8 @@ export default function VolumeMprViewer({ caseId, runId, token, shape, heatId, h
           <span className="volume-mpr-count" aria-live="polite">{index + 1} / {depth}</span>
         </div>
         <label>Preset
-          <select value={preset} onChange={event => { const p = PRESETS.find(item => item.id === event.target.value); if (p) { setWin(p.window); setLevel(p.level); } }}>
-            {PRESETS.map(p => <option key={p.id} value={p.id}>{p.label} ({p.window}/{p.level})</option>)}
+          <select value={preset} onChange={event => { const p = WINDOW_PRESETS.find(item => item.id === event.target.value); if (p) { setWin(p.window); setLevel(p.level); } }}>
+            {WINDOW_PRESETS.map(p => <option key={p.id} value={p.id}>{p.label} ({p.window}/{p.level})</option>)}
             {preset === "custom" && <option value="custom">Custom ({win}/{level})</option>}
           </select>
         </label>

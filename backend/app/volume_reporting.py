@@ -27,7 +27,7 @@ def snapshot(run):
         'execution_seconds': result.get('duration_seconds'),
         'predicted_coarse_foreground_voxels': result.get('coarse_foreground_voxels'),
         'stages': stages, 'narrowing_percent': None, 'severity_category': None,
-        'human_assessment': None, 'clinical_validated': False,
+        'human_assessment': run.get('geometry_review'), 'clinical_validated': False,
         'explanation': {'method': 'deterministic_saved_volume_template',
             'text': 'This saved volume run contains a segmentation prediction and orthogonal previews. '
                     'Foreground voxel count is not accuracy, lumen diameter, disease probability or stenosis severity. '
@@ -83,6 +83,16 @@ def csv_text(document):
     writer.writerow(['candidate_id','path_id','minimum_diameter_mm','reference_diameter_mm','diameter_narrowing_percent','experimental_grade','ras_mm','minimum_area_mm2','reference_area_mm2','area_narrowing_percent','uncertainty_status'])
     for candidate in document.get('experimental_geometry', {}).get('candidates', []):
         writer.writerow([safe(candidate.get(key)) for key in ['id','path_id','minimum_diameter_mm','reference_diameter_mm','narrowing_percent','severity','location_ras_mm','minimum_area_mm2','reference_area_mm2','area_narrowing_percent','uncertainty_status']])
+    review = document.get('human_assessment') or {}
+    if review.get('current'):
+        writer.writerow([])
+        writer.writerow(['review_path_id','decision','artery','reviewer_minimum_diameter_mm','reviewer_reference_diameter_mm','reviewer_narrowing_percent','diameter_method','minimum_position_mm','reference_position_mm','reviewer_role','reviewed_at','notes'])
+        for row in review['current']:
+            measured = row.get('measurement') or {}
+            writer.writerow([safe(x) for x in [row['path_id'], row['decision'], row.get('artery'), measured.get('minimum_diameter_mm'),
+                measured.get('reference_diameter_mm'), measured.get('narrowing_percent'), measured.get('diameter_method'),
+                (measured.get('minimum') or {}).get('position_mm'), (measured.get('reference') or {}).get('position_mm'),
+                row.get('reviewer_role'), row.get('reviewed_at'), row.get('notes')]])
     return stream.getvalue()
 
 
@@ -165,13 +175,28 @@ def pdf_bytes(document):
             style=TableStyle([('BACKGROUND',(0,0),(-1,0),colors.HexColor('#f4f4f5')),('GRID',(0,0),(-1,-1),.5,colors.HexColor('#d4d4d8')),('VALIGN',(0,0),(-1,-1),'TOP'),('PADDING',(0,0),(-1,-1),5)])))
         report.paragraph('Target: mean vessel-minus-background logit over the voxels the 3D model labels as vessel at 128³, explained at '
                          'decoder block dec[1] and restored to the native grid through the saved mask transform. Attribution shows where that '
-                         'segmentation output was sensitive; it is not a lesion label, narrowing or disease probability. Model randomization was not tested.')
+                         'segmentation output was sensitive; it is not a lesion label, narrowing or disease probability. Model randomization was '
+                         'checked once, on the public demo case only (Grad-CAM 3D partial, Grad-CAM++ 3D fail).')
 
     report.story.append(PageBreak())
     report.section('Methods, limitations and review')
     report.field('Geometry method', (geometry or {}).get('method'))
     report.field('Diameter definition', 'Area-equivalent perpendicular lumen section')
-    report.field('Human review', 'Not linked')
+    review = document.get('human_assessment') or {}
+    if review.get('current'):
+        report.field('Human review', f"{len(review['current'])} path(s) reviewed · {review.get('edits_recorded')} edit(s) recorded")
+        rows = [[cell(value, report.table_header) for value in ['Path', 'Decision', 'Artery', 'Reviewer min / ref', 'Narrowing', 'Reviewed']]]
+        for row in review['current']:
+            measured = row.get('measurement') or {}
+            rows.append([cell(row['path_id']), cell(row['decision'].capitalize()), cell((row.get('artery') or '—').replace('_', ' ')),
+                         cell(f"{measured['minimum_diameter_mm']:.2f} / {measured['reference_diameter_mm']:.2f} mm" if measured else '—'),
+                         cell(f"{measured['narrowing_percent']:.1f}%" if measured else '—'),
+                         cell(f"{row.get('reviewer_role', '')} · {str(row.get('reviewed_at', ''))[:10]}")])
+        report.story.append(Table(rows, colWidths=[40, 62, 80, 110, 62, 140], repeatRows=1,
+            style=TableStyle([('BACKGROUND',(0,0),(-1,0),colors.HexColor('#f4f4f5')),('GRID',(0,0),(-1,-1),.5,colors.HexColor('#d4d4d8')),('VALIGN',(0,0),(-1,-1),'TOP'),('PADDING',(0,0),(-1,-1),5)])))
+        report.paragraph('Reviewer edits are recorded beside the model output, which is unchanged. Reviewer diameters are computed by the server at the reviewer-placed markers on the predicted mask, so they are not independent of the model.')
+    else:
+        report.field('Human review', 'No reviewer geometry edits recorded')
     for limitation in dict.fromkeys([*((geometry or {}).get('limitations') or []), *(document.get('limitations') or [])]):
         report.paragraph('- ' + limitation)
     report.paragraph('The saved vessel mask is a research prediction. Fragmentation, coarse resolution and segmentation error can affect every derived measurement. See JSON and CSV exports for full-precision geometry, hashes and stage notes.')

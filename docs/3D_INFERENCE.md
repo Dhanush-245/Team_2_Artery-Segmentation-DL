@@ -126,3 +126,22 @@ Reproduce contract/API tests from backend: `.venv/bin/python -m pytest tests/tes
 Opt in to installed weights with `CV_TEST_REAL_3D=1`. The live verification script
 `scripts/verify_volume_workflow.py` deliberately creates one synthetic case using
 private local demo credentials; it never prints credentials or exports tokens.
+
+## Curved planar reformation and reviewer geometry edits (22 November 2026)
+
+- **CPR viewer** (`backend/app/volume_cpr.py`, `GET …/cpr.png?path_id=Pn&rotation=θ`). It straightens one saved
+  centreline path. The path is resampled at equal 0.3 mm arc-length steps. Each column samples the saved source
+  (trilinear) and mask (nearest) along a rotation-minimising normal, rotated by θ about the tangent. x runs along
+  the path (start on the left), and both axes are in millimetres. Only the voxel box the samples touch is loaded.
+  Tests: a straight 6 mm tube and a curved 5 mm tube both straighten to a constant-width band (±1 mm), and the
+  result does not change with rotation.
+- **Reviewer edits** (`backend/app/volume_geometry_review.py`, `…/geometry-review`). Doctors, clinicians and
+  administrators with review access can accept, reject or flag one path, name the artery, and place a minimum
+  marker and a reference marker on the CPR or width profile. The server computes area-equivalent diameters from
+  perpendicular sections at the markers, falling back to centreline mask width, and then the narrowing. The
+  client never sends a number.
+  - Records are append-only JSON in `STORAGE/volumes/<run>/review/`. A record is tied to the mask SHA-256 it was
+    made on; a changed mask returns 409. Each edit is audited.
+  - Reviews appear as `human_assessment` in the 3D report (JSON, CSV and PDF), and as `geometry_review.json` in the
+    evidence ZIP. The model output is never changed.
+  - Reviewer diameters are measured on the predicted mask, so they are not independent references.

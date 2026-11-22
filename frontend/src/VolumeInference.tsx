@@ -6,6 +6,7 @@ import VolumeOrbit from './VolumeOrbit';
 import VolumeMeasurementPanel from './VolumeMeasurementPanel';
 import VolumeMprViewer from './VolumeMprViewer';
 import VolumeXaiPanel from './VolumeXaiPanel';
+import VolumeCprReview, { type GeometryPath } from './VolumeCprReview';
 import { utcDate } from "./lib/time";
 
 type VolumeRun = { id: string; status: string; error: string | null; created_at: string;model_key?:string;
@@ -40,24 +41,26 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
   const [uploadPercent, setUploadPercent] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [previews, setPreviews] = useState<Record<string,string>>({});
-  const [report, setReport] = useState<null | {experimental_geometry?: {status?:string;reasons?:string[];exploratory_estimates?:ExploratoryEstimate[];paths?: {id:string;length_mm:number}[];candidates?:{id:string;path_id:string;minimum_area_mm2?:number;reference_area_mm2?:number;area_narrowing_percent?:number;minimum_diameter_mm:number;reference_diameter_mm:number;narrowing_percent:number;severity:string;location_ras_mm:number[]}[];limitations?:string[]}; analysis_run_id:string; model_id:string; explanation:{text:string}; stages:Record<string,{status:string;reason:string}>}>(null);
+  const [report, setReport] = useState<null | {experimental_geometry?: {status?:string;reasons?:string[];exploratory_estimates?:ExploratoryEstimate[];mask_sha256?:string;paths?: GeometryPath[];candidates?:{id:string;path_id:string;minimum_area_mm2?:number;reference_area_mm2?:number;area_narrowing_percent?:number;minimum_diameter_mm:number;reference_diameter_mm:number;narrowing_percent:number;severity:string;location_ras_mm:number[]}[];limitations?:string[]}; analysis_run_id:string; model_id:string; explanation:{text:string}; stages:Record<string,{status:string;reason:string}>}>(null);
   const [reportError,setReportError] = useState('');
+  const [reportVersion, setReportVersion] = useState(0);
+  const reloadReport = useCallback(() => setReportVersion(value => value + 1), []);
   const [heat, setHeat] = useState<{ id?: string; label?: string }>({});
   const showHeat = useCallback((id?: string, label?: string) => setHeat({ id, label }), []);
   const selected = runs.find(r => r.id === chosen) || runs[0];
   const active = runs.some(r => ['queued','running'].includes(r.status));
   const headers = {Authorization: `Bearer ${token}`};
 
+  useEffect(() => { setReport(null); setReportError(''); }, [caseId, selected?.id, selected?.status, token]);
   useEffect(() => {
     let disposed=false;
-    setReport(null); setReportError('');
     if (selected?.status === 'completed') void fetch(apiUrl(`/api/cases/${caseId}/volumes/analyses/${selected.id}/report/json`),
       {headers:{Authorization:`Bearer ${token}`}}).then(async response=>{
         if(!response.ok) throw new Error('Saved 3D explanation/report unavailable for this account or run.');
         return response.json();
       }).then(value=>{if(!disposed)setReport(value);}).catch(cause=>{if(!disposed)setReportError(cause.message);});
     return ()=>{disposed=true;};
-  },[caseId,selected?.id,selected?.status,token]);
+  },[caseId,selected?.id,selected?.status,token,reportVersion]);
 
   useEffect(() => {
     let disposed = false;
@@ -224,6 +227,8 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
             {reportError ? <p role="alert">{reportError}</p> : !report ? <p role="status">Loading saved-run report…</p> : <>
               {report.experimental_geometry && <section aria-label="Experimental 3D geometry">
                 <VolumeMeasurementPanel candidates={report.experimental_geometry.candidates ?? []} />
+                {(report.experimental_geometry.paths ?? []).length > 0 && <VolumeCprReview key={`cpr-${selected.id}`} caseId={caseId} runId={selected.id} token={token}
+                  paths={report.experimental_geometry.paths ?? []} estimates={estimates} maskSha256={report.experimental_geometry.mask_sha256} onSaved={reloadReport} />}
                 <div className="volume-subsection-heading"><h4>Strict candidate measurements</h4><span>{(report.experimental_geometry.paths ?? []).length} paths · {(report.experimental_geometry.paths ?? []).reduce((sum,path)=>sum+path.length_mm,0).toFixed(2)} mm traced</span></div>
                 {(report.experimental_geometry.candidates ?? []).length > 0 && <table className="stenosis-summary"><thead><tr><th>Candidate / path</th><th>Minimum width</th><th>Reference width</th><th>Narrowing</th><th>Experimental grade</th><th>RAS location (mm)</th></tr></thead>
                   <tbody>{(report.experimental_geometry.candidates ?? []).map(candidate=><tr key={candidate.id}><td>{candidate.id} / {candidate.path_id}</td><td>{candidate.minimum_diameter_mm.toFixed(2)} mm<br/>{candidate.minimum_area_mm2?.toFixed(2)} mm²</td><td>{candidate.reference_diameter_mm.toFixed(2)} mm<br/>{candidate.reference_area_mm2?.toFixed(2)} mm²</td><td>Diameter {candidate.narrowing_percent.toFixed(2)}%<br/>Area {candidate.area_narrowing_percent?.toFixed(2)}%</td><td>{candidate.severity}</td><td>{candidate.location_ras_mm.map(value=>value.toFixed(2)).join(', ')}</td></tr>)}</tbody>
