@@ -460,3 +460,15 @@ details[open] > summary .evaluation-chevron { transform: rotate(180deg); }
 .caliper-estimate { display: grid; min-width: 90px; font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .caliper-estimate small { font-size: .68rem; font-weight: 500; opacity: .75; }
 .caliper-export { margin-top: .5rem; }
+
+/* MPR controls: slice bar on its own row, display controls aligned in one row below. */
+.volume-mpr-controls { display: grid; grid-template-columns: minmax(180px, 1.4fr) 90px 90px minmax(150px, 1fr) auto; align-items: end; gap: .6rem .8rem; }
+.volume-mpr-controls .volume-mpr-slice { grid-column: 1 / -1; }
+.volume-mpr-controls label { display: grid; gap: 4px; font-size: .74rem; font-weight: 600; }
+.volume-mpr-controls label select, .volume-mpr-controls label input[type=number] { width: 100%; }
+.volume-mpr-opacity { grid-template-columns: 1fr; }
+.volume-mpr-opacity input[type=range] { width: 100%; height: 34px; }
+.volume-mpr-download { height: 34px; padding: 0 .7rem; border: 1px solid #d4d4d8; border-radius: 8px; text-decoration: none; color: inherit; }
+@media (max-width: 720px) { .volume-mpr-controls { grid-template-columns: 1fr 1fr; } .volume-mpr-controls > label:first-of-type { grid-column: 1 / -1; } }
+.volume-mpr-download, .volume-mpr-opacity span { white-space: nowrap; }
+.volume-mpr-download { align-self: end; }

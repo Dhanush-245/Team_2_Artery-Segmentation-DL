@@ -1631,7 +1631,7 @@ def volume_mpr(case_id: str, run_id: str, axis: int = 2, index: int = 0,
     try:
         from .volume_mpr import render_mpr
         payload = render_mpr(source, mask, axis=axis, index=index, window=window,
-                             level=level, opacity=opacity)
+                             level=level, opacity=opacity, physical_aspect=True)
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
     return Response(payload, media_type='image/png', headers={'Cache-Control':'no-store'})

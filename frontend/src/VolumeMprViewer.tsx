@@ -78,15 +78,15 @@ export default function VolumeMprViewer({ caseId, runId, token, shape }: Props) 
           <button type="button" aria-label="Next slice" onClick={() => step(1)} disabled={index >= depth - 1}><ChevronRight size={16} /></button>
           <span className="volume-mpr-count" aria-live="polite">{index + 1} / {depth}</span>
         </div>
-        <label>Window
+        <label>Preset
           <select value={preset} onChange={event => { const p = PRESETS.find(item => item.id === event.target.value); if (p) { setWin(p.window); setLevel(p.level); } }}>
             {PRESETS.map(p => <option key={p.id} value={p.id}>{p.label} ({p.window}/{p.level})</option>)}
             {preset === "custom" && <option value="custom">Custom ({win}/{level})</option>}
           </select>
         </label>
-        <label>W <input type="number" min={1} max={5000} value={win} onChange={event => setWin(Math.max(1, Number(event.target.value) || 1))} /></label>
-        <label>L <input type="number" min={-1500} max={3000} value={level} onChange={event => setLevel(Number(event.target.value) || 0)} /></label>
-        <label className="volume-mpr-opacity">Mask <input type="range" min={0} max={100} value={opacity} onChange={event => setOpacity(Number(event.target.value))} aria-label="Mask overlay opacity" /> {opacity}%</label>
+        <label>Window (W)<input type="number" min={1} max={5000} value={win} onChange={event => setWin(Math.max(1, Number(event.target.value) || 1))} /></label>
+        <label>Level (L)<input type="number" min={-1500} max={3000} value={level} onChange={event => setLevel(Number(event.target.value) || 0)} /></label>
+        <label className="volume-mpr-opacity"><span>Mask overlay · {opacity}%</span><input type="range" min={0} max={100} value={opacity} onChange={event => setOpacity(Number(event.target.value))} aria-label="Mask overlay opacity" /></label>
         {image && <a className="volume-mpr-download" href={image} download={`slice-${AXES.find(a => a.axis === axis)?.label.toLowerCase()}-${index + 1}.png`}><Download size={14} /> Slice PNG</a>}
       </div>
       <p className="caption">Rendered on demand from the saved full-resolution source and its predicted mask. Window/level assumes Hounsfield units; the mask is a research prediction that needs review.</p>

@@ -6,7 +6,7 @@ import numpy as np
 from PIL import Image
 
 
-def render_mpr(source_path, mask_path, *, axis, index, window, level, opacity):
+def render_mpr(source_path, mask_path, *, axis, index, window, level, opacity, physical_aspect=False):
     if axis not in (0, 1, 2) or not np.isfinite([window, level, opacity]).all():
         raise ValueError('Invalid MPR controls')
     if window <= 0 or not 0 <= opacity <= 1:
@@ -26,6 +26,15 @@ def render_mpr(source_path, mask_path, *, axis, index, window, level, opacity):
     rgb = np.repeat(gray[..., None], 3, axis=2).astype(np.float32)
     color = np.array([0, 205, 220], dtype=np.float32)
     rgb[selected] = rgb[selected] * (1-opacity) + color * opacity
+    picture = Image.fromarray(np.uint8(np.clip(rgb, 0, 255)))
+    if physical_aspect:
+        # Rows follow the second remaining array axis and columns the first, after the transpose above.
+        column_axis, row_axis = [item for item in range(3) if item != axis]
+        zooms = [float(z) for z in source.header.get_zooms()[:3]]
+        if zooms[column_axis] > 0 and zooms[row_axis] > 0:
+            height = max(1, round(picture.height * zooms[row_axis] / zooms[column_axis]))
+            if height != picture.height:
+                picture = picture.resize((picture.width, height), Image.Resampling.BILINEAR)
     stream = BytesIO()
-    Image.fromarray(np.uint8(np.clip(rgb, 0, 255))).save(stream, format='PNG')
+    picture.save(stream, format='PNG')
     return stream.getvalue()
