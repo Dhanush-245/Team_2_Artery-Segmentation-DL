@@ -52,20 +52,16 @@ jobs:
           docker run -d --name cv -e JWT_SECRET="$(openssl rand -hex 32)" -p 8000:8000 corovision-ci:${{ github.sha }}
           for i in $(seq 1 60); do curl -fsS http://127.0.0.1:8000/api/health/ready && exit 0; sleep 3; done
           docker logs cv; exit 1
+      # Trivy runs from its pinned official image; the setup action's binary
+      # download proved unreliable on hosted runners.
       - name: Vulnerability scan (fail on fixable critical findings)
-        uses: aquasecurity/trivy-action@v0.33.1
-        with:
-          image-ref: corovision-ci:${{ github.sha }}
-          scanners: vuln
-          severity: CRITICAL
-          ignore-unfixed: true
-          exit-code: '1'
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.65.0 \
+            image --scanners vuln --severity CRITICAL --ignore-unfixed --exit-code 1 --no-progress --timeout 20m \
+            corovision-ci:${{ github.sha }}
       - name: Vulnerability report (high and critical, informational)
         if: always()
-        uses: aquasecurity/trivy-action@v0.33.1
-        with:
-          image-ref: corovision-ci:${{ github.sha }}
-          scanners: vuln
-          severity: HIGH,CRITICAL
-          format: table
-          exit-code: '0'
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.65.0 \
+            image --scanners vuln --severity HIGH,CRITICAL --exit-code 0 --no-progress --timeout 20m \
+            corovision-ci:${{ github.sha }}
