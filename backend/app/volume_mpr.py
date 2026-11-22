@@ -6,7 +6,23 @@ import numpy as np
 from PIL import Image
 
 
-def render_mpr(source_path, mask_path, *, axis, index, window, level, opacity, physical_aspect=False):
+def slice_from_coarse(coarse, coarse_affine, source, axis, index):
+    """Trilinearly sample a coarse array on one native slice through the affines (as resample_from_to, order=1)."""
+    from scipy.ndimage import map_coordinates
+    shape = [n for i, n in enumerate(source.shape[:3]) if i != axis]
+    grid = np.meshgrid(np.arange(shape[0]), np.arange(shape[1]), indexing='ij')
+    voxels = [None, None, None]
+    others = [i for i in range(3) if i != axis]
+    voxels[axis] = np.full(grid[0].shape, index, dtype=float)
+    voxels[others[0]], voxels[others[1]] = grid[0].astype(float), grid[1].astype(float)
+    points = np.stack([v.ravel() for v in voxels] + [np.ones(grid[0].size)])
+    coarse_voxels = (np.linalg.inv(coarse_affine) @ source.affine @ points)[:3]
+    sampled = map_coordinates(np.asarray(coarse, dtype=np.float32), coarse_voxels, order=1, mode='nearest')
+    return np.clip(sampled.reshape(grid[0].shape), 0, 1)
+
+
+def render_mpr(source_path, mask_path, *, axis, index, window, level, opacity, physical_aspect=False,
+               heat=None, heat_opacity=0.7):
     if axis not in (0, 1, 2) or not np.isfinite([window, level, opacity]).all():
         raise ValueError('Invalid MPR controls')
     if window <= 0 or not 0 <= opacity <= 1:
@@ -26,6 +42,13 @@ def render_mpr(source_path, mask_path, *, axis, index, window, level, opacity, p
     rgb = np.repeat(gray[..., None], 3, axis=2).astype(np.float32)
     color = np.array([0, 205, 220], dtype=np.float32)
     rgb[selected] = rgb[selected] * (1-opacity) + color * opacity
+    if heat is not None:
+        if not 0 <= heat_opacity <= 1:
+            raise ValueError('Attribution opacity must be within 0..1')
+        values = slice_from_coarse(heat[0], heat[1], source, axis, index).T[::-1]
+        ramp = np.stack((np.minimum(1, values * 2), np.clip(values * 2 - .65, 0, 1), np.clip(values * 3 - 2, 0, 1)), -1) * 255
+        alpha = (np.clip(values * 1.4, 0, 1) * heat_opacity)[..., None]
+        rgb = rgb * (1 - alpha) + ramp * alpha
     picture = Image.fromarray(np.uint8(np.clip(rgb, 0, 255)))
     if physical_aspect:
         # Rows follow the second remaining array axis and columns the first, after the transpose above.

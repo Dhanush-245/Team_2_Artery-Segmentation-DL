@@ -75,5 +75,5 @@ test("the Explainable AI research page lists only this user's evidence and state
   await expect(page.getByRole("heading", { name: "Explainable AI", level: 2 })).toBeVisible();
   await expect(page).toHaveTitle(/Explainable AI · CoroVision AI/);
   await expect(page.getByText("Only cases you can open are counted.")).toBeVisible();
-  await expect(page.getByText(/volumetric attribution is not implemented/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Saved volumetric explanations" })).toBeVisible();
 });

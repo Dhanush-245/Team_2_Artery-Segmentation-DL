@@ -1617,6 +1617,7 @@ def volume_artifact(case_id: str, run_id: str, name: str,
 @app.get('/api/cases/{case_id}/volumes/analyses/{run_id}/mpr.png')
 def volume_mpr(case_id: str, run_id: str, axis: int = 2, index: int = 0,
                window: float = 800, level: float = 300, opacity: float = .55,
+               xai: str | None = None, xai_opacity: float = .7,
                user: User = Depends(require_case_role), db: Session = Depends(get_db)):
     from fastapi.responses import Response
     accessible_case(case_id, user, db)
@@ -1630,8 +1631,12 @@ def volume_mpr(case_id: str, run_id: str, axis: int = 2, index: int = 0,
         raise HTTPException(404, 'Saved source and mask pair unavailable')
     try:
         from .volume_mpr import render_mpr
+        heat = None
+        if xai:
+            from .volume_xai_api import heat_for_mpr
+            heat = heat_for_mpr(STORAGE, row.id, xai)
         payload = render_mpr(source, mask, axis=axis, index=index, window=window,
-                             level=level, opacity=opacity, physical_aspect=True)
+                             level=level, opacity=opacity, physical_aspect=True, heat=heat, heat_opacity=xai_opacity)
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
     return Response(payload, media_type='image/png', headers={'Cache-Control':'no-store'})
@@ -1651,6 +1656,7 @@ def volume_evidence(case_id: str, run_id: str, user: User = Depends(require_case
     folder = STORAGE/'volumes'/row.id/'outputs'
     volume = volume_run_out(row)
     volume['experimental_geometry'] = saved_measurement(folder/'mask_source.nii.gz')
+    volume['xai'] = volume_xai_for_report(row.id)
     document = snapshot(volume)
     members = {'analysis.json': json.dumps(document, allow_nan=False).encode(),
         'geometry.json': json.dumps(document['experimental_geometry'], allow_nan=False).encode(),
@@ -1658,15 +1664,27 @@ def volume_evidence(case_id: str, run_id: str, user: User = Depends(require_case
     for name in ['mask_source.nii.gz','probability_coarse.nii.gz','overlay_0.png','overlay_1.png','overlay_2.png','result.json']:
         if (folder/name).is_file():
             members[name] = (folder/name).read_bytes()
+    members['xai_explanations.json'] = json.dumps(document.get('explainable_ai') or [], indent=2).encode()
+    for item in document.get('explainable_ai') or []:
+        coarse = STORAGE/'volumes'/row.id/'xai'/f"{item['id']}.coarse.npy"
+        if item.get('status') == 'ready' and coarse.is_file() and hashlib.sha256(coarse.read_bytes()).hexdigest() == (item.get('artifact_sha256') or {}).get('coarse'):
+            members[f"xai/{item['identity']['method']}_{item['id'][:8]}.coarse128.npy"] = coarse.read_bytes()
     manifest = dict(case_id=case_id, run_id=run_id,
         files={name: hashlib.sha256(value).hexdigest() for name,value in members.items()},
-        unavailable={'interactive_mpr_cpr':'Synchronized source-volume MPR/CPR viewer pending', 'attribution':'Target-specific model attribution pending'})
+        unavailable={'interactive_cpr':'Curved planar reformation is not implemented',
+                     'native_attribution':'Native-grid attribution volumes are kept in the application (hash in xai_explanations.json) to keep this archive small'})
     stream = BytesIO()
     with ZipFile(stream, 'w', ZIP_DEFLATED) as archive:
         for name,value in members.items():
             archive.writestr(name,value)
         archive.writestr('manifest.json',json.dumps(manifest))
     return Response(stream.getvalue(), media_type='application/zip', headers={'Content-Disposition': f'attachment; filename="volume-{run_id}-evidence.zip"'})
+
+
+def volume_xai_for_report(run_id):
+    from .volume_xai_api import records as volume_records
+    keep = ('id', 'status', 'method_label', 'identity', 'target', 'alignment', 'summary', 'artifact_sha256', 'verification', 'created_at', 'completed_at')
+    return [{k: r.get(k) for k in keep} for r in volume_records(STORAGE, run_id)]
 
 
 @app.get('/api/cases/{case_id}/volumes/analyses/{run_id}/report/{format}')
@@ -1683,6 +1701,7 @@ def volume_research_report(case_id: str, run_id: str, format: Literal['json', 'c
         mask_path = STORAGE/'volumes'/row.id/'outputs'/'mask_source.nii.gz'
         if row.status == 'completed' and mask_path.is_file():
             volume['experimental_geometry'] = saved_measurement(mask_path)
+        volume['xai'] = volume_xai_for_report(row.id)
         document = snapshot(volume)
     except ValueError as exc:
         raise HTTPException(409, str(exc)) from exc
@@ -2975,6 +2994,9 @@ install_reference_measurements(app, get_db=get_db, current_user=require_case_rol
 from .xai_api import install as install_xai  # noqa: E402
 install_xai(app, get_db=get_db, current_user=require_case_role, accessible_case=accessible_case, case_out=case_out,
             storage=STORAGE, audit=audit, Image=Image, AnalysisEvent=AnalysisEvent, Case=Case, event_out=event_out)
+from .volume_xai_api import install as install_volume_xai  # noqa: E402
+install_volume_xai(app, get_db=get_db, current_user=require_case_role, accessible_case=accessible_case, case_out=case_out,
+                   storage=STORAGE, audit=audit, VolumeAnalysis=VolumeAnalysis)
 
 
 frontend_dist = BASE_DIR / "frontend" / "dist"

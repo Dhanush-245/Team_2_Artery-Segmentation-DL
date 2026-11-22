@@ -648,3 +648,7 @@ details[open] > summary .evaluation-chevron { transform: rotate(180deg); }
 .xai-definitions { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: .88rem; }
 .xai-panel .cv-panel-head h3 { color: var(--theme-ink, #09090b); }
 .dark .xai-panel .cv-panel-head h3 { color: #fafafa; }
+.volume-xai { padding: 14px 16px; border: 1px solid var(--theme-line, #e4e4e7); border-radius: 12px; }
+.volume-xai h4 { margin: 0; font-size: 1rem; }
+.volume-xai-method { display: flex; align-items: center; gap: 8px; font-size: .8rem; font-weight: 600; }
+.volume-xai-method select { min-width: 220px; }

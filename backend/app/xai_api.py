@@ -356,7 +356,25 @@ def install(app, *, get_db, current_user, accessible_case, case_out, storage: Pa
             entry['verified'] += row['deletion'] in ('PASS', 'FAIL')
             entry['deletion_pass'] += row['deletion'] == 'PASS'
             entry['insertion_pass'] += row['insertion'] == 'PASS'
+        from .models import VolumeAnalysis
+        from .volume_xai_api import records as volume_records
+        volume_rows, volume_runs = [], 0
+        for case in db.scalars(select(Case).where(Case.deleted_at.is_(None))):
+            try:
+                accessible_case(case.id, user, db, required_action='read')
+            except HTTPException:
+                continue
+            for run in db.scalars(select(VolumeAnalysis).where(VolumeAnalysis.case_id == case.id, VolumeAnalysis.status == 'completed')):
+                volume_runs += 1
+                for r in volume_records(storage, run.id):
+                    v = r.get('verification') or {}
+                    volume_rows.append(dict(case_id=case.id, case_code=case.case_code, run_id=run.id, record_id=r['id'],
+                                            method_label=r.get('method_label'), status=r.get('status'),
+                                            alignment=(r.get('alignment') or {}).get('status', 'NOT_TESTED'),
+                                            deletion=v.get('deletion', 'NOT_TESTED'), insertion=v.get('insertion', 'NOT_TESTED'),
+                                            created_at=r.get('created_at')))
         return dict(engine_version=engine.ENGINE_VERSION, method_versions=engine.METHOD_VERSIONS,
+                    volume=dict(runs=volume_runs, records=volume_rows),
                     target_definitions=engine.TARGET_DEFINITIONS, coverage=coverage, by_method=by_method,
-                    records=rows, study_evidence=STUDY_EVIDENCE, volume_xai='NOT_IMPLEMENTED',
+                    records=rows, study_evidence=STUDY_EVIDENCE, volume_xai='IMPLEMENTED' if volume_rows or volume_runs else 'NO_3D_RUNS',
                     scope='Only cases you can open are counted.', research_only=True)

@@ -32,7 +32,8 @@ def snapshot(run):
             'text': 'This saved volume run contains a segmentation prediction and orthogonal previews. '
                     'Foreground voxel count is not accuracy, lumen diameter, disease probability or stenosis severity. '
                     'Downstream unavailable stages were not executed. Review the original volume and model limitations.'},
-        'artifacts': run.get('artifacts', {}), 'limitations': result.get('limitations', [])}
+        'artifacts': run.get('artifacts', {}), 'limitations': result.get('limitations', []),
+        'explainable_ai': run.get('xai') or []}
     document['snapshot_sha256'] = hashlib.sha256(json.dumps(document, sort_keys=True, allow_nan=False).encode()).hexdigest()
     geometry = run.get('experimental_geometry')
     if geometry:
@@ -146,6 +147,25 @@ def pdf_bytes(document):
         report.story.append(Table(rows, colWidths=[44,104,66,78,58,144], repeatRows=1,
             style=TableStyle([('BACKGROUND',(0,0),(-1,0),colors.HexColor('#f1ecfb')),('GRID',(0,0),(-1,-1),.5,colors.HexColor('#ccd8e4')),('VALIGN',(0,0),(-1,-1),'TOP'),('PADDING',(0,0),(-1,-1),5)])))
         report.paragraph('MLD is the narrowest predicted-mask width along each path and RVD the median width elsewhere on the same path. These exploratory estimates are shown for research demonstration and are not eligible, validated measurements.')
+
+    report.section('Explainable AI — Research Interpretation')
+    xai = document.get('explainable_ai') or []
+    if not xai:
+        report.paragraph('XAI not generated: no volumetric explanation was saved for this run.')
+    else:
+        rows = [[cell(value, report.table_header) for value in ['Method', 'Status', 'Native alignment', 'Energy in target', 'Deletion', 'Insertion']]]
+        for item in xai:
+            v, a, summary = item.get('verification') or {}, item.get('alignment') or {}, item.get('summary') or {}
+            energy = summary.get('energy_inside_target_mask')
+            rows.append([cell(item.get('method_label', '')), cell(str(item.get('status', '')).replace('_', ' ')),
+                         cell(f"{a.get('status', 'NOT_TESTED')} (Dice {a.get('mask_dice_vs_saved', '-')})"),
+                         cell('—' if energy is None else f'{energy * 100:.1f}%'),
+                         cell(v.get('deletion', 'NOT_TESTED')), cell(v.get('insertion', 'NOT_TESTED'))])
+        report.story.append(Table(rows, colWidths=[96, 60, 110, 70, 60, 60], repeatRows=1,
+            style=TableStyle([('BACKGROUND',(0,0),(-1,0),colors.HexColor('#f4f4f5')),('GRID',(0,0),(-1,-1),.5,colors.HexColor('#d4d4d8')),('VALIGN',(0,0),(-1,-1),'TOP'),('PADDING',(0,0),(-1,-1),5)])))
+        report.paragraph('Target: mean vessel-minus-background logit over the voxels the 3D model labels as vessel at 128³, explained at '
+                         'decoder block dec[1] and restored to the native grid through the saved mask transform. Attribution shows where that '
+                         'segmentation output was sensitive; it is not a lesion label, narrowing or disease probability. Model randomization was not tested.')
 
     report.story.append(PageBreak())
     report.section('Methods, limitations and review')

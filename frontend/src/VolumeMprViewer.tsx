@@ -16,10 +16,10 @@ const AXES = [
   { axis: 0, label: "Sagittal", hint: "array axis 1" },
 ] as const;
 
-type Props = { caseId: string; runId: string; token: string; shape: number[] };
+type Props = { caseId: string; runId: string; token: string; shape: number[]; heatId?: string; heatLabel?: string };
 
 /** Full-resolution multiplanar slices rendered on demand by the server from the saved source and mask. */
-export default function VolumeMprViewer({ caseId, runId, token, shape }: Props) {
+export default function VolumeMprViewer({ caseId, runId, token, shape, heatId, heatLabel }: Props) {
   const [axis, setAxis] = useState<0 | 1 | 2>(2);
   const depth = Math.max(1, shape[axis] ?? 1);
   const [indexByAxis, setIndexByAxis] = useState<Record<number, number>>(() => ({ 0: Math.floor((shape[0] ?? 1) / 2), 1: Math.floor((shape[1] ?? 1) / 2), 2: Math.floor((shape[2] ?? 1) / 2) }));
@@ -27,6 +27,7 @@ export default function VolumeMprViewer({ caseId, runId, token, shape }: Props) 
   const [win, setWin] = useState(800);
   const [level, setLevel] = useState(300);
   const [opacity, setOpacity] = useState(55);
+  const [heatOpacity, setHeatOpacity] = useState(70);
   const [image, setImage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -35,6 +36,7 @@ export default function VolumeMprViewer({ caseId, runId, token, shape }: Props) 
   useEffect(() => {
     const controller = new AbortController();
     const query = new URLSearchParams({ axis: String(axis), index: String(index), window: String(win), level: String(level), opacity: String(opacity / 100) });
+    if (heatId) { query.set('xai', heatId); query.set('xai_opacity', String(heatOpacity / 100)); }
     const timer = setTimeout(async () => {
       setLoading(true); setError("");
       try {
@@ -48,7 +50,7 @@ export default function VolumeMprViewer({ caseId, runId, token, shape }: Props) 
       } finally { if (!controller.signal.aborted) setLoading(false); }
     }, 120);
     return () => { clearTimeout(timer); controller.abort(); };
-  }, [caseId, runId, token, axis, index, win, level, opacity]);
+  }, [caseId, runId, token, axis, index, win, level, opacity, heatId, heatOpacity]);
   useEffect(() => () => { if (current.current) URL.revokeObjectURL(current.current); }, []);
 
   const step = (delta: number) => setIndexByAxis(prev => ({ ...prev, [axis]: Math.max(0, Math.min(depth - 1, index + delta)) }));
@@ -86,6 +88,7 @@ export default function VolumeMprViewer({ caseId, runId, token, shape }: Props) 
         </label>
         <label>Window (W)<input type="number" min={1} max={5000} value={win} onChange={event => setWin(Math.max(1, Number(event.target.value) || 1))} /></label>
         <label>Level (L)<input type="number" min={-1500} max={3000} value={level} onChange={event => setLevel(Number(event.target.value) || 0)} /></label>
+        {heatId && <label className="volume-mpr-opacity"><span>{heatLabel ?? 'Attribution'} · {heatOpacity}%</span><input type="range" min={0} max={100} value={heatOpacity} onChange={event => setHeatOpacity(Number(event.target.value))} aria-label="Attribution overlay opacity" /></label>}
         <label className="volume-mpr-opacity"><span>Mask overlay · {opacity}%</span><input type="range" min={0} max={100} value={opacity} onChange={event => setOpacity(Number(event.target.value))} aria-label="Mask overlay opacity" /></label>
         {image && <a className="volume-mpr-download" href={image} download={`slice-${AXES.find(a => a.axis === axis)?.label.toLowerCase()}-${index + 1}.png`}><Download size={14} /> Slice PNG</a>}
       </div>

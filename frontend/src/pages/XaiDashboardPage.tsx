@@ -14,7 +14,8 @@ type Summary = { engine_version: string; method_versions: Record<string, string>
   by_method: Record<string, { records: number; ready: number; verified: number; deletion_pass: number; insertion_pass: number }>;
   records: Row[]; study_evidence: { id: string; date: string; method: string; cohort: string; overall: string; checks: Record<string, string>[];
     randomization_note?: string; deletion_insertion_note?: string; randomization?: string; deletion_insertion?: string }[];
-  volume_xai: string; scope: string };
+  volume_xai: string; scope: string;
+  volume?: { runs: number; records: { case_id: string; case_code: string; run_id: string; record_id: string; method_label: string; status: string; alignment: string; deletion: string; insertion: string; created_at: string }[] } };
 
 const TONE: Record<string, string> = { ready: "ok", PASS: "ok", FAIL: "bad", PARTIAL: "warn", NOT_TESTED: "muted", NOT_EVALUABLE: "warn", failed: "bad", generating: "info", not_evaluable: "warn", NOT_IMPLEMENTED: "muted" };
 const Chip = ({ value }: { value: string }) => <span className={`cv-chip ${TONE[value] ?? "muted"}`}>{value.replaceAll("_", " ")}</span>;
@@ -53,7 +54,8 @@ export default function XaiDashboardPage() {
         <div><dt>Eligible for explanation</dt><dd>{c.eligible_runs}</dd></div>
         <div><dt>Runs with saved explanations</dt><dd>{c.runs_with_explanations}</dd></div>
         <div><dt>Runs with no stenosis candidate</dt><dd>{c.zero_candidate_runs}</dd></div>
-        <div><dt>3D volumetric XAI</dt><dd><Chip value={data.volume_xai} /></dd></div>
+        <div><dt>Completed 3D runs</dt><dd>{data.volume?.runs ?? 0}</dd></div>
+        <div><dt>Saved 3D explanations</dt><dd>{data.volume?.records.length ?? 0}</dd></div>
       </dl>
       <p className="caption">Ineligible runs used an earlier model release or a non-XCA image; their saved maps stay as they were. Zero-candidate runs offer segmentation explanations only.</p>
     </Card>
@@ -86,6 +88,17 @@ export default function XaiDashboardPage() {
     </Card>
 
     <Card className="panel">
+      <div className="cv-panel-head"><span className="eyebrow">3D CTA</span><h3>Saved volumetric explanations</h3></div>
+      {!data.volume?.records.length ? <p className="muted">No volumetric explanation saved yet. Generate one from a 3D case's analysis view.</p> : <div className="table-scroll"><table>
+        <thead><tr><th>Case</th><th>Run</th><th>Method</th><th>Status</th><th>Alignment</th><th>Deletion</th><th>Insertion</th><th>Saved</th></tr></thead>
+        <tbody>{data.volume.records.map(r => <tr key={r.record_id}>
+          <td><button type="button" className="cv-link-button" onClick={() => navigate(`/analysis?case_id=${r.case_id}`)}>{r.case_code}</button></td>
+          <td>{r.run_id.slice(0, 8)}</td><td>{r.method_label}</td><td><Chip value={r.status} /></td><td><Chip value={r.alignment} /></td>
+          <td><Chip value={r.deletion} /></td><td><Chip value={r.insertion} /></td><td>{utcDate(r.created_at).toLocaleString()}</td></tr>)}</tbody>
+      </table></div>}
+    </Card>
+
+    <Card className="panel">
       <div className="cv-panel-head"><span className="eyebrow">VERIFICATION STUDIES</span><h3>Study-level faithfulness results</h3><p className="muted">Recorded experiments on the frozen detector. Historical results are shown as recorded, including failures.</p></div>
       {data.study_evidence.map(item => <div key={item.id} className="xai-study">
         <p><strong>{item.date} · {item.method}</strong> · {item.cohort} · overall <Chip value={item.overall} /></p>
@@ -102,7 +115,7 @@ export default function XaiDashboardPage() {
         <li><strong>Stenosis candidate:</strong> {data.target_definitions.stenosis}.</li>
         <li><strong>Segmentation:</strong> {data.target_definitions.segmentation}.</li>
         <li>Engine {data.engine_version}. Heatmaps show where a model target was sensitive, not lesion labels, severity or disease probability. Technical generation and scientific faithfulness are separate results; clinical validity is not assessed.</li>
-        <li>3D CTA: volumetric attribution is not implemented for the retained 3D checkpoint, so no 3D heatmap is shown.</li>
+        <li><strong>3D CTA:</strong> mean vessel-minus-background logit over the voxels the retained 3D U-Net labels as vessel at 128³, explained at decoder block dec[1] and restored to the native grid through the saved mask's affine path. Each record carries an alignment check against the saved mask.</li>
       </ul>
     </Card>
   </div>;

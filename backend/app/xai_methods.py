@@ -7,18 +7,23 @@ saliency maps for research review, not clinical explanations.
 """
 
 
+def _spatial(tensor):
+    """Spatial dims of an (N, C, *spatial) tensor: (2, 3) for 2D maps, (2, 3, 4) for volumes."""
+    return tuple(range(2, tensor.ndim))
+
+
 def gradcam_weights(gradient):
-    return gradient.mean(dim=(2, 3), keepdim=True)
+    return gradient.mean(dim=_spatial(gradient), keepdim=True)
 
 
 def gradcam_plus_plus_weights(activation, gradient, eps: float = 1e-8):
     import torch
     grad_2 = gradient.pow(2)
     grad_3 = gradient.pow(3)
-    activation_sum = activation.sum(dim=(2, 3), keepdim=True)
+    activation_sum = activation.sum(dim=_spatial(activation), keepdim=True)
     denominator = 2 * grad_2 + activation_sum * grad_3
     alpha = torch.where(denominator.abs() > eps, grad_2 / denominator, torch.zeros_like(denominator))
-    return (alpha * torch.relu(gradient)).sum(dim=(2, 3), keepdim=True)
+    return (alpha * torch.relu(gradient)).sum(dim=_spatial(gradient), keepdim=True)
 
 
 def weighted_cam(activation, weights):

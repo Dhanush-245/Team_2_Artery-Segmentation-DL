@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Download, FileJson, FileSpreadsheet, FileText, Package } from 'lucide-react';
 import { apiUrl } from './api';
 import { Button } from './components/prismui/button';
 import VolumeOrbit from './VolumeOrbit';
 import VolumeMeasurementPanel from './VolumeMeasurementPanel';
 import VolumeMprViewer from './VolumeMprViewer';
+import VolumeXaiPanel from './VolumeXaiPanel';
 import { utcDate } from "./lib/time";
 
 type VolumeRun = { id: string; status: string; error: string | null; created_at: string;model_key?:string;
@@ -39,6 +40,8 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
   const [previews, setPreviews] = useState<Record<string,string>>({});
   const [report, setReport] = useState<null | {experimental_geometry?: {status?:string;reasons?:string[];exploratory_estimates?:ExploratoryEstimate[];paths?: {id:string;length_mm:number}[];candidates?:{id:string;path_id:string;minimum_area_mm2?:number;reference_area_mm2?:number;area_narrowing_percent?:number;minimum_diameter_mm:number;reference_diameter_mm:number;narrowing_percent:number;severity:string;location_ras_mm:number[]}[];limitations?:string[]}; analysis_run_id:string; model_id:string; explanation:{text:string}; stages:Record<string,{status:string;reason:string}>}>(null);
   const [reportError,setReportError] = useState('');
+  const [heat, setHeat] = useState<{ id?: string; label?: string }>({});
+  const showHeat = useCallback((id?: string, label?: string) => setHeat({ id, label }), []);
   const selected = runs.find(r => r.id === chosen) || runs[0];
   const active = runs.some(r => ['queued','running'].includes(r.status));
   const headers = {Authorization: `Bearer ${token}`};
@@ -202,7 +205,8 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
             </Button>
             {viewingRun === selected.id && <VolumeOrbit key={selected.id} url={selected.preview_url} token={token} />}
           </section>}
-          {selected.status === 'completed' && <VolumeMprViewer key={`mpr-${selected.id}`} caseId={caseId} runId={selected.id} token={token} shape={selected.result.source_shape} />}
+          {selected.status === 'completed' && <VolumeXaiPanel key={`xai-${selected.id}`} token={token} caseId={caseId} runId={selected.id} onShow={showHeat} />}
+          {selected.status === 'completed' && <VolumeMprViewer key={`mpr-${selected.id}`} caseId={caseId} runId={selected.id} token={token} shape={selected.result.source_shape} heatId={heat.id} heatLabel={heat.label} />}
           <details key={selected.id}><summary>{selected.input_kind === 'synthetic_fixture' ? 'Show synthetic test slices (not medical images)' : 'Saved coarse-grid previews (model input resolution)'}</summary>
           <div className="volume-slices">{selected.result.slices.map(slice => <figure key={slice.artifact}>
             {previews[slice.artifact] ? <img src={previews[slice.artifact]} alt={`Predicted coronary overlay on ${slice.axis} slice ${slice.coarse_index}`} /> : <p>Loading saved preview…</p>}

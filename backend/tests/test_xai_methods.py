@@ -23,3 +23,17 @@ def test_plus_plus_ignores_negative_gradients_and_is_finite():
     weights = gradcam_plus_plus_weights(activation, gradient)
     assert torch.isfinite(weights).all()
     assert (weights == 0).all()
+
+
+def test_weights_extend_to_volumes_and_match_2d_per_slice_semantics():
+    activation = torch.zeros(1, 2, 4, 8, 8)
+    activation[0, 0, 1:3, 2:4, 2:4] = 1.0
+    activation[0, 1] = 0.2
+    gradient = torch.zeros_like(activation)
+    gradient[0, 0] = 1.0
+    for weights in (gradcam_weights(gradient), gradcam_plus_plus_weights(activation, gradient)):
+        assert weights.shape == (1, 2, 1, 1, 1)
+        cam = weighted_cam(activation, weights)[0, 0]
+        assert cam[1:3, 2:4, 2:4].min() > 0 and cam[0, 6, 6] == 0
+    flat = torch.rand(1, 3, 5, 5)
+    assert torch.allclose(gradcam_weights(flat), flat.mean(dim=(2, 3), keepdim=True))
