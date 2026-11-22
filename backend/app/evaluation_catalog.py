@@ -80,10 +80,40 @@ def evaluation_runs():
     return records
 
 
+EXTERNAL_FILE = RELEASES / "external_validation_cadica_20261122.json"
+
+
+def external_runs():
+    """External-dataset checks of the frozen release, kept separate from ARCADE validation."""
+    if not EXTERNAL_FILE.is_file():
+        return []
+    raw = EXTERNAL_FILE.read_bytes()
+    data = json.loads(raw)
+    stenosis = next(m for m in RELEASE["models"] if m["task"] == "stenosis")
+    return [{
+        "id": f'{RELEASE["version"]}:stenosis:external:{data["dataset"]["name"]}',
+        "record_type": "external_validation_report",
+        "model": {"architecture": stenosis["architecture"], "version": RELEASE["version"],
+                  "checkpoint_sha256": stenosis["sha256"], "checkpoint_reference": stenosis["filename"]},
+        "task": "stenosis_masks", "dataset": data["dataset"], "dimension": "2D",
+        "sample_counts": data["sample_counts"], "metrics": data["metrics"],
+        "protocol": {"id": data.get("protocol_id"), "description": data["protocol"], "independent_final_test": False},
+        "evaluated_at": data.get("evaluated_at"), "runtime_seconds": data.get("runtime_seconds"),
+        "hardware": data.get("hardware"), "approval_status": None, "reviewer_status": None,
+        "source": f"ml/releases/{EXTERNAL_FILE.name}", "training_history": [], "training_config": None,
+        "prediction_artifacts": [], "sample_evaluations": [], "limitations": data["limitations"],
+        "confusion": data["confusion"], "operating_point": data.get("operating_point"),
+        "severity_agreement": data["severity_agreement"],
+        "evidence_source": {"file": f"ml/releases/{EXTERNAL_FILE.name}", "sha256": hashlib.sha256(raw).hexdigest(),
+                            "report": data.get("report"), "report_sha256": data.get("report_sha256")},
+    }]
+
+
 def catalog():
-    runs = evaluation_runs()
+    release = evaluation_runs()
+    runs = release + external_runs()
     return {"runs": runs, "summary": {
-        "evaluated_models": len(runs), "imported_evaluation_records": len(runs),
+        "evaluated_models": len(release), "imported_evaluation_records": len(runs),
         "approved_models": None, "experimental_models": None, "running_experiments": None,
         "pending_review": None, "failed_experiments": None, "latest_successful_evaluation": None,
     }, "capabilities": {

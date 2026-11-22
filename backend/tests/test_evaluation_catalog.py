@@ -11,6 +11,7 @@ from test_rbac_system import make_user
 def test_catalog_preserves_manifest_and_missing_values():
     original = deepcopy(RELEASE)
     data = catalog()
+    data["runs"] = [run for run in data["runs"] if run["record_type"] == "imported_release_validation_report"]
     assert len(data["runs"]) == len(RELEASE["models"]) == 2
     assert data["summary"]["approved_models"] is None
     assert data["summary"]["running_experiments"] is None

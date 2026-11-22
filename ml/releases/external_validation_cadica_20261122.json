@@ -1,0 +1,174 @@
+{
+ "schema_version": "corovision.external-validation.v1",
+ "evaluated_at": "2026-11-22",
+ "dataset": {
+  "name": "CADICA",
+  "version": "v5 (selectedVideos)",
+  "split": "external",
+  "patient_independence_verified": true,
+  "subset": "one middle keyframe per selected video"
+ },
+ "sample_counts": {
+  "images": 382,
+  "patients": 42,
+  "studies": null,
+  "excluded": null
+ },
+ "protocol": "External check of the frozen release (no training, threshold change or tuning). Detection matched to expert boxes at IoU ≥ 0.3; severity measured inside expert boxes with the 5-class research protocol.",
+ "protocol_id": "cadica-external-20261122",
+ "runtime_seconds": 291.3,
+ "hardware": "CPU (Docker, application image)",
+ "operating_point": {
+  "score_threshold": 0.25,
+  "mask_threshold": 0.5,
+  "decision": "frozen"
+ },
+ "metrics": [
+  {
+   "name": "Lesion recall",
+   "value": 0.5,
+   "unit": "ratio",
+   "aggregation": "lesion boxes, IoU ≥ 0.3",
+   "definition": "TP / (TP+FN) against CADICA expert boxes"
+  },
+  {
+   "name": "Lesion precision",
+   "value": 0.1992373689227836,
+   "unit": "ratio",
+   "aggregation": "lesion boxes, IoU ≥ 0.3",
+   "definition": "TP / (TP+FP)"
+  },
+  {
+   "name": "Lesion F1",
+   "value": 0.2849352419904567,
+   "unit": "ratio",
+   "aggregation": "lesion boxes, IoU ≥ 0.3",
+   "definition": "2PR / (P+R)"
+  },
+  {
+   "name": "Frame sensitivity",
+   "value": 0.9182156133828996,
+   "unit": "ratio",
+   "aggregation": "keyframe: any detection vs lesion video",
+   "definition": "TP / (TP+FN)"
+  },
+  {
+   "name": "Frame specificity",
+   "value": 0.24778761061946902,
+   "unit": "ratio",
+   "aggregation": "keyframe: no detection vs non-lesion video",
+   "definition": "TN / (TN+FP)"
+  },
+  {
+   "name": "Frame accuracy",
+   "value": 0.7198952879581152,
+   "unit": "ratio",
+   "aggregation": "keyframe",
+   "definition": ""
+  },
+  {
+   "name": "Frame false positive rate",
+   "value": 0.7522123893805309,
+   "unit": "ratio",
+   "aggregation": "keyframe",
+   "definition": "FP / (FP+TN)"
+  },
+  {
+   "name": "Frame false negative rate",
+   "value": 0.08178438661710037,
+   "unit": "ratio",
+   "aggregation": "keyframe",
+   "definition": "FN / (FN+TP)"
+  },
+  {
+   "name": "Frame AUC-ROC",
+   "value": 0.7478698555778531,
+   "unit": "ratio",
+   "aggregation": "keyframe max detector score",
+   "definition": "Probability a lesion frame outscores a non-lesion frame"
+  },
+  {
+   "name": "Severity coverage",
+   "value": 0.0,
+   "unit": "ratio",
+   "aggregation": "lesions graded / lesions",
+   "definition": "Share of lesions where the measurement passed every quality gate"
+  }
+ ],
+ "confusion": {
+  "level": "lesion instance, IoU ≥ 0.3",
+  "tp": 209,
+  "fp": 840,
+  "fn": 209,
+  "tn": null
+ },
+ "frame_confusion": {
+  "level": "keyframe",
+  "tp": 247,
+  "fp": 85,
+  "fn": 22,
+  "tn": 28
+ },
+ "recall_by_cadica_label": {
+  "p0_20": {
+   "detected": 48,
+   "total": 116,
+   "recall": 0.41379310344827586
+  },
+  "p100": {
+   "detected": 1,
+   "total": 11,
+   "recall": 0.09090909090909091
+  },
+  "p20_50": {
+   "detected": 40,
+   "total": 82,
+   "recall": 0.4878048780487805
+  },
+  "p50_70": {
+   "detected": 37,
+   "total": 63,
+   "recall": 0.5873015873015873
+  },
+  "p70_90": {
+   "detected": 42,
+   "total": 69,
+   "recall": 0.6086956521739131
+  },
+  "p90_98": {
+   "detected": 38,
+   "total": 73,
+   "recall": 0.5205479452054794
+  },
+  "p99": {
+   "detected": 3,
+   "total": 4,
+   "recall": 0.75
+  }
+ },
+ "severity_agreement": {
+  "lesions": 418,
+  "measured": 1,
+  "graded": 0,
+  "agreement": null,
+  "abstention_reasons": {
+   "low_local_boundary_contrast": 281,
+   "ambiguous_vessel_paths": 77,
+   "no_candidate_crossing_centerline": 27,
+   "branch_ambiguity_in_candidate_region": 23,
+   "multiple_vessel_components_in_candidate": 8,
+   "invalid_path_or_candidate": 1
+  },
+  "protocol": "COROVISION_XCA_RESEARCH_5CLASS v1.0.0"
+ },
+ "limitations": [
+  "CADICA categories are visual expert estimates, not QCA.",
+  "GT boxes were used as candidates for severity, isolating measurement from detection.",
+  "Keyframes are clustered within 42 patients; no patient-level confidence intervals are reported.",
+  "Frame classification uses lesion vs non-lesion selected videos as the reference.",
+  "CADICA was never used to train or select the installed models.",
+  "Severity agreement is not measurable while the measurement quality gate abstains on almost every lesion."
+ ],
+ "report": "reports/cadica_external_validation_20261122/summary.json",
+ "report_sha256": "368ea88503aa902d7919a7eb404198ddb1254fed3bbb74ea043c436bdc46dcf4"
+}

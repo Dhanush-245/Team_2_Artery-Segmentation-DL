@@ -12,7 +12,7 @@ from test_rbac_system import make_user
 def test_catalog_serves_epoch_history_and_dataset_versions():
     data = catalog()
     assert data["capabilities"]["epoch_history"] is True
-    for run in data["runs"]:
+    for run in [r for r in data["runs"] if r["record_type"] == "imported_release_validation_report"]:
         assert len(run["training_history"]) >= 10
         first = run["training_history"][0]
         assert first["epoch"] == 1 and isinstance(first["train_loss"], float)

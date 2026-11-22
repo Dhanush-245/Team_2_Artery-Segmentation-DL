@@ -217,13 +217,6 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
           <div className="workbench-layer-tabs" role="group" aria-label="Image layer">
             {(["localization", "source", "processed", "mask", "overlay", "centerline", "contours", "artery_probability", "probability", "attention", "gradcam", "gradcampp"] as const).map((item) => { const available = item === 'source' ? !!source : item === 'processed' || item === 'localization' ? !!(processedPreview || overlay) : item === 'overlay' ? !!overlay : !!xaiLayers[item]; return <button key={item} type="button" disabled={!available} title={available ? undefined : 'No valid saved artifact is available for this layer'} aria-pressed={mode === item} className={mode === item ? "active" : ""} onClick={() => setMode(item)}>{item === "localization" ? "Localization" : item === "source" ? "Original" : item === "processed" ? "Processed" : item === 'mask' ? 'Artery mask' : item === "overlay" ? "AI overlay" : item === "contours" ? "Vessel contours" : item === "centerline" ? "Centerline graph" : item === "artery_probability" ? "Artery probability" : item === "attention" ? "Feature activation" : item === "probability" ? "Stenosis probability" : item === "gradcampp" ? "Grad-CAM++" : "Grad-CAM"}</button>; })}
           </div>
-          <div className="workbench-compare-controls" style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", margin: "8px 0" }}>
-            <label>Split compare <select value={compareLayer} onChange={event => setCompareLayer(event.target.value)} aria-label="Layer to compare against the current view">
-              <option value="">Off</option>
-              {COMPARE_KEYS.filter(key => key !== mode && !!layerSource(key)).map(key => <option key={key} value={key}>{LAYER_LABELS[key]}</option>)}
-            </select></label>
-            {compareSrc && <label style={{ display: "flex", alignItems: "center", gap: 8 }}>Divider <input type="range" min={0} max={100} value={split} onChange={event => setSplit(Number(event.target.value))} aria-label="Split position" /><small>left: {LAYER_LABELS[mode] ?? mode} · right: {LAYER_LABELS[compareLayer]}</small></label>}
-          </div>
           <div ref={canvas} className="workbench-canvas" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }}>
             {verifiedFallback ? <div className="workbench-image-stack" style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})` }}>
               {mode === "overlay" && processedPreview && overlay ? <><img src={processedPreview} alt="Preprocessed angiography image" draggable={false} /><img className="workbench-overlay" src={overlay} alt="AI artery and suspected stenosis overlay" style={{ opacity: opacity / 100 }} draggable={false} /></> : <img src={renderedImage} alt={mode === "source" ? "Original uploaded study" : (mode === "processed" || mode === "localization") ? "Prepared angiography with saved candidate localization" : mode === "overlay" ? "Saved AI artery and suspected stenosis overlay" : mode === "contours" ? "Saved vessel contours in prepared image coordinates" : mode === "mask" ? "Saved artery mask" : mode === "centerline" ? "Algorithmic centerline paths, branch nodes, and endpoints" : mode === "attention" ? "Detector backbone feature activation visualization" : mode === "artery_probability" ? "Uncalibrated artery pixel probability heatmap" : mode === "probability" ? "Uncalibrated stenosis pixel probability heatmap" : "Grad-CAM saliency map for stenosis detector output"} draggable={false} />}
@@ -263,6 +256,18 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
             <button type="button" aria-label="Reset view" onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }}><RotateCcw size={18} /></button>
             <button type="button" aria-label="Fit image to screen" onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }}><Maximize2 size={18} /></button>
             {([['Left', 40, 0], ['Right', -40, 0], ['Up', 0, 40], ['Down', 0, -40]] as const).map(([label, x, y]) => <button key={label} className="pan-control" type="button" disabled={zoom <= 1} onClick={() => setOffset(p => ({ x: p.x + x, y: p.y + y }))}>Pan {label}</button>)}
+          </div>
+          <div className="workbench-compare" role="group" aria-label="Split compare">
+            <label className="workbench-compare-select">Compare with
+              <select value={compareLayer} onChange={event => setCompareLayer(event.target.value)} aria-label="Layer shown right of the divider">
+                <option value="">Off</option>
+                {COMPARE_KEYS.filter(key => key !== mode && !!layerSource(key)).map(key => <option key={key} value={key}>{LAYER_LABELS[key]}</option>)}
+              </select>
+            </label>
+            {compareSrc && <>
+              <input className="workbench-compare-range" type="range" min={0} max={100} value={split} onChange={event => setSplit(Number(event.target.value))} aria-label="Divider position" />
+              <span className="workbench-compare-legend">{LAYER_LABELS[mode] ?? mode} ◀ ▶ {LAYER_LABELS[compareLayer]}</span>
+            </>}
           </div>
           <div className="workbench-viewer-notes">
           {zoom <= 1 && <p className="caption">Zoom in to enable panning.</p>}

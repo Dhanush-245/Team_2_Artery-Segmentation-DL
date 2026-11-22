@@ -7,7 +7,7 @@ def _metrics(run):
 
 
 def test_segmentation_record_has_full_metric_set_and_confusion():
-    runs = {r["task"]: r for r in catalog()["runs"]}
+    runs = {r["task"]: r for r in catalog()["runs"] if r["record_type"] == "imported_release_validation_report"}
     seg = runs["binary_artery_segmentation"]
     names = _metrics(seg)
     for name in ("Dice", "IoU", "Pixel accuracy", "Precision", "Recall", "Sensitivity", "Specificity",
@@ -20,7 +20,7 @@ def test_segmentation_record_has_full_metric_set_and_confusion():
 
 
 def test_detection_record_has_instance_metrics_at_frozen_threshold():
-    runs = {r["task"]: r for r in catalog()["runs"]}
+    runs = {r["task"]: r for r in catalog()["runs"] if r["record_type"] == "imported_release_validation_report"}
     det = runs["stenosis_masks"]
     names = _metrics(det)
     for name in ("Precision", "Recall", "F1", "AUC-ROC", "False positives per image"):
