@@ -2860,6 +2860,8 @@ def create_research_report(case_id: str, data: ResearchReportIn,
         StenosisMeasurement.analysis_event_id == event.id).order_by(StenosisMeasurement.created_at.desc()))]
     snapshot['automatic_measurements'] = get_automatic_measurements(case.id, event.id, user, db)
     snapshot['vessel_segments'] = get_vessel_segments(case.id, event.id, user, db)
+    from .xai_api import report_records
+    snapshot['xai'] = report_records(STORAGE, event.id)
     report.snapshot_json = json.dumps(snapshot, default=str)
     db.add(report)
     audit(db, user.id, f'research_report_generated:v{version}:{event.id}', case.id)
@@ -2902,10 +2904,12 @@ def export_research_report(case_id: str, report_id: str, format: Literal['json',
         image = db.get(Image, snapshot['image']['id'])
         event = db.get(AnalysisEvent, snapshot['analysis']['id'])
         from .image_panels import report_images
-        content, media = pdf_bytes(snapshot, report_images(image, event, snapshot.get('image_panels'))), 'application/pdf'
+        from .xai_api import report_artifacts
+        xai_files = report_artifacts(STORAGE, snapshot)
+        content, media = pdf_bytes(snapshot, report_images(image, event, snapshot.get('image_panels')), xai_images=xai_files), 'application/pdf'
         if format == 'zip':
             from .image_panels import paths
-            content, media = evidence_zip(snapshot, content, paths(image, event)), 'application/zip'
+            content, media = evidence_zip(snapshot, content, {**paths(image, event), **xai_files}), 'application/zip'
     audit(db, user.id, f'research_report_exported:{report_id}:{format}', case_id)
     db.commit()
     return Response(content, media_type=media, headers={'Content-Disposition': f'attachment; filename="research-report-v{snapshot["version"]}.{format}"'})
@@ -2968,6 +2972,9 @@ from .reference_measurements import install as install_reference_measurements  #
 install_reference_measurements(app, get_db=get_db, current_user=require_case_role, accessible_case=accessible_case,
                                storage=STORAGE, audit=audit, Image=Image, Case=Case,
                                reviewer_roles=ROLE_CLINICAL_REVIEWERS)
+from .xai_api import install as install_xai  # noqa: E402
+install_xai(app, get_db=get_db, current_user=require_case_role, accessible_case=accessible_case, case_out=case_out,
+            storage=STORAGE, audit=audit, Image=Image, AnalysisEvent=AnalysisEvent, Case=Case, event_out=event_out)
 
 
 frontend_dist = BASE_DIR / "frontend" / "dist"

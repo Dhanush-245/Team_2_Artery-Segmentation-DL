@@ -610,3 +610,41 @@ details[open] > summary .evaluation-chevron { transform: rotate(180deg); }
 .app-shell .volume-stage-grid > div { flex-wrap: wrap; align-items: flex-start; gap: 6px; min-width: 0; }
 .app-shell .volume-stage-grid > div > * { min-width: 0; }
 .app-shell .volume-stage-grid .cv-chip { white-space: normal; text-align: left; }
+
+/* ---- Case Explainable AI panel ---- */
+.xai-panel { display: grid; gap: 16px; min-width: 0; scroll-margin-top: 90px; }
+.xai-panel .viewer-heading { align-items: flex-start; gap: 12px; }
+.xai-identity { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; margin: 0; padding: 10px 12px; border: 1px solid var(--theme-line, #e4e4e7); border-radius: 10px; }
+.xai-identity div, .xai-facts div { display: grid; gap: 2px; min-width: 0; }
+.xai-identity dt, .xai-facts dt { font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--theme-muted, #71717a); }
+.xai-identity dd, .xai-facts dd { margin: 0; font-size: .86rem; font-weight: 600; overflow-wrap: anywhere; }
+.xai-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(260px, .8fr); gap: 18px; align-items: start; }
+@media (max-width: 980px) { .xai-layout { grid-template-columns: minmax(0, 1fr); } }
+.xai-viewport { position: relative; aspect-ratio: 1 / 1; width: 100%; max-width: 560px; background: #09090b; border-radius: 10px; overflow: hidden; }
+.xai-viewport img, .xai-viewport svg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.xai-heat { mix-blend-mode: normal; pointer-events: none; }
+.xai-outline rect { fill: none; stroke: #fff; stroke-width: 2; stroke-dasharray: 6 4; }
+.xai-viewport-note { position: absolute; left: 10px; bottom: 10px; padding: 3px 8px; border-radius: 6px; background: rgba(9,9,11,.75); color: #fafafa; font-size: .75rem; }
+.xai-controls { display: grid; gap: 12px; min-width: 0; }
+.xai-controls label { display: grid; gap: 6px; font-size: .82rem; font-weight: 600; }
+.xai-controls label.xai-check { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+.xai-controls label.xai-check input { width: 16px; height: 16px; }
+.xai-controls .caption { margin: 0; }
+.xai-legend { display: flex; align-items: center; gap: 8px; }
+.xai-ramp { display: inline-block; flex: 0 0 72px; height: 8px; border-radius: 999px; background: linear-gradient(90deg, #000, #b00 30%, #f60 55%, #fd0 80%, #fff); border: 1px solid var(--theme-line, #e4e4e7); }
+.xai-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.xai-card { display: grid; gap: 10px; align-content: start; padding: 14px 16px; border: 1px solid var(--theme-line, #e4e4e7); border-radius: 10px; min-width: 0; }
+.xai-card h4 { display: flex; align-items: center; gap: 6px; margin: 0; font-size: .92rem; }
+.xai-facts { display: grid; gap: 8px; margin: 0; }
+.xai-facts dd .cv-chip { margin-right: 4px; }
+.xai-compare-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.xai-compare-tile { margin: 0; display: grid; gap: 6px; }
+.xai-compare-tile img, .xai-compare-empty { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 8px; border: 1px solid var(--theme-line, #e4e4e7); }
+.xai-compare-empty { display: grid; place-items: center; font-size: .8rem; color: var(--theme-muted, #71717a); background: var(--theme-soft, #f4f4f5); }
+.xai-compare-tile figcaption { display: grid; gap: 4px; font-size: .78rem; }
+.xai-study { padding: 8px 0; border-bottom: 1px solid var(--theme-line, #e4e4e7); }
+.xai-study ul { margin: 4px 0 6px 18px; font-size: .84rem; }
+.xai-dashboard { display: grid; gap: 18px; }
+.xai-definitions { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: .88rem; }
+.xai-panel .cv-panel-head h3 { color: var(--theme-ink, #09090b); }
+.dark .xai-panel .cv-panel-head h3 { color: #fafafa; }

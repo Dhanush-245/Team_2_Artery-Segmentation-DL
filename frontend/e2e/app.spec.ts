@@ -68,3 +68,12 @@ test("a doctor records a caliper reference measurement", async ({ page, request 
   await page.getByRole("button", { name: /^save$/i }).click();
   await expect(page.getByRole("table", { name: /saved reference measurements/i })).toContainText("L1");
 });
+
+test("the Explainable AI research page lists only this user's evidence and states its limits", async ({ page }) => {
+  await signIn(page, "researcher");
+  await page.goto("/xai");
+  await expect(page.getByRole("heading", { name: "Explainable AI", level: 2 })).toBeVisible();
+  await expect(page).toHaveTitle(/Explainable AI · CoroVision AI/);
+  await expect(page.getByText("Only cases you can open are counted.")).toBeVisible();
+  await expect(page.getByText(/volumetric attribution is not implemented/)).toBeVisible();
+});

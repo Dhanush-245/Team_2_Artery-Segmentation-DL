@@ -106,6 +106,7 @@ def evidence_zip(snapshot, pdf, saved_artifacts=None):
     if snapshot.get('vessel_segments'):
         files['vessel_segments.json'] = json.dumps(snapshot['vessel_segments'], indent=2).encode()
     files['model_provenance.json'] = json.dumps(snapshot.get('provenance', {}), indent=2).encode()
+    files['xai_explanations.json'] = json.dumps(snapshot.get('xai') or [], indent=2).encode()
     manifest = {
         'schema_version': 1,
         'report_id': snapshot['report_id'],
@@ -124,6 +125,50 @@ def evidence_zip(snapshot, pdf, saved_artifacts=None):
             archive.writestr(name, content)
         archive.writestr('manifest.json', json.dumps(manifest, indent=2))
     return buffer.getvalue()
+
+
+def xai_section(report, snapshot, xai_images, cell, table, Image, ImageReader):
+    """Explainable AI — Research Interpretation: the run's saved case-specific explanations, or why none exist."""
+    from .xai_api import STUDY_EVIDENCE
+    report.section('Explainable AI — Research Interpretation')
+    records = snapshot.get('xai')
+    if records is None:
+        report.paragraph('XAI not generated: this report version predates case-specific explanation records.')
+        return
+    if not records:
+        report.paragraph('XAI not generated: no case-specific explanation was saved for this run before the report was created.')
+    else:
+        rows = [[cell(v, report.table_header) for v in ('Target', 'Method', 'Status', 'Deletion', 'Insertion', 'Randomization')]]
+        for r in records:
+            identity, v = r.get('identity') or {}, r.get('verification') or {}
+            target = 'Vessel mask' if identity.get('task') == 'segmentation' else identity.get('target_id', '')
+            rows.append([cell(target), cell(r.get('method_label') or identity.get('method', '')), cell(str(r.get('status', '')).replace('_', ' ')),
+                         cell(v.get('deletion', 'NOT_TESTED')), cell(v.get('insertion', 'NOT_TESTED')), cell(v.get('randomization', 'NOT_TESTED'))])
+        report.story.append(table(rows, [70, 130, 60, 70, 70, 80]))
+        first = records[0].get('identity') or {}
+        report.field('Detector checkpoint', (first.get('checkpoint_sha256') or '')[:16] + '…' if first.get('checkpoint_sha256') else 'Unavailable')
+        report.field('Explanation engine', records[0].get('engine_version'))
+        figures = []
+        width = report.document.width / 3 - 8
+        for name, path in list(xai_images.items())[:3]:
+            try:
+                w, h = ImageReader(str(path)).getSize()
+            except (OSError, ValueError, TypeError):
+                continue
+            scale = min((width - 8) / w, 170 / h)
+            figures.append([Image(str(path), width=w * scale, height=h * scale),
+                            Paragraph_caption(report, ' · '.join(name[4:].rsplit('_', 2)[:2]).replace('vessel_mask', 'vessel mask'))])
+        if figures:
+            report.story.append(table([figures], [width] * len(figures), header=False))
+    overall = '; '.join(f"{c['target']}: {c.get('overall', '')}" for c in STUDY_EVIDENCE[-1]['checks'])
+    report.paragraph('Study-level faithfulness (M3-02, ARCADE validation): ' + overall + '. Heatmaps show where a model target was sensitive; '
+                     'they are not lesion labels, severity or disease probability, and clinical validity is not assessed.')
+
+
+def Paragraph_caption(report, text):
+    from xml.sax.saxutils import escape
+    from reportlab.platypus import Paragraph
+    return Paragraph(escape(text), report.caption)
 
 
 def stenosis_count_text(result):
@@ -187,7 +232,7 @@ def tabular(snapshot):
     return output.getvalue()
 
 
-def pdf_bytes(snapshot, image_paths):
+def pdf_bytes(snapshot, image_paths, xai_images=None):
     from reportlab.lib.utils import ImageReader
     from reportlab.lib import colors
     from reportlab.lib.enums import TA_CENTER
@@ -316,6 +361,7 @@ def pdf_bytes(snapshot, image_paths):
     available_panels = [panel.get('title') for panel in snapshot.get('image_panels') or [] if panel.get('available')]
     report.paragraph('Available saved evidence: ' + ', '.join(available_panels) if available_panels else 'No verified attribution image is saved for this run.')
     report.paragraph('No demonstration heatmap or inferred explanation is inserted into this report.')
+    xai_section(report, snapshot, xai_images or {}, cell, table, Image, ImageReader)
 
     # Page 5 — concise methods, limitations and review state.
     report.story.append(PageBreak())

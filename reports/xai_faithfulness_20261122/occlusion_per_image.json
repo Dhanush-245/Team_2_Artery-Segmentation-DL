@@ -142,6 +142,147 @@
    "seconds": 12233.5
   },
   {
+   "image_id": 17,
+   "candidates": 5,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 5,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.6740784227848053,
+   "maps": {
+    "saved_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "485180b66e1b8b447fce3e26eab6bcff65d435dd71e2f4fa6ed97b12a59f00ef",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.06572560851927847,
+      "random_deletion_auc": 0.3218731682049111,
+      "ranked_insertion_auc": 0.38066414276836436,
+      "random_insertion_auc": 0.0939258738188073,
+      "deletion_auc_advantage": 0.25614755968563263,
+      "insertion_auc_advantage": 0.28673826894955706
+     },
+     "randomization": {
+      "absolute_spearman": 0.32222198730808715,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "485180b66e1b8b447fce3e26eab6bcff65d435dd71e2f4fa6ed97b12a59f00ef",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.014784483425319198,
+      "random_deletion_auc": 0.3218731682049111,
+      "ranked_insertion_auc": 0.5538396592251956,
+      "random_insertion_auc": 0.0939258738188073,
+      "deletion_auc_advantage": 0.3070886847795919,
+      "insertion_auc_advantage": 0.45991378540638833
+     },
+     "randomization": {
+      "absolute_spearman": 0.39752297057849584,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "485180b66e1b8b447fce3e26eab6bcff65d435dd71e2f4fa6ed97b12a59f00ef",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.014581437828019262,
+      "random_deletion_auc": 0.3218731682049111,
+      "ranked_insertion_auc": 0.5783720888663083,
+      "random_insertion_auc": 0.0939258738188073,
+      "deletion_auc_advantage": 0.30729173037689184,
+      "insertion_auc_advantage": 0.484446215047501
+     },
+     "randomization": {
+      "absolute_spearman": 0.16480309456331682,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "485180b66e1b8b447fce3e26eab6bcff65d435dd71e2f4fa6ed97b12a59f00ef",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.014577798405662179,
+      "random_deletion_auc": 0.3218731682049111,
+      "ranked_insertion_auc": 0.5504448156105355,
+      "random_insertion_auc": 0.0939258738188073,
+      "deletion_auc_advantage": 0.3072953697992489,
+      "insertion_auc_advantage": 0.4565189417917282
+     },
+     "randomization": {
+      "absolute_spearman": 0.03146850696286166,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 610,
+   "seconds": 747.8
+  },
+  {
    "image_id": 18,
    "candidates": 1,
    "parity": {
@@ -281,6 +422,3082 @@
    },
    "unique_forwards": 482,
    "seconds": 8679.6
+  },
+  {
+   "image_id": 25,
+   "candidates": 2,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 2,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.38727378845214844,
+   "maps": {
+    "saved_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "7363a44a48f92f9bd9abe7e54fdab27a9a94f0abe5f90927ebd779f4cd039134",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.006921278312802315,
+      "random_deletion_auc": 0.03028486529365182,
+      "ranked_insertion_auc": 0.22880661708768457,
+      "random_insertion_auc": 0.07405405677855015,
+      "deletion_auc_advantage": 0.023363586980849504,
+      "insertion_auc_advantage": 0.15475256030913442
+     },
+     "randomization": {
+      "absolute_spearman": 0.30473669305694095,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "7363a44a48f92f9bd9abe7e54fdab27a9a94f0abe5f90927ebd779f4cd039134",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.0034994891029782593,
+      "random_deletion_auc": 0.03028486529365182,
+      "ranked_insertion_auc": 0.22880661708768457,
+      "random_insertion_auc": 0.07405405677855015,
+      "deletion_auc_advantage": 0.02678537619067356,
+      "insertion_auc_advantage": 0.15475256030913442
+     },
+     "randomization": {
+      "absolute_spearman": 0.3068613414283062,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "7363a44a48f92f9bd9abe7e54fdab27a9a94f0abe5f90927ebd779f4cd039134",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.0034994891029782593,
+      "random_deletion_auc": 0.03028486529365182,
+      "ranked_insertion_auc": 0.3457860421622172,
+      "random_insertion_auc": 0.07405405677855015,
+      "deletion_auc_advantage": 0.02678537619067356,
+      "insertion_auc_advantage": 0.27173198538366705
+     },
+     "randomization": {
+      "absolute_spearman": 0.10899521420793327,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "7363a44a48f92f9bd9abe7e54fdab27a9a94f0abe5f90927ebd779f4cd039134",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.0034994891029782593,
+      "random_deletion_auc": 0.03028486529365182,
+      "ranked_insertion_auc": 0.32203793223015964,
+      "random_insertion_auc": 0.07405405677855015,
+      "deletion_auc_advantage": 0.02678537619067356,
+      "insertion_auc_advantage": 0.2479838754516095
+     },
+     "randomization": {
+      "absolute_spearman": 0.22167917163770767,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 498,
+   "seconds": 579.4
+  },
+  {
+   "image_id": 38,
+   "candidates": 8,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 8,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.4490612605586648,
+   "maps": {
+    "saved_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "38c1ba8064cbb0d70c9b38f3487213aaee0b0c0ad33c37bc73e20a76ff298f8e",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.020887005688564386,
+      "random_deletion_auc": 0.12311614525242476,
+      "ranked_insertion_auc": 0.2885603897666442,
+      "random_insertion_auc": 0.09127504617936211,
+      "deletion_auc_advantage": 0.10222913956386037,
+      "insertion_auc_advantage": 0.1972853435872821
+     },
+     "randomization": {
+      "absolute_spearman": 0.22612848404761812,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "38c1ba8064cbb0d70c9b38f3487213aaee0b0c0ad33c37bc73e20a76ff298f8e",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.01645999728498282,
+      "random_deletion_auc": 0.12311614525242476,
+      "ranked_insertion_auc": 0.27507134657207644,
+      "random_insertion_auc": 0.09127504617936211,
+      "deletion_auc_advantage": 0.10665614796744194,
+      "insertion_auc_advantage": 0.18379630039271433
+     },
+     "randomization": {
+      "absolute_spearman": 0.2200781522506049,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "38c1ba8064cbb0d70c9b38f3487213aaee0b0c0ad33c37bc73e20a76ff298f8e",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.020678374836279545,
+      "random_deletion_auc": 0.12311614525242476,
+      "ranked_insertion_auc": 0.3037498248304473,
+      "random_insertion_auc": 0.09127504617936211,
+      "deletion_auc_advantage": 0.10243777041614521,
+      "insertion_auc_advantage": 0.21247477865108522
+     },
+     "randomization": {
+      "absolute_spearman": 0.230836818473648,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "38c1ba8064cbb0d70c9b38f3487213aaee0b0c0ad33c37bc73e20a76ff298f8e",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.033081285924708936,
+      "random_deletion_auc": 0.12311614525242476,
+      "ranked_insertion_auc": 0.33801926285377704,
+      "random_insertion_auc": 0.09127504617936211,
+      "deletion_auc_advantage": 0.09003485932771582,
+      "insertion_auc_advantage": 0.24674421667441493
+     },
+     "randomization": {
+      "absolute_spearman": 0.4641816110334006,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 568,
+   "seconds": 651.4
+  },
+  {
+   "image_id": 45,
+   "candidates": 6,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 6,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.58436972523729,
+   "maps": {
+    "saved_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "fa79060ddbaed792915b78b108159b7bb6bcdfbe1bd2af09618d1dde64d3f196",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.02166800452202248,
+      "random_deletion_auc": 0.10176547361576618,
+      "ranked_insertion_auc": 0.49563495560626813,
+      "random_insertion_auc": 0.14415237338592607,
+      "deletion_auc_advantage": 0.08009746909374371,
+      "insertion_auc_advantage": 0.35148258222034207
+     },
+     "randomization": {
+      "absolute_spearman": 0.07960206509513251,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "fa79060ddbaed792915b78b108159b7bb6bcdfbe1bd2af09618d1dde64d3f196",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.017139244931361947,
+      "random_deletion_auc": 0.10176547361576618,
+      "ranked_insertion_auc": 0.4873046565432257,
+      "random_insertion_auc": 0.14415237338592607,
+      "deletion_auc_advantage": 0.08462622868440424,
+      "insertion_auc_advantage": 0.3431522831572996
+     },
+     "randomization": {
+      "absolute_spearman": 0.15523250880674722,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "fa79060ddbaed792915b78b108159b7bb6bcdfbe1bd2af09618d1dde64d3f196",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.01616495120106265,
+      "random_deletion_auc": 0.10176547361576618,
+      "ranked_insertion_auc": 0.5068889928224962,
+      "random_insertion_auc": 0.14415237338592607,
+      "deletion_auc_advantage": 0.08560052241470353,
+      "insertion_auc_advantage": 0.36273661943657015
+     },
+     "randomization": {
+      "absolute_spearman": 0.24269649131050594,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "fa79060ddbaed792915b78b108159b7bb6bcdfbe1bd2af09618d1dde64d3f196",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.021623557656615354,
+      "random_deletion_auc": 0.10176547361576618,
+      "ranked_insertion_auc": 0.474175593747835,
+      "random_insertion_auc": 0.14415237338592607,
+      "deletion_auc_advantage": 0.08014191595915082,
+      "insertion_auc_advantage": 0.33002322036190895
+     },
+     "randomization": {
+      "absolute_spearman": 0.2872133212998812,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 534,
+   "seconds": 637.5
+  },
+  {
+   "image_id": 46,
+   "candidates": 1,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 1,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.6215749979019165,
+   "maps": {
+    "saved_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "e6e199b99fb736bff3b924a52848818b7b5ccf06e5218f08a119cf816d591a13",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.004856054671108723,
+      "random_deletion_auc": 0.0723560550250113,
+      "ranked_insertion_auc": 0.39256607909919694,
+      "random_insertion_auc": 0.03868222516030073,
+      "deletion_auc_advantage": 0.06750000035390258,
+      "insertion_auc_advantage": 0.3538838539388962
+     },
+     "randomization": {
+      "absolute_spearman": 0.00504970062555147,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "e6e199b99fb736bff3b924a52848818b7b5ccf06e5218f08a119cf816d591a13",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.004856054671108723,
+      "random_deletion_auc": 0.0723560550250113,
+      "ranked_insertion_auc": 0.39256607909919694,
+      "random_insertion_auc": 0.03868222516030073,
+      "deletion_auc_advantage": 0.06750000035390258,
+      "insertion_auc_advantage": 0.3538838539388962
+     },
+     "randomization": {
+      "absolute_spearman": 0.005049700625551498,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "e6e199b99fb736bff3b924a52848818b7b5ccf06e5218f08a119cf816d591a13",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.004856054671108723,
+      "random_deletion_auc": 0.0723560550250113,
+      "ranked_insertion_auc": 0.36724040168337524,
+      "random_insertion_auc": 0.03868222516030073,
+      "deletion_auc_advantage": 0.06750000035390258,
+      "insertion_auc_advantage": 0.3285581765230745
+     },
+     "randomization": {
+      "absolute_spearman": 0.27862143928975375,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "e6e199b99fb736bff3b924a52848818b7b5ccf06e5218f08a119cf816d591a13",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.016761132515966892,
+      "random_deletion_auc": 0.0723560550250113,
+      "ranked_insertion_auc": 0.4997668727883138,
+      "random_insertion_auc": 0.03868222516030073,
+      "deletion_auc_advantage": 0.05559492250904441,
+      "insertion_auc_advantage": 0.46108464762801304
+     },
+     "randomization": {
+      "absolute_spearman": 0.5478816056021816,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 500,
+   "seconds": 592.1
+  },
+  {
+   "image_id": 82,
+   "candidates": 4,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 4,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.44629357382655144,
+   "maps": {
+    "saved_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "fc7a2e4cb999c1dc059567e18263ce2a3835575badc1bd2551a36219407802e9",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.0041143035487039015,
+      "random_deletion_auc": 0.242017456155736,
+      "ranked_insertion_auc": 0.43061772620421834,
+      "random_insertion_auc": 0.08956802550528664,
+      "deletion_auc_advantage": 0.2379031526070321,
+      "insertion_auc_advantage": 0.3410497006989317
+     },
+     "randomization": {
+      "absolute_spearman": 0.006565057449566695,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "fc7a2e4cb999c1dc059567e18263ce2a3835575badc1bd2551a36219407802e9",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.0036888588656438515,
+      "random_deletion_auc": 0.242017456155736,
+      "ranked_insertion_auc": 0.43242499462212436,
+      "random_insertion_auc": 0.08956802550528664,
+      "deletion_auc_advantage": 0.23832859729009215,
+      "insertion_auc_advantage": 0.3428569691168377
+     },
+     "randomization": {
+      "absolute_spearman": 0.515577103619973,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "fc7a2e4cb999c1dc059567e18263ce2a3835575badc1bd2551a36219407802e9",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.0036888588656438515,
+      "random_deletion_auc": 0.242017456155736,
+      "ranked_insertion_auc": 0.42358623606560286,
+      "random_insertion_auc": 0.08956802550528664,
+      "deletion_auc_advantage": 0.23832859729009215,
+      "insertion_auc_advantage": 0.3340182105603162
+     },
+     "randomization": {
+      "absolute_spearman": 0.013568666108378058,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "fc7a2e4cb999c1dc059567e18263ce2a3835575badc1bd2551a36219407802e9",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.0036888588656438515,
+      "random_deletion_auc": 0.242017456155736,
+      "ranked_insertion_auc": 0.48888954805443063,
+      "random_insertion_auc": 0.08956802550528664,
+      "deletion_auc_advantage": 0.23832859729009215,
+      "insertion_auc_advantage": 0.399321522549144
+     },
+     "randomization": {
+      "absolute_spearman": 0.06470771970188616,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 500,
+   "seconds": 600.4
+  },
+  {
+   "image_id": 95,
+   "candidates": 2,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 2,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.661640927195549,
+   "maps": {
+    "saved_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "b2585f25be7990b5771e1076c3edcfe98893b9d15e8bdf1ed0ad204ae33534c5",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.010775521746836603,
+      "random_deletion_auc": 0.1870921835070476,
+      "ranked_insertion_auc": 0.35400788846891373,
+      "random_insertion_auc": 0.02232454583281651,
+      "deletion_auc_advantage": 0.176316661760211,
+      "insertion_auc_advantage": 0.3316833426360972
+     },
+     "randomization": {
+      "absolute_spearman": 0.006478118346831088,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "b2585f25be7990b5771e1076c3edcfe98893b9d15e8bdf1ed0ad204ae33534c5",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.006452273111790419,
+      "random_deletion_auc": 0.1870921835070476,
+      "ranked_insertion_auc": 0.35400788846891373,
+      "random_insertion_auc": 0.02232454583281651,
+      "deletion_auc_advantage": 0.18063991039525717,
+      "insertion_auc_advantage": 0.3316833426360972
+     },
+     "randomization": {
+      "absolute_spearman": 0.010250496313043188,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "b2585f25be7990b5771e1076c3edcfe98893b9d15e8bdf1ed0ad204ae33534c5",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.010411215538624674,
+      "random_deletion_auc": 0.1870921835070476,
+      "ranked_insertion_auc": 0.4048224892176222,
+      "random_insertion_auc": 0.02232454583281651,
+      "deletion_auc_advantage": 0.17668096796842292,
+      "insertion_auc_advantage": 0.3824979433848057
+     },
+     "randomization": {
+      "absolute_spearman": 0.15987970563090845,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "b2585f25be7990b5771e1076c3edcfe98893b9d15e8bdf1ed0ad204ae33534c5",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.006452273111790419,
+      "random_deletion_auc": 0.1870921835070476,
+      "ranked_insertion_auc": 0.32820548181189224,
+      "random_insertion_auc": 0.02232454583281651,
+      "deletion_auc_advantage": 0.18063991039525717,
+      "insertion_auc_advantage": 0.30588093597907573
+     },
+     "randomization": {
+      "absolute_spearman": 0.22528236169379756,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 524,
+   "seconds": 612.0
+  },
+  {
+   "image_id": 98,
+   "candidates": 1,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 1,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.9899328947067261,
+   "maps": {
+    "saved_gradcam": {
+     "available": false,
+     "reason": "map unavailable or all zero",
+     "all_zero": true
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "f4ea9776531399960cc97963408d4ab876cdc1f1309b6326958aaae14fbac85d",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.0077338507398962975,
+      "random_deletion_auc": 0.038671212270855904,
+      "ranked_insertion_auc": 0.919326413422823,
+      "random_insertion_auc": 0.40151756536215544,
+      "deletion_auc_advantage": 0.030937361530959606,
+      "insertion_auc_advantage": 0.5178088480606675
+     },
+     "randomization": {
+      "absolute_spearman": 0.002157222596371505,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "f4ea9776531399960cc97963408d4ab876cdc1f1309b6326958aaae14fbac85d",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.20077320944983512,
+      "random_deletion_auc": 0.038671212270855904,
+      "ranked_insertion_auc": 0.657521509565413,
+      "random_insertion_auc": 0.40151756536215544,
+      "deletion_auc_advantage": -0.16210199717897922,
+      "insertion_auc_advantage": 0.25600394420325756
+     },
+     "randomization": {
+      "absolute_spearman": 0.033879858406280626,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": false,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "f4ea9776531399960cc97963408d4ab876cdc1f1309b6326958aaae14fbac85d",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.023205161094665527,
+      "random_deletion_auc": 0.038671212270855904,
+      "ranked_insertion_auc": 0.9034431669861078,
+      "random_insertion_auc": 0.40151756536215544,
+      "deletion_auc_advantage": 0.015466051176190376,
+      "insertion_auc_advantage": 0.5019256016239524
+     },
+     "randomization": {
+      "absolute_spearman": 0.05983999358101027,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 422,
+   "seconds": 530.9
+  },
+  {
+   "image_id": 100,
+   "candidates": 3,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 3,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.47500593960285187,
+   "maps": {
+    "saved_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "aa4a706dc9f5f8483fed855a8123b7beb00384841398840194572a8f3d7e259b",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.004440941498614848,
+      "random_deletion_auc": 0.36280883588672924,
+      "ranked_insertion_auc": 0.5016926084645092,
+      "random_insertion_auc": 0.1448477729378889,
+      "deletion_auc_advantage": 0.3583678943881144,
+      "insertion_auc_advantage": 0.3568448355266204
+     },
+     "randomization": {
+      "absolute_spearman": 0.22094567048854896,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "aa4a706dc9f5f8483fed855a8123b7beb00384841398840194572a8f3d7e259b",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.004988195685048899,
+      "random_deletion_auc": 0.36280883588672924,
+      "ranked_insertion_auc": 0.4796808800116803,
+      "random_insertion_auc": 0.1448477729378889,
+      "deletion_auc_advantage": 0.35782064020168036,
+      "insertion_auc_advantage": 0.33483310707379144
+     },
+     "randomization": {
+      "absolute_spearman": 0.3547679478232933,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "aa4a706dc9f5f8483fed855a8123b7beb00384841398840194572a8f3d7e259b",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.004440941498614848,
+      "random_deletion_auc": 0.36280883588672924,
+      "ranked_insertion_auc": 0.46193706969885784,
+      "random_insertion_auc": 0.1448477729378889,
+      "deletion_auc_advantage": 0.3583678943881144,
+      "insertion_auc_advantage": 0.317089296760969
+     },
+     "randomization": {
+      "absolute_spearman": 0.01911667588921062,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "aa4a706dc9f5f8483fed855a8123b7beb00384841398840194572a8f3d7e259b",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.004988195685048899,
+      "random_deletion_auc": 0.36280883588672924,
+      "ranked_insertion_auc": 0.4658984613294403,
+      "random_insertion_auc": 0.1448477729378889,
+      "deletion_auc_advantage": 0.35782064020168036,
+      "insertion_auc_advantage": 0.3210506883915514
+     },
+     "randomization": {
+      "absolute_spearman": 0.3694437572249946,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 486,
+   "seconds": 540.8
+  },
+  {
+   "image_id": 101,
+   "candidates": 6,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 6,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.561720443268617,
+   "maps": {
+    "saved_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "c426f4dae9c18ec6efbefe047ddd5eb37644bfa6aedd92eea6abbefc0c11e2b9",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.019706508280554164,
+      "random_deletion_auc": 0.29813395820868516,
+      "ranked_insertion_auc": 0.44892881440076354,
+      "random_insertion_auc": 0.059789260053851954,
+      "deletion_auc_advantage": 0.278427449928131,
+      "insertion_auc_advantage": 0.3891395543469116
+     },
+     "randomization": {
+      "absolute_spearman": 0.16762164106107624,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "c426f4dae9c18ec6efbefe047ddd5eb37644bfa6aedd92eea6abbefc0c11e2b9",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.017796652372150373,
+      "random_deletion_auc": 0.29813395820868516,
+      "ranked_insertion_auc": 0.4536918876886678,
+      "random_insertion_auc": 0.059789260053851954,
+      "deletion_auc_advantage": 0.28033730583653477,
+      "insertion_auc_advantage": 0.39390262763481587
+     },
+     "randomization": {
+      "absolute_spearman": 0.2275323573762032,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "c426f4dae9c18ec6efbefe047ddd5eb37644bfa6aedd92eea6abbefc0c11e2b9",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.019310939067509025,
+      "random_deletion_auc": 0.29813395820868516,
+      "ranked_insertion_auc": 0.4950030124940288,
+      "random_insertion_auc": 0.059789260053851954,
+      "deletion_auc_advantage": 0.27882301914117613,
+      "insertion_auc_advantage": 0.43521375244017685
+     },
+     "randomization": {
+      "absolute_spearman": 0.07910212998892086,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "c426f4dae9c18ec6efbefe047ddd5eb37644bfa6aedd92eea6abbefc0c11e2b9",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.019310939067509025,
+      "random_deletion_auc": 0.29813395820868516,
+      "ranked_insertion_auc": 0.4940473997946052,
+      "random_insertion_auc": 0.059789260053851954,
+      "deletion_auc_advantage": 0.27882301914117613,
+      "insertion_auc_advantage": 0.4342581397407533
+     },
+     "randomization": {
+      "absolute_spearman": 0.21502610959291293,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 498,
+   "seconds": 576.0
+  },
+  {
+   "image_id": 102,
+   "candidates": 2,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 2,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.7185057252645493,
+   "maps": {
+    "saved_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "2849a980050fd82f54bda713ef46f5a025acb4521e3e833d6f9aae0696608e1d",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.008857901324518025,
+      "random_deletion_auc": 0.28458315576426685,
+      "ranked_insertion_auc": 0.5187205595721025,
+      "random_insertion_auc": 0.08591787191107869,
+      "deletion_auc_advantage": 0.2757252544397488,
+      "insertion_auc_advantage": 0.4328026876610238
+     },
+     "randomization": {
+      "absolute_spearman": 0.09025864260877428,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "2849a980050fd82f54bda713ef46f5a025acb4521e3e833d6f9aae0696608e1d",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.012506910949014127,
+      "random_deletion_auc": 0.28458315576426685,
+      "ranked_insertion_auc": 0.5607396133709699,
+      "random_insertion_auc": 0.08591787191107869,
+      "deletion_auc_advantage": 0.2720762448152527,
+      "insertion_auc_advantage": 0.4748217414598912
+     },
+     "randomization": {
+      "absolute_spearman": 0.24270603883161526,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "2849a980050fd82f54bda713ef46f5a025acb4521e3e833d6f9aae0696608e1d",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.01826768007595092,
+      "random_deletion_auc": 0.28458315576426685,
+      "ranked_insertion_auc": 0.5684720679419115,
+      "random_insertion_auc": 0.08591787191107869,
+      "deletion_auc_advantage": 0.26631547568831593,
+      "insertion_auc_advantage": 0.4825541960308328
+     },
+     "randomization": {
+      "absolute_spearman": 0.14684221222530802,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "2849a980050fd82f54bda713ef46f5a025acb4521e3e833d6f9aae0696608e1d",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.012506910949014127,
+      "random_deletion_auc": 0.28458315576426685,
+      "ranked_insertion_auc": 0.5848267279798165,
+      "random_insertion_auc": 0.08591787191107869,
+      "deletion_auc_advantage": 0.2720762448152527,
+      "insertion_auc_advantage": 0.4989088560687378
+     },
+     "randomization": {
+      "absolute_spearman": 0.2898157465638606,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 550,
+   "seconds": 567.0
+  },
+  {
+   "image_id": 109,
+   "candidates": 5,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 5,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.7876957833766938,
+   "maps": {
+    "saved_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "002a42c3b1d23125157ea142eb059c770a2f558cb078997d50df58258eea0a5e",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.028550039930269125,
+      "random_deletion_auc": 0.220511197950691,
+      "ranked_insertion_auc": 0.5740929476218297,
+      "random_insertion_auc": 0.1315913779195398,
+      "deletion_auc_advantage": 0.19196115802042185,
+      "insertion_auc_advantage": 0.44250156970228993
+     },
+     "randomization": {
+      "absolute_spearman": 0.36568685237460063,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "002a42c3b1d23125157ea142eb059c770a2f558cb078997d50df58258eea0a5e",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.022326517244800927,
+      "random_deletion_auc": 0.220511197950691,
+      "ranked_insertion_auc": 0.7022973954677582,
+      "random_insertion_auc": 0.1315913779195398,
+      "deletion_auc_advantage": 0.19818468070589007,
+      "insertion_auc_advantage": 0.5707060175482184
+     },
+     "randomization": {
+      "absolute_spearman": 0.37224144252620855,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "002a42c3b1d23125157ea142eb059c770a2f558cb078997d50df58258eea0a5e",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.05011095083318651,
+      "random_deletion_auc": 0.220511197950691,
+      "ranked_insertion_auc": 0.6077432014397346,
+      "random_insertion_auc": 0.1315913779195398,
+      "deletion_auc_advantage": 0.17040024711750448,
+      "insertion_auc_advantage": 0.4761518235201948
+     },
+     "randomization": {
+      "absolute_spearman": 0.11497295541771732,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "002a42c3b1d23125157ea142eb059c770a2f558cb078997d50df58258eea0a5e",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.022985966457054016,
+      "random_deletion_auc": 0.220511197950691,
+      "ranked_insertion_auc": 0.6536534163169563,
+      "random_insertion_auc": 0.1315913779195398,
+      "deletion_auc_advantage": 0.197525231493637,
+      "insertion_auc_advantage": 0.5220620383974165
+     },
+     "randomization": {
+      "absolute_spearman": 0.08263267124720586,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 618,
+   "seconds": 667.1
+  },
+  {
+   "image_id": 110,
+   "candidates": 2,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 2,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.6010688841342926,
+   "maps": {
+    "saved_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "daa802cfdb4b5e83e221472f27ab66892e308dbb0d2994a55af6f171af9982a9",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.004695850657299161,
+      "random_deletion_auc": 0.03173156199045479,
+      "ranked_insertion_auc": 0.5072710257954895,
+      "random_insertion_auc": 0.1447048333939165,
+      "deletion_auc_advantage": 0.027035711333155632,
+      "insertion_auc_advantage": 0.36256619240157306
+     },
+     "randomization": {
+      "absolute_spearman": 0.19790511823703397,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "daa802cfdb4b5e83e221472f27ab66892e308dbb0d2994a55af6f171af9982a9",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.004695850657299161,
+      "random_deletion_auc": 0.03173156199045479,
+      "ranked_insertion_auc": 0.5072710257954895,
+      "random_insertion_auc": 0.1447048333939165,
+      "deletion_auc_advantage": 0.027035711333155632,
+      "insertion_auc_advantage": 0.36256619240157306
+     },
+     "randomization": {
+      "absolute_spearman": 0.41575824486428536,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "daa802cfdb4b5e83e221472f27ab66892e308dbb0d2994a55af6f171af9982a9",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.014082219917327166,
+      "random_deletion_auc": 0.03173156199045479,
+      "ranked_insertion_auc": 0.6217848585220054,
+      "random_insertion_auc": 0.1447048333939165,
+      "deletion_auc_advantage": 0.017649342073127627,
+      "insertion_auc_advantage": 0.4770800251280889
+     },
+     "randomization": {
+      "absolute_spearman": 0.02521536548496693,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "daa802cfdb4b5e83e221472f27ab66892e308dbb0d2994a55af6f171af9982a9",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.004695850657299161,
+      "random_deletion_auc": 0.03173156199045479,
+      "ranked_insertion_auc": 0.7073080646805465,
+      "random_insertion_auc": 0.1447048333939165,
+      "deletion_auc_advantage": 0.027035711333155632,
+      "insertion_auc_advantage": 0.56260323128663
+     },
+     "randomization": {
+      "absolute_spearman": 0.5319437732047441,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 506,
+   "seconds": 614.3
+  },
+  {
+   "image_id": 112,
+   "candidates": 7,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 7,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.6826443906341281,
+   "maps": {
+    "saved_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "d796160e9dd85798bc7b5b5b24b984356682b5698f3d3311b47a6dd70116a566",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.03684281097126326,
+      "random_deletion_auc": 0.047614319782171934,
+      "ranked_insertion_auc": 0.38447516122167663,
+      "random_insertion_auc": 0.08442299264217062,
+      "deletion_auc_advantage": 0.010771508810908673,
+      "insertion_auc_advantage": 0.300052168579506
+     },
+     "randomization": {
+      "absolute_spearman": 0.2544624071251524,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "d796160e9dd85798bc7b5b5b24b984356682b5698f3d3311b47a6dd70116a566",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.021151350461877882,
+      "random_deletion_auc": 0.047614319782171934,
+      "ranked_insertion_auc": 0.3645304019197023,
+      "random_insertion_auc": 0.08442299264217062,
+      "deletion_auc_advantage": 0.02646296932029405,
+      "insertion_auc_advantage": 0.2801074092775317
+     },
+     "randomization": {
+      "absolute_spearman": 0.36296579415111235,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "d796160e9dd85798bc7b5b5b24b984356682b5698f3d3311b47a6dd70116a566",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.0580920170427167,
+      "random_deletion_auc": 0.047614319782171934,
+      "ranked_insertion_auc": 0.3896019433658304,
+      "random_insertion_auc": 0.08442299264217062,
+      "deletion_auc_advantage": -0.010477697260544767,
+      "insertion_auc_advantage": 0.3051789507236598
+     },
+     "randomization": {
+      "absolute_spearman": 0.1445153819329621,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": false,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "d796160e9dd85798bc7b5b5b24b984356682b5698f3d3311b47a6dd70116a566",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.023021278819734495,
+      "random_deletion_auc": 0.047614319782171934,
+      "ranked_insertion_auc": 0.3998059948374118,
+      "random_insertion_auc": 0.08442299264217062,
+      "deletion_auc_advantage": 0.02459304096243744,
+      "insertion_auc_advantage": 0.3153830021952412
+     },
+     "randomization": {
+      "absolute_spearman": 0.1928748846275627,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 562,
+   "seconds": 668.7
+  },
+  {
+   "image_id": 132,
+   "candidates": 4,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 4,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.4277245197445154,
+   "maps": {
+    "saved_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "0d2e9478cab20444a533969b1fcb4edea2f1bfb2f9d4628b06492a4ab00ace88",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.0056609218736412,
+      "random_deletion_auc": 0.20049716053472366,
+      "ranked_insertion_auc": 0.43182643108593766,
+      "random_insertion_auc": 0.12059132878493983,
+      "deletion_auc_advantage": 0.19483623866108246,
+      "insertion_auc_advantage": 0.3112351023009978
+     },
+     "randomization": {
+      "absolute_spearman": 0.3464283569784023,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "0d2e9478cab20444a533969b1fcb4edea2f1bfb2f9d4628b06492a4ab00ace88",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.008257113819126971,
+      "random_deletion_auc": 0.20049716053472366,
+      "ranked_insertion_auc": 0.43182643108593766,
+      "random_insertion_auc": 0.12059132878493983,
+      "deletion_auc_advantage": 0.1922400467155967,
+      "insertion_auc_advantage": 0.3112351023009978
+     },
+     "randomization": {
+      "absolute_spearman": 0.3427633635435497,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "0d2e9478cab20444a533969b1fcb4edea2f1bfb2f9d4628b06492a4ab00ace88",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.008599291948485188,
+      "random_deletion_auc": 0.20049716053472366,
+      "ranked_insertion_auc": 0.32177315138687845,
+      "random_insertion_auc": 0.12059132878493983,
+      "deletion_auc_advantage": 0.19189786858623847,
+      "insertion_auc_advantage": 0.20118182260193862
+     },
+     "randomization": {
+      "absolute_spearman": 0.007261118874118744,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "0d2e9478cab20444a533969b1fcb4edea2f1bfb2f9d4628b06492a4ab00ace88",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.013925352905062027,
+      "random_deletion_auc": 0.20049716053472366,
+      "ranked_insertion_auc": 0.2522192125179572,
+      "random_insertion_auc": 0.12059132878493983,
+      "deletion_auc_advantage": 0.18657180762966163,
+      "insertion_auc_advantage": 0.13162788373301737
+     },
+     "randomization": {
+      "absolute_spearman": 0.3193483149990565,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 504,
+   "seconds": 543.6
+  },
+  {
+   "image_id": 137,
+   "candidates": 3,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 3,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.4763634999593099,
+   "maps": {
+    "saved_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "d112f9ddd62c715a054300fb5298a858f1514c8fc853f18c0cd3eb2acf6cf5ce",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.020115360307196774,
+      "random_deletion_auc": 0.03200820328978201,
+      "ranked_insertion_auc": 0.5337916953722015,
+      "random_insertion_auc": 0.21287862314299372,
+      "deletion_auc_advantage": 0.011892842982585236,
+      "insertion_auc_advantage": 0.3209130722292078
+     },
+     "randomization": {
+      "absolute_spearman": 0.19007002576900586,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "d112f9ddd62c715a054300fb5298a858f1514c8fc853f18c0cd3eb2acf6cf5ce",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.004561710481842359,
+      "random_deletion_auc": 0.03200820328978201,
+      "ranked_insertion_auc": 0.46210431253227097,
+      "random_insertion_auc": 0.21287862314299372,
+      "deletion_auc_advantage": 0.027446492807939652,
+      "insertion_auc_advantage": 0.24922568938927725
+     },
+     "randomization": {
+      "absolute_spearman": 0.2565135256740567,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "d112f9ddd62c715a054300fb5298a858f1514c8fc853f18c0cd3eb2acf6cf5ce",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.013297262291113535,
+      "random_deletion_auc": 0.03200820328978201,
+      "ranked_insertion_auc": 0.3779991227590168,
+      "random_insertion_auc": 0.21287862314299372,
+      "deletion_auc_advantage": 0.018710940998668477,
+      "insertion_auc_advantage": 0.1651204996160231
+     },
+     "randomization": {
+      "absolute_spearman": 0.17624662413238493,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "d112f9ddd62c715a054300fb5298a858f1514c8fc853f18c0cd3eb2acf6cf5ce",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.0082884073878328,
+      "random_deletion_auc": 0.03200820328978201,
+      "ranked_insertion_auc": 0.2563286238000728,
+      "random_insertion_auc": 0.21287862314299372,
+      "deletion_auc_advantage": 0.02371979590194921,
+      "insertion_auc_advantage": 0.0434500006570791
+     },
+     "randomization": {
+      "absolute_spearman": 0.13219335559126008,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 618,
+   "seconds": 666.4
+  },
+  {
+   "image_id": 139,
+   "candidates": 3,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 3,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.6088464558124542,
+   "maps": {
+    "saved_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "c0c958d6ebb4317ae29dd8d1bdfdeb8f84a1d29df79a782bd32a7dd737e03cce",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.1136957126048704,
+      "random_deletion_auc": 0.020428515505045652,
+      "ranked_insertion_auc": 0.5139540343273741,
+      "random_insertion_auc": 0.29037432077651226,
+      "deletion_auc_advantage": -0.09326719709982474,
+      "insertion_auc_advantage": 0.2235797135508618
+     },
+     "randomization": {
+      "absolute_spearman": 0.001893002292182896,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": false,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "c0c958d6ebb4317ae29dd8d1bdfdeb8f84a1d29df79a782bd32a7dd737e03cce",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.013605574805599947,
+      "random_deletion_auc": 0.020428515505045652,
+      "ranked_insertion_auc": 0.7567312637693249,
+      "random_insertion_auc": 0.29037432077651226,
+      "deletion_auc_advantage": 0.006822940699445706,
+      "insertion_auc_advantage": 0.4663569429928126
+     },
+     "randomization": {
+      "absolute_spearman": 0.0044158220137656195,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": false,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "c0c958d6ebb4317ae29dd8d1bdfdeb8f84a1d29df79a782bd32a7dd737e03cce",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.01460305283156534,
+      "random_deletion_auc": 0.020428515505045652,
+      "ranked_insertion_auc": 0.6801185128473055,
+      "random_insertion_auc": 0.29037432077651226,
+      "deletion_auc_advantage": 0.005825462673480313,
+      "insertion_auc_advantage": 0.38974419207079325
+     },
+     "randomization": {
+      "absolute_spearman": 0.012602281022703452,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": false,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "c0c958d6ebb4317ae29dd8d1bdfdeb8f84a1d29df79a782bd32a7dd737e03cce",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.022599082672968507,
+      "random_deletion_auc": 0.020428515505045652,
+      "ranked_insertion_auc": 0.5335727237397805,
+      "random_insertion_auc": 0.29037432077651226,
+      "deletion_auc_advantage": -0.0021705671679228544,
+      "insertion_auc_advantage": 0.24319840296326822
+     },
+     "randomization": {
+      "absolute_spearman": 0.303901366434358,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": false,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 540,
+   "seconds": 559.3
+  },
+  {
+   "image_id": 140,
+   "candidates": 6,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 6,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.6114808780451616,
+   "maps": {
+    "saved_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "7aad5cdd5616c6e6e6031b2e0733b61be2e5326bd3eb8710cfdaf096ba08d545",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.01589123236287075,
+      "random_deletion_auc": 0.25102535882615484,
+      "ranked_insertion_auc": 0.4649917059286963,
+      "random_insertion_auc": 0.07881603709150417,
+      "deletion_auc_advantage": 0.2351341264632841,
+      "insertion_auc_advantage": 0.3861756688371921
+     },
+     "randomization": {
+      "absolute_spearman": NaN,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "7aad5cdd5616c6e6e6031b2e0733b61be2e5326bd3eb8710cfdaf096ba08d545",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.007098596610982592,
+      "random_deletion_auc": 0.25102535882615484,
+      "ranked_insertion_auc": 0.48912146890264313,
+      "random_insertion_auc": 0.07881603709150417,
+      "deletion_auc_advantage": 0.24392676221517226,
+      "insertion_auc_advantage": 0.410305431811139
+     },
+     "randomization": {
+      "absolute_spearman": 0.30832588794849086,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "7aad5cdd5616c6e6e6031b2e0733b61be2e5326bd3eb8710cfdaf096ba08d545",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.012467096297768876,
+      "random_deletion_auc": 0.25102535882615484,
+      "ranked_insertion_auc": 0.5364556522981729,
+      "random_insertion_auc": 0.07881603709150417,
+      "deletion_auc_advantage": 0.23855826252838597,
+      "insertion_auc_advantage": 0.45763961520666874
+     },
+     "randomization": {
+      "absolute_spearman": 0.10586900833138473,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "7aad5cdd5616c6e6e6031b2e0733b61be2e5326bd3eb8710cfdaf096ba08d545",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.007098596610982592,
+      "random_deletion_auc": 0.25102535882615484,
+      "ranked_insertion_auc": 0.5976659454075464,
+      "random_insertion_auc": 0.07881603709150417,
+      "deletion_auc_advantage": 0.24392676221517226,
+      "insertion_auc_advantage": 0.5188499083160422
+     },
+     "randomization": {
+      "absolute_spearman": 0.19449141441641862,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 528,
+   "seconds": 577.1
+  },
+  {
+   "image_id": 149,
+   "candidates": 3,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 3,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.46023521820704144,
+   "maps": {
+    "saved_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "d33b0d725e5b3a11cde665cf3b358ffd450849b406546c9fcd9b77f660b68700",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.07003676627452174,
+      "random_deletion_auc": 0.18411542184185237,
+      "ranked_insertion_auc": 0.19287802181982744,
+      "random_insertion_auc": 0.052176204665253564,
+      "deletion_auc_advantage": 0.11407865556733063,
+      "insertion_auc_advantage": 0.14070181715457386
+     },
+     "randomization": {
+      "absolute_spearman": NaN,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "d33b0d725e5b3a11cde665cf3b358ffd450849b406546c9fcd9b77f660b68700",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.010026797807464998,
+      "random_deletion_auc": 0.18411542184185237,
+      "ranked_insertion_auc": 0.2327335499188242,
+      "random_insertion_auc": 0.052176204665253564,
+      "deletion_auc_advantage": 0.17408862403438738,
+      "insertion_auc_advantage": 0.18055734525357064
+     },
+     "randomization": {
+      "absolute_spearman": 0.00351966519803704,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "d33b0d725e5b3a11cde665cf3b358ffd450849b406546c9fcd9b77f660b68700",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.007939971595381698,
+      "random_deletion_auc": 0.18411542184185237,
+      "ranked_insertion_auc": 0.230387067849127,
+      "random_insertion_auc": 0.052176204665253564,
+      "deletion_auc_advantage": 0.17617545024647066,
+      "insertion_auc_advantage": 0.1782108631838734
+     },
+     "randomization": {
+      "absolute_spearman": 0.04025879487423909,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "d33b0d725e5b3a11cde665cf3b358ffd450849b406546c9fcd9b77f660b68700",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.03226663094634811,
+      "random_deletion_auc": 0.18411542184185237,
+      "ranked_insertion_auc": 0.24101625961096337,
+      "random_insertion_auc": 0.052176204665253564,
+      "deletion_auc_advantage": 0.15184879089550427,
+      "insertion_auc_advantage": 0.18884005494570982
+     },
+     "randomization": {
+      "absolute_spearman": 0.29562575773190186,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 540,
+   "seconds": 554.9
+  },
+  {
+   "image_id": 167,
+   "candidates": 4,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 4,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.5319575630128384,
+   "maps": {
+    "saved_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "ee042e86005032928f0941ddaec23e5bfda4da992184cb291a17bea5477abbdb",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.005790380964754149,
+      "random_deletion_auc": 0.08243263477925211,
+      "ranked_insertion_auc": 0.5047855116135906,
+      "random_insertion_auc": 0.11834838983486407,
+      "deletion_auc_advantage": 0.07664225381449796,
+      "insertion_auc_advantage": 0.3864371217787266
+     },
+     "randomization": {
+      "absolute_spearman": 0.10197193721605852,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "ee042e86005032928f0941ddaec23e5bfda4da992184cb291a17bea5477abbdb",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.005790380964754149,
+      "random_deletion_auc": 0.08243263477925211,
+      "ranked_insertion_auc": 0.5062631518521812,
+      "random_insertion_auc": 0.11834838983486407,
+      "deletion_auc_advantage": 0.07664225381449796,
+      "insertion_auc_advantage": 0.3879147620173171
+     },
+     "randomization": {
+      "absolute_spearman": 0.2345118142815101,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "ee042e86005032928f0941ddaec23e5bfda4da992184cb291a17bea5477abbdb",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.005790380964754149,
+      "random_deletion_auc": 0.08243263477925211,
+      "ranked_insertion_auc": 0.5004651417839341,
+      "random_insertion_auc": 0.11834838983486407,
+      "deletion_auc_advantage": 0.07664225381449796,
+      "insertion_auc_advantage": 0.38211675194907
+     },
+     "randomization": {
+      "absolute_spearman": 0.02208870063370494,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "ee042e86005032928f0941ddaec23e5bfda4da992184cb291a17bea5477abbdb",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.011964750214247033,
+      "random_deletion_auc": 0.08243263477925211,
+      "ranked_insertion_auc": 0.45222925808047876,
+      "random_insertion_auc": 0.11834838983486407,
+      "deletion_auc_advantage": 0.07046788456500508,
+      "insertion_auc_advantage": 0.3338808682456147
+     },
+     "randomization": {
+      "absolute_spearman": 0.04372819362582437,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 620,
+   "seconds": 1719.0
+  },
+  {
+   "image_id": 179,
+   "candidates": 11,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 11,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.3516618467190049,
+   "maps": {
+    "saved_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "e817f455bd36c44cb117715d5f0ecf729133d1ea67802b63eaedbf9e0f9224b5",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.020675948815716598,
+      "random_deletion_auc": 0.16724451368314808,
+      "ranked_insertion_auc": 0.2251437088654546,
+      "random_insertion_auc": 0.05606505115495317,
+      "deletion_auc_advantage": 0.14656856486743147,
+      "insertion_auc_advantage": 0.16907865771050143
+     },
+     "randomization": {
+      "absolute_spearman": 0.19256739123005512,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "e817f455bd36c44cb117715d5f0ecf729133d1ea67802b63eaedbf9e0f9224b5",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.010475599804935471,
+      "random_deletion_auc": 0.16724451368314808,
+      "ranked_insertion_auc": 0.2587040582703511,
+      "random_insertion_auc": 0.05606505115495317,
+      "deletion_auc_advantage": 0.1567689138782126,
+      "insertion_auc_advantage": 0.20263900711539792
+     },
+     "randomization": {
+      "absolute_spearman": 0.283018539117666,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "e817f455bd36c44cb117715d5f0ecf729133d1ea67802b63eaedbf9e0f9224b5",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.015381242968777025,
+      "random_deletion_auc": 0.16724451368314808,
+      "ranked_insertion_auc": 0.24469396498435264,
+      "random_insertion_auc": 0.05606505115495317,
+      "deletion_auc_advantage": 0.15186327071437106,
+      "insertion_auc_advantage": 0.18862891382939947
+     },
+     "randomization": {
+      "absolute_spearman": 0.10751485708750921,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "e817f455bd36c44cb117715d5f0ecf729133d1ea67802b63eaedbf9e0f9224b5",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.013550972909962928,
+      "random_deletion_auc": 0.16724451368314808,
+      "ranked_insertion_auc": 0.1816706830286421,
+      "random_insertion_auc": 0.05606505115495317,
+      "deletion_auc_advantage": 0.15369354077318514,
+      "insertion_auc_advantage": 0.12560563187368892
+     },
+     "randomization": {
+      "absolute_spearman": 0.1239474846985607,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 552,
+   "seconds": 1888.0
+  },
+  {
+   "image_id": 180,
+   "candidates": 5,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 5,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.4264110684394836,
+   "maps": {
+    "saved_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "0275486eb75c92c3870359e18e46e20bcf470420fb884349ac87146248e5cd82",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.01073777759447694,
+      "random_deletion_auc": 0.010338831273838877,
+      "ranked_insertion_auc": 0.3168656001333147,
+      "random_insertion_auc": 0.13479952283669264,
+      "deletion_auc_advantage": -0.0003989463206380637,
+      "insertion_auc_advantage": 0.18206607729662208
+     },
+     "randomization": {
+      "absolute_spearman": 0.4031053737611188,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": false,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "0275486eb75c92c3870359e18e46e20bcf470420fb884349ac87146248e5cd82",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.0046255261637270445,
+      "random_deletion_auc": 0.010338831273838877,
+      "ranked_insertion_auc": 0.3723540788982064,
+      "random_insertion_auc": 0.13479952283669264,
+      "deletion_auc_advantage": 0.005713305110111832,
+      "insertion_auc_advantage": 0.23755455606151374
+     },
+     "randomization": {
+      "absolute_spearman": 0.4115090627824218,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": false,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "0275486eb75c92c3870359e18e46e20bcf470420fb884349ac87146248e5cd82",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.004193579498678445,
+      "random_deletion_auc": 0.010338831273838877,
+      "ranked_insertion_auc": 0.34804519277531654,
+      "random_insertion_auc": 0.13479952283669264,
+      "deletion_auc_advantage": 0.0061452517751604315,
+      "insertion_auc_advantage": 0.2132456699386239
+     },
+     "randomization": {
+      "absolute_spearman": 0.07108861552916208,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": false,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "0275486eb75c92c3870359e18e46e20bcf470420fb884349ac87146248e5cd82",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.0046255261637270445,
+      "random_deletion_auc": 0.010338831273838877,
+      "ranked_insertion_auc": 0.3497140100691467,
+      "random_insertion_auc": 0.13479952283669264,
+      "deletion_auc_advantage": 0.005713305110111832,
+      "insertion_auc_advantage": 0.21491448723245407
+     },
+     "randomization": {
+      "absolute_spearman": 0.06898768987797751,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": false,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 530,
+   "seconds": 929.4
+  },
+  {
+   "image_id": 188,
+   "candidates": 2,
+   "parity": {
+    "gradcam_constrained_max_abs_diff_vs_saved": 0.0,
+    "gradcampp_constrained_max_abs_diff_vs_saved": 0.0,
+    "binding": {
+     "targets": 2,
+     "binding": "matched_original_candidates"
+    }
+   },
+   "unperturbed_target_score": 0.23218461126089096,
+   "maps": {
+    "saved_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "a1e9e1f07e443f05592e970a3761edeeb636dfc7187c80a8eb448ea148bce0f3",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.0018139422754757106,
+      "random_deletion_auc": 0.024269451678264886,
+      "ranked_insertion_auc": 0.1713166778208688,
+      "random_insertion_auc": 0.046803562610875815,
+      "deletion_auc_advantage": 0.022455509402789176,
+      "insertion_auc_advantage": 0.12451311520999297
+     },
+     "randomization": {
+      "absolute_spearman": 0.3381683997735888,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "saved_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "a1e9e1f07e443f05592e970a3761edeeb636dfc7187c80a8eb448ea148bce0f3",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.0018139422754757106,
+      "random_deletion_auc": 0.024269451678264886,
+      "ranked_insertion_auc": 0.1713166778208688,
+      "random_insertion_auc": 0.046803562610875815,
+      "deletion_auc_advantage": 0.022455509402789176,
+      "insertion_auc_advantage": 0.12451311520999297
+     },
+     "randomization": {
+      "absolute_spearman": 0.37647607114092435,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": false
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    },
+    "raw_gradcam": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "a1e9e1f07e443f05592e970a3761edeeb636dfc7187c80a8eb448ea148bce0f3",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.0018139422754757106,
+      "random_deletion_auc": 0.024269451678264886,
+      "ranked_insertion_auc": 0.174816353013739,
+      "random_insertion_auc": 0.046803562610875815,
+      "deletion_auc_advantage": 0.022455509402789176,
+      "insertion_auc_advantage": 0.12801279040286317
+     },
+     "randomization": {
+      "absolute_spearman": 0.10852086070456142,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": true,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_controls_passed",
+     "clinical_validated": false
+    },
+    "raw_gradcampp": {
+     "protocol": {
+      "id": "corovision-forward-occlusion-v1",
+      "deletion_auc_advantage_min": 0.01,
+      "insertion_auc_advantage_min": 0.01,
+      "randomized_attribution_abs_spearman_max": 0.2
+     },
+     "input_sha256": "a1e9e1f07e443f05592e970a3761edeeb636dfc7187c80a8eb448ea148bce0f3",
+     "grid": 8,
+     "seed": 20261114,
+     "target_binding": "caller_supplied_frozen_checkpoint_score_function",
+     "metrics": {
+      "ranked_deletion_auc": 0.018229941953904927,
+      "random_deletion_auc": 0.024269451678264886,
+      "ranked_insertion_auc": 0.15528872678987682,
+      "random_insertion_auc": 0.046803562610875815,
+      "deletion_auc_advantage": 0.006039509724359959,
+      "insertion_auc_advantage": 0.108485164179001
+     },
+     "randomization": {
+      "absolute_spearman": 0.09997217146247961,
+      "control": "fully randomized disposable copy, same method and constraint form"
+     },
+     "gates": {
+      "deletion": false,
+      "insertion": true,
+      "randomization": true
+     },
+     "status": "faithfulness_not_established",
+     "clinical_validated": false
+    }
+   },
+   "unique_forwards": 500,
+   "seconds": 1006.2
   }
  ]
 }

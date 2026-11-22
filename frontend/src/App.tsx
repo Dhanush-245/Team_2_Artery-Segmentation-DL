@@ -19,6 +19,7 @@ const AnalysisPage = lazy(() => import("./pages/AnalysisPage"));
 const ReviewsPage = lazy(() => import("./pages/ReviewsPage"));
 const ReportsRoutePage = lazy(() => import("./pages/ReportsRoutePage"));
 const ModelsPage = lazy(() => import("./pages/ModelsPage"));
+const XaiDashboardPage = lazy(() => import("./pages/XaiDashboardPage"));
 const AccountPage = lazy(() => import("./pages/AccountPage"));
 const AdminPage = lazy(() => import("./pages/AdminPage"));
 
@@ -196,6 +197,7 @@ function App() {
           <Route path={SECTION_PATHS.reviews} element={<ReviewsPage />} />
           <Route path={SECTION_PATHS.reports} element={<ReportsRoutePage />} />
           <Route path={SECTION_PATHS.models} element={<ModelsPage />} />
+          <Route path={SECTION_PATHS.xai} element={<XaiDashboardPage />} />
           <Route path={SECTION_PATHS.account} element={<AccountPage />} />
           <Route path={SECTION_PATHS.admin} element={<AdminPage section="users" />} />
           <Route path={SECTION_PATHS.permissions} element={<AdminPage section="permissions" />} />

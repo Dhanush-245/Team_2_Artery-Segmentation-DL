@@ -15,6 +15,7 @@ export function canOpenSection(view: string, role?: string, permissions?: string
   if (view === "reviews") return role === "doctor" || role === "clinician" || role === "admin";
   if (view === "uploads") return role === "researcher" || role === "technician" || role === "admin";
   if (view === "models") return canViewModels(role);
+  if (view === "xai") return !!role && role !== "viewer" && role !== "ml_engineer";
   if (!["cases", "analysis", "reports"].includes(view)) return false;
   if (role === "viewer") return view === "cases";
   if (role === "admin") return true;

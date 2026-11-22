@@ -7,6 +7,7 @@ import { Button } from "./components/prismui/button";
 import { Card } from "./components/prismui/card";
 import { apiUrl } from "./api";
 import { candidateViewport } from './reviewEvidence';
+import CaseXaiPanel from "./CaseXaiPanel";
 import ImagePanelGallery from './ImagePanelGallery';
 import StenosisMeasurements from './StenosisMeasurements';
 import WidthProfileReview from './WidthProfileReview';
@@ -174,6 +175,7 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
   ] as const;
   const stages = analysis?.structured_result?.stages;
   const candidateCount = analysis?.structured_result?.candidates.length;
+  const openXai = () => document.getElementById('case-xai')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   const openSeverity = () => {
     if (onReview) { onReview(); return; }
     document.getElementById('severity-assessment')?.scrollIntoView({behavior:'smooth',block:'start'});
@@ -181,7 +183,7 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
 
   return <div className="workbench-page analysis-console">
     <div className="page-heading"><div><p className="eyebrow">{reviewMode ? 'SAVED EVIDENCE' : 'IMAGING WORKSPACE'}</p><h2>{reviewMode ? 'Severity review' : 'Coronary analysis'}</h2></div><span className="stage-badge">Research only</span></div>
-    <nav className="case-section-nav" aria-label="Analysis review report workflow"><Button variant={reviewMode ? 'outline' : 'default'} onClick={onImageReview}>1 · Image Review</Button><Button variant={reviewMode ? 'default' : 'outline'} disabled={!analysis} onClick={openSeverity}>2 · Severity Review</Button><Button variant="outline" disabled={!analysis} onClick={onReports}>3 · Reports</Button></nav>
+    <nav className="case-section-nav" aria-label="Analysis review report workflow"><Button variant={reviewMode ? 'outline' : 'default'} onClick={onImageReview}>1 · Image Review</Button><Button variant="outline" disabled={!analysis || reviewMode} onClick={openXai}>2 · Explainable AI</Button><Button variant={reviewMode ? 'default' : 'outline'} disabled={!analysis} onClick={openSeverity}>3 · Severity Review</Button><Button variant="outline" disabled={!analysis} onClick={onReports}>4 · Reports</Button></nav>
     <div className="workbench-selectors">
       <label>Case<select value={selectedCase?.id || ""} onChange={(event) => onCaseChange(event.target.value)}><option value="">Select a case</option>{cases.map((item) => <option value={item.id} key={item.id}>{item.case_code} · {item.status}</option>)}</select></label>
       <label>Study image<select value={selectedImage?.id || ""} onChange={(event) => onImageChange(event.target.value)} disabled={!selectedCase?.images.length}><option value="">Select an image</option>{selectedCase?.images.map((item) => <option value={item.id} key={item.id}>{item.original_name}</option>)}</select></label>
@@ -351,6 +353,7 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
         {!!xaiFailures.length && <p role="alert" className="xai-error">Some saved explanation artifacts could not be loaded. The analysis result is unchanged.</p>}
       </Card>}
       {analysis && <Card className="panel"><details className="evidence-details"><summary>Model provenance, structured explanation & limitations</summary><pre className="provenance-json">{JSON.stringify({ model: analysis.model_version, models: analysis.structured_result?.models, preprocessing: analysis.structured_result?.input || selectedImage.processing_record }, null, 2)}</pre><ResultEvidence result={analysis.structured_result} /></details></Card>}
+      {analysis && selectedCase && !reviewMode && <Card className="panel"><CaseXaiPanel key={analysis.id} token={token} caseId={selectedCase.id} runId={analysis.id} preparedUrl={processedPreview} /></Card>}
       {analysis && <Card className="panel"><ImagePanelGallery token={token} imageId={selectedImage.id} runId={analysis.id} modelVersion={analysis.model_version} candidateCount={analysis.structured_result?.candidates.length} /></Card>}
       {analysis && selectedCase && <div id="severity-assessment"><Card className="panel"><StenosisMeasurements key={analysis.id} token={token} caseId={selectedCase.id} imageId={selectedImage.id} runId={analysis.id} candidates={analysis.structured_result?.candidates.map(c=>c.candidate_id)||[]} canReview={!!selectedCase.permissions?.can_review} canAssess={!!(selectedCase.permissions?.can_run_analysis||selectedCase.permissions?.can_review)} /></Card></div>}
       <AnalysisHistory imageId={selectedImage.id} token={token} history={history} onSelect={onSelectAnalysis} />

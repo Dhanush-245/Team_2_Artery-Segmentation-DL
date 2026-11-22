@@ -1,6 +1,6 @@
 # M3-02 detector Grad-CAM / Grad-CAM++ faithfulness checks (22 Nov 2026)
 
-**Outcome: PARTIAL.** The machinery is verified. A measured cascading-randomization result on 10 images shows
+**Outcome: PARTIAL overall; raw Grad-CAM passes all three controls (see final results at the end).** The machinery is verified. A measured cascading-randomization result on 10 images shows
 **Grad-CAM++ fails the model-randomization sanity check**. Insertion and deletion were measured on only **2
 images**, which is too few for an aggregate claim. Faithfulness is **not established** for either saved map.
 Research evidence only. No clinical validation.
@@ -140,3 +140,27 @@ Grad-CAM++ as model-faithful.
 - `occlusion_per_image.json`: full deletion and insertion results per map.
 - `randomization_per_image.json`: per-image, per-stage similarities, target bindings and localization descriptors.
 - `eligibility.json`: per-image candidate counts and scores for all 200 validation images, plus the seeded sample.
+
+## Final deletion / insertion results (completed 22 Nov 2026, n = 25)
+
+The 23 remaining sampled validation images were measured on an uncontended host with the same runner (sha256 `d674d431…`); the two earlier rows were kept. Aggregation needed one fix: a missing randomized similarity (`None`, constant map) is now counted as undefined instead of crashing. No measurement, threshold or gate changed.
+
+| Map | Images | Deletion advantage, median (bootstrap 95% CI of mean) | Insertion advantage, median (CI) | One-sided Wilcoxon p (del / ins) | Deletion gate | Insertion gate | Full-randomization gate (abs rho <= 0.2) |
+|---|---|---|---|---|---|---|---|
+| saved gradcam | 24 of 25 | 0.108 (0.081–0.170) | 0.336 (0.273–0.351) | 4.2e-06 / 6.0e-08 | 22/24 | 24/24 | 12/24 (3 undefined) |
+| saved gradcampp | 25 of 25 | 0.107 (0.091–0.175) | 0.343 (0.301–0.405) | 3.0e-08 / 3.0e-08 | 23/25 | 25/25 | 8/25 |
+| raw gradcam | 25 of 25 | 0.102 (0.072–0.165) | 0.329 (0.280–0.369) | 7.5e-06 / 3.0e-08 | 21/25 | 25/25 | 22/25 |
+| raw gradcampp | 25 of 25 | 0.090 (0.085–0.170) | 0.321 (0.265–0.392) | 6.0e-08 / 3.0e-08 | 22/25 | 25/25 | 12/25 |
+
+**Reading.** Every map beats an equal-area random order on both curves, with large and consistent effects. The model-randomization control separates the maps: raw Grad-CAM stays near zero correlation with a fully randomized detector (22 of 25), while the mask-constrained maps and raw Grad-CAM++ often keep the same structure. Together with the cascading result above (n = 10), only **raw Grad-CAM** passes all three controls at study level.
+
+## Final acceptance (M3-02)
+
+| Map | Deletion / insertion (n = 25) | Model randomization | Study-level result |
+|---|---|---|---|
+| raw Grad-CAM | PASS | PASS (cascading: median |rho| <= 0.2 at every stage, n = 10; full randomization 22/25) | **PASS** (research faithfulness controls) |
+| raw Grad-CAM++ | PASS | FAIL | PARTIAL |
+| mask-constrained Grad-CAM (saved app map) | PASS | FAIL (location kept by the mask) | PARTIAL |
+| mask-constrained Grad-CAM++ (saved app map) | PASS | FAIL | PARTIAL |
+
+Scope: ARCADE stenosis validation split only, frozen checkpoint f0bc898c, saved operating point. Development-exposed data; no independent cohort; clinical explainability not assessed. Product consequence: the case Explainable AI step defaults to raw (unconstrained) maps and offers the mask constraint as an option.

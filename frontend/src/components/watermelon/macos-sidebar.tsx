@@ -23,7 +23,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { canCreateCases, canOpenSection, canViewModels } from "../../permissions";
 import { demoAccountChoices, type SavedAccount } from "../../demoSessions";
 
-export type SidebarView = "overview" | "cases" | "uploads" | "reviews" | "analysis" | "models" | "reports" | "account" | "admin" | "permissions" | "access" | "audit";
+export type SidebarView = "overview" | "cases" | "uploads" | "reviews" | "analysis" | "models" | "xai" | "reports" | "account" | "admin" | "permissions" | "access" | "audit";
 
 export interface SidebarUser {
   id?: string;
@@ -53,6 +53,7 @@ const views = [
   { id: "reviews", label: "Severity Review", icon: ClipboardList },
   { id: "analysis", label: "AI Analysis", icon: ScanEye },
   { id: "models", label: "Model Evaluation", icon: BrainCircuit },
+  { id: "xai", label: "Explainable AI", icon: Microscope },
   { id: "reports", label: "Reports", icon: FileBarChart2 },
   { id: "admin", label: "User Management", icon: ShieldUser },
   { id: "permissions", label: "Roles & Permissions", icon: ShieldCheck },

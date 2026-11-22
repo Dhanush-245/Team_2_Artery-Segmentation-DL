@@ -34,6 +34,10 @@ export const SECTION_META: Record<SidebarView, SectionMeta> = {
     title: "Model Evaluation",
     description: "Installed model versions, imported validation evidence and training history.",
   },
+  xai: {
+    title: "Explainable AI",
+    description: "Coverage, methods and verification of saved case explanations.",
+  },
   reports: {
     title: "Reports",
     description: "Immutable report snapshots and protected exports bound to an exact saved run.",

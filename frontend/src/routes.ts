@@ -8,6 +8,7 @@ export const SECTION_PATHS: Record<SidebarView, string> = {
   analysis: "/analysis",
   reviews: "/reviews",
   models: "/models",
+  xai: "/xai",
   reports: "/reports",
   account: "/account",
   admin: "/admin",
