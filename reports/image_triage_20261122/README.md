@@ -48,3 +48,18 @@ Decision: **accept for the research deployment**, with no CRITICAL findings and 
 Debian publishes fixes (CI already scans every build and fails on fixable CRITICAL findings). Moving to a distroless
 or Chainguard Python base would remove most of the remainder and is the next option if a stricter policy applies.
 Full per-CVE lists: `trivy_high_critical.json`.
+
+## Rescan after rebuild with a freshly pulled base (22 November 2026, later)
+
+Trivy 0.76.2 with a current database on the rebuilt image (Debian 13.8, `python:3.13-slim-trixie` pulled again,
+`apt-get upgrade` applied): **0 critical, 50 high, 0 with a fixed version** (49 affected, 1 fix deferred). This is unchanged.
+
+- 36 of the 50 are four util-linux CVEs (CVE-2026-76642, -78408, -78409, -78410). They repeat across nine binary
+  packages built from util-linux: bsdutils, libblkid1, liblastlog2-2, libmount1, libsmartcols1, libuuid1, login,
+  mount and util-linux. bsdutils and login are Debian "required" packages, and the libraries are dependencies of
+  the base system. Removing them would break the image, so they stay until Debian ships a fix.
+- The rest: libsqlite3-0 (3), ncurses (4 packages, 1 CVE), openssl (3 packages, 1 CVE), systemd/udev
+  libraries (1 CVE), libacl1 (1) and perl-base (1). None has a fixed version.
+
+Decision: keep the Debian 13 slim base. Rebuild and rescan when Debian publishes fixes; the existing
+`apt-get upgrade` step picks them up without other changes.
