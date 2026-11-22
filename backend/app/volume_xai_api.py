@@ -63,10 +63,14 @@ def heat_for_mpr(storage: Path, run_id: str, record_id: str):
     blob = path.read_bytes()
     if hashlib.sha256(blob).hexdigest() != (record.get('artifact_sha256') or {}).get('coarse'):
         raise HTTPException(409, 'Saved attribution failed its integrity check')
-    return np.load(path).astype(np.float32), np.asarray(record['coarse_affine_ras_mm'], dtype=float)
+    return np.load(path).astype(np.float32), np.asarray(record['coarse_affine_ras_mm'], dtype=float), bool(record.get('cropped'))
 
 
 def install(app, *, get_db, current_user, accessible_case, case_out, storage: Path, audit, VolumeAnalysis):
+    from .xai_api import recover_interrupted
+    recovered = recover_interrupted((storage / 'volumes').glob('*/xai/*.json'))
+    if recovered:
+        LOG.warning('volume_xai_records_recovered count=%s', recovered)
     from .volume_inference import CHECKPOINT_SHA, MODEL_ID, checkpoint_path
 
     def now():
@@ -100,23 +104,23 @@ def install(app, *, get_db, current_user, accessible_case, case_out, storage: Pa
         temp.write_text(json.dumps(record, allow_nan=False))
         temp.replace(target)
 
-    def generate(record, source, mask):
+    def generate(record, source, mask, crop=None):
         try:
             with VOLUME_LOCK:
                 model = vx.load_model(checkpoint_path(), CHECKPOINT_SHA)
-                values, roi, _, meta = vx.attribution(source, model, record['identity']['method'])
-                check = vx.alignment(roi, meta['coarse_affine'], meta['image'], mask)
+                values, roi, _, meta = vx.attribution(source, model, record['identity']['method'], roi=crop)
+                check = vx.alignment(roi, meta['coarse_affine'], meta['image'], mask, cropped=meta['cropped'])
                 folder = run_folder(storage, record['run_id']) / 'xai'
                 folder.mkdir(parents=True, exist_ok=True)
                 coarse = folder / f"{record['id']}.coarse.npy"
                 np.save(coarse, values.astype(np.float16))
-                native_sha = vx.save_native(values, meta['coarse_affine'], meta['image'], folder / f"{record['id']}.attr.nii.gz")
+                native_sha = vx.save_native(values, meta['coarse_affine'], meta['image'], folder / f"{record['id']}.attr.nii.gz", cropped=meta['cropped'])
             record.update(status='ready' if check['status'] == 'PASS' else 'failed',
                           error=None if check['status'] == 'PASS' else 'Spatial alignment check failed; attribution withheld',
                           alignment=check, summary=vx.summarize(values, roi),
                           target=dict(record['target'], target_score=meta['target_score'], target_layer=meta['target_layer'], roi_voxels=meta['roi_voxels']),
                           artifact_sha256=dict(native=native_sha, coarse=hashlib.sha256(coarse.read_bytes()).hexdigest()),
-                          coarse_affine_ras_mm=np.asarray(meta['coarse_affine']).tolist(),
+                          coarse_affine_ras_mm=np.asarray(meta['coarse_affine']).tolist(), cropped=meta['cropped'],
                           completed_at=now())
         except LookupError as error:
             record.update(status='not_evaluable', error=str(error))
@@ -126,13 +130,13 @@ def install(app, *, get_db, current_user, accessible_case, case_out, storage: Pa
         finally:
             write(record['run_id'], record)
 
-    def run_verification(record, source):
+    def run_verification(record, source, crop=None):
         try:
             with VOLUME_LOCK:
                 model = vx.load_model(checkpoint_path(), CHECKPOINT_SHA)
                 from .volume_inference import prepare_input
                 import torch
-                _, _, prepared, _ = prepare_input(source)
+                _, _, prepared, _, _ = prepare_input(source, roi=crop)
                 with torch.inference_mode():
                     roi = (model(torch.from_numpy(prepared)[None, None]).argmax(1)[0] == 1).numpy()
                 values = np.load(record_path(storage, record['run_id'], record['id'], '.coarse.npy')).astype(np.float32)
@@ -195,7 +199,8 @@ def install(app, *, get_db, current_user, accessible_case, case_out, storage: Pa
         audit(db, user.id, f'volume_xai_requested:{identity[:16]}:{row.id}', case.id)
         db.commit()
         folder = run_folder(storage, row.id)
-        threading.Thread(target=generate, args=(record, next(folder.glob('source.nii*')), folder / 'outputs' / 'mask_source.nii.gz'), daemon=True).start()
+        crop = (result.get('preprocessing') or {}).get('roi')
+        threading.Thread(target=generate, args=(record, next(folder.glob('source.nii*')), folder / 'outputs' / 'mask_source.nii.gz', crop), daemon=True).start()
         return record
 
     def own(case_id, run_id, record_id, user, db):
@@ -226,5 +231,6 @@ def install(app, *, get_db, current_user, accessible_case, case_out, storage: Pa
         write(row.id, record)
         audit(db, user.id, f'volume_xai_verification:{record_id[:16]}', case.id)
         db.commit()
-        threading.Thread(target=run_verification, args=(record, next(run_folder(storage, row.id).glob('source.nii*'))), daemon=True).start()
+        crop = (json.loads(row.result_json or '{}').get('preprocessing') or {}).get('roi')
+        threading.Thread(target=run_verification, args=(record, next(run_folder(storage, row.id).glob('source.nii*')), crop), daemon=True).start()
         return record

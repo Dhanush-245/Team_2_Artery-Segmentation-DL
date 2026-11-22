@@ -152,24 +152,71 @@ def inspect_input(path):
     return image
 
 
-def prepare_input(path):
+HEART_ROI_MM = 160.0
+FULL_FOV_LIMIT_MM = 250.0
+HEART_ROI_METHOD = 'contrast-blood-pool-depth-centre-160mm-v1'
+
+
+def locate_heart_roi(values, zooms):
+    """Heart-centred crop for whole-chest scans, so the 128^3 model sees an ImageCAS-like field of view.
+
+    The cardiac chambers are the thickest contrast-filled structures: the crop is centred on the
+    largest component of blood-pool voxels (150-600 HU) at >= 60% of the maximum depth, computed at
+    half resolution. Returns None (full volume) for heart-sized fields of view or when no blood pool is found.
+    """
+    from scipy import ndimage
+    zooms = np.asarray(zooms[:3], dtype=float)
+    if float((np.array(values.shape[:2]) * zooms[:2]).max()) <= FULL_FOV_LIMIT_MM:
+        return None
+    small = values[::2, ::2, ::2]
+    blood = ndimage.binary_opening((small > 150) & (small < 600), iterations=1)
+    if not blood.any():
+        return None
+    depth = ndimage.distance_transform_edt(blood, sampling=zooms * 2)
+    core = depth >= 0.6 * float(depth.max())
+    labels, count = ndimage.label(core)
+    if not count:
+        return None
+    sizes = ndimage.sum(core, labels, range(1, count + 1))
+    centre = np.argwhere(labels == int(np.argmax(sizes)) + 1).mean(0) * 2
+    half = np.ceil(HEART_ROI_MM / 2 / zooms).astype(int)
+    lo = np.maximum(np.round(centre - half).astype(int), 0)
+    hi = np.minimum(np.round(centre + half).astype(int), values.shape[:3])
+    if np.any(hi - lo < 16):
+        return None
+    return dict(method=HEART_ROI_METHOD, lo=lo.tolist(), hi=hi.tolist(), fov_mm=HEART_ROI_MM,
+                centre_canonical_voxel=np.round(centre, 1).tolist(), max_blood_depth_mm=round(float(depth.max()), 1))
+
+
+def prepare_input(path, roi='auto'):
+    """roi: 'auto' locates a heart crop for whole-chest scans; None uses the full volume; a dict reproduces a saved crop."""
     image = inspect_input(path)
     canonical = nib.as_closest_canonical(image)
     values = np.array(canonical.dataobj, dtype=np.float32, copy=True)
     if not np.isfinite(values).all():
         raise ValueError('Non-finite CT intensities')
+    if roi == 'auto':
+        roi = locate_heart_roi(values, canonical.header.get_zooms())
+    offset = np.zeros(3, dtype=int)
+    if roi:
+        lo, hi = np.asarray(roi['lo'], dtype=int), np.asarray(roi['hi'], dtype=int)
+        values = values[lo[0]:hi[0], lo[1]:hi[1], lo[2]:hi[2]].copy()
+        offset = lo
     # Exact source prepare_imagecas_streaming.py, including float16 NPZ storage.
     np.clip(values, -200, 800, out=values)  # Owned array only; never mutate the source.
     prepared = ((zoom(values, np.array([128]*3)/values.shape,
                       order=1, prefilter=False) + 200)/1000).astype(np.float16).astype(np.float32)
-    coarse_affine = canonical.affine @ np.diag([*( (np.array(canonical.shape)-1)/127 ), 1.])
-    return image, canonical, prepared, coarse_affine
+    shift = np.eye(4)
+    shift[:3, 3] = offset
+    coarse_affine = canonical.affine @ shift @ np.diag([*( (np.array(values.shape)-1)/127 ), 1.])
+    return image, canonical, prepared, coarse_affine, roi
 
 
-def restore_mask(mask, coarse_affine, source):
-    # scipy.zoom grid_mode=False preserves first/last voxel centres.
+def restore_mask(mask, coarse_affine, source, cropped=False):
+    # scipy.zoom grid_mode=False preserves first/last voxel centres. A cropped field of view
+    # contributes nothing outside the crop (constant 0) instead of extending its edge voxels.
     coarse = nib.Nifti1Image(mask.astype(np.uint8), coarse_affine)
-    restored = resample_from_to(coarse, (source.shape, source.affine), order=0, mode='nearest')
+    restored = resample_from_to(coarse, (source.shape, source.affine), order=0, mode='constant' if cropped else 'nearest', cval=0)
     result = nib.Nifti1Image(np.asarray(restored.dataobj, dtype=np.uint8), source.affine)
     result.header.set_xyzt_units('mm')
     result.set_qform(source.get_qform(), int(source.header['qform_code']))
@@ -191,7 +238,7 @@ def run_inference(source_path, output, model_key='imagecas'):
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
     if digest != (CHECKPOINT_SHA if model_key=='imagecas' else spec['sha256']):
         raise ValueError('3D checkpoint checksum mismatch; refusing an unregistered model')
-    source, canonical, prepared, coarse_affine = prepare_input(source_path)
+    source, canonical, prepared, coarse_affine, roi = prepare_input(source_path)
     checkpoint = torch.load(path, map_location='cpu', weights_only=True)
     if (checkpoint['manifest']['labels'] != {'0':'background','1':spec['label']}
             or checkpoint['manifest'].get('resolution',[128]*3) != [128]*3):
@@ -206,7 +253,7 @@ def run_inference(source_path, output, model_key='imagecas'):
         probability = logits.softmax(1)[0,1].numpy()
         mask = logits.argmax(1)[0].numpy().astype(np.uint8)
     output.mkdir(parents=True, exist_ok=True)
-    restored = restore_mask(mask, coarse_affine, source)
+    restored = restore_mask(mask, coarse_affine, source, cropped=bool(roi))
     nib.save(restored, output/'mask_source.nii.gz')
     coarse = nib.Nifti1Image(probability, coarse_affine)
     coarse.header.set_xyzt_units('mm')
@@ -224,7 +271,8 @@ def run_inference(source_path, output, model_key='imagecas'):
         slices.append({'axis': ['RAS X','RAS Y','RAS Z'][axis], 'coarse_index': index, 'artifact': name})
     return {'schema_version':'volume-analysis-1.0', 'model_id':MODEL_ID if model_key=='imagecas' else model_key+'-unet3d-128-v1','model_key':model_key,'anatomy':spec['anatomy'],
             'checkpoint_sha256':digest, 'checkpoint_epoch':int(checkpoint['epoch']),
-            'preprocessing': {'version':'imagecas-source-parity-1', 'axis_order':'canonical RAS XYZ',
+            'preprocessing': {'version':'imagecas-source-parity-1' if not roi else 'imagecas-heart-roi-1', 'axis_order':'canonical RAS XYZ',
+                              'roi': roi,
                               'clip_hu':[-200,800], 'normalization':'(clip+200)/1000',
                               'resize':'scipy zoom order=1 prefilter=False grid_mode=False',
                               'float16_storage_roundtrip':True, 'shape':[128]*3},

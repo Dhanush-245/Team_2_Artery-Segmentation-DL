@@ -88,14 +88,14 @@ def fake_volume(monkeypatch, tmp_path):
     monkeypatch.setattr('app.volume_inference.checkpoint_path', lambda: checkpoint)
     monkeypatch.setattr(vx, 'load_model', lambda path, sha: object())
 
-    def attribution(source, model, method):
+    def attribution(source, model, method, roi=None):
         image = nib.load(str(source))
         values = np.zeros((128, 128, 128), np.float32); values[10:20, 10:20, 10:20] = 1
         roi = values > 0
         coarse_affine = image.affine @ np.diag([*((np.array(image.shape) - 1) / 127), 1.])
-        return values, roi, values, dict(target_score=2.0, target_layer='dec[1]', roi_voxels=int(roi.sum()), coarse_affine=coarse_affine, image=image)
+        return values, roi, values, dict(target_score=2.0, target_layer='dec[1]', roi_voxels=int(roi.sum()), coarse_affine=coarse_affine, image=image, cropped=False)
     monkeypatch.setattr(vx, 'attribution', attribution)
-    monkeypatch.setattr(vx, 'alignment', lambda *a: dict(status='PASS', mask_dice_vs_saved=1.0))
+    monkeypatch.setattr(vx, 'alignment', lambda *a, **k: dict(status='PASS', mask_dice_vs_saved=1.0))
 
 
 def _wait(client, url, headers):
@@ -140,3 +140,17 @@ def test_other_3d_models_are_unsupported(fake_volume):
         base = f"/api/cases/{case['id']}/volumes/analyses/{run}/xai"
         assert client.get(base, headers=owner).json()['state'] == 'UNSUPPORTED'
         assert client.post(base + '/explanations', headers=owner, json={'method': 'gradcam'}).status_code == 409
+
+
+def test_interrupted_work_is_recovered_after_restart(tmp_path):
+    from app.xai_api import recover_interrupted
+    stuck = tmp_path / 'a.json'
+    stuck.write_text(json.dumps({'status': 'generating', 'verification': {'status': 'not_run'}}))
+    running = tmp_path / 'b.json'
+    running.write_text(json.dumps({'status': 'ready', 'verification': {'status': 'running', 'deletion': 'NOT_TESTED'}}))
+    done = tmp_path / 'c.json'
+    done.write_text(json.dumps({'status': 'ready', 'verification': {'status': 'completed', 'deletion': 'PASS'}}))
+    assert recover_interrupted([stuck, running, done]) == 2
+    assert json.loads(stuck.read_text())['status'] == 'failed'
+    assert json.loads(running.read_text())['verification']['status'] == 'failed'
+    assert json.loads(done.read_text())['verification']['deletion'] == 'PASS'

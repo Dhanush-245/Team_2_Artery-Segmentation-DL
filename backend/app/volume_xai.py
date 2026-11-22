@@ -47,20 +47,20 @@ def _normalize(values):
     return values / top if top > 0 else values
 
 
-def attribution(source: Path, model, method: str):
+def attribution(source: Path, model, method: str, roi=None):
     """Return (coarse 128^3 attribution in [0, 1], coarse vessel mask, prepared input, metadata)."""
     import torch
     import torch.nn.functional as F
     from .volume_inference import prepare_input
     from .xai_methods import gradcam_plus_plus_weights, gradcam_weights, weighted_cam
-    image, canonical, prepared, coarse_affine = prepare_input(source)
+    image, canonical, prepared, coarse_affine, roi_crop = prepare_input(source, roi=roi)
     x = torch.from_numpy(prepared)[None, None]
     with torch.no_grad():  # not inference_mode: the mask indexes a tensor tracked by autograd below
         logits = model(x)
         roi = (logits.argmax(1)[0] == 1)
     if not bool(roi.any()):
         raise LookupError('The 3D model labels no vessel voxels in this volume')
-    meta = dict(roi_voxels=int(roi.sum()), coarse_affine=coarse_affine, image=image)
+    meta = dict(roi_voxels=int(roi.sum()), coarse_affine=coarse_affine, image=image, cropped=bool(roi_crop))
     if method == 'occlusion':
         def score(values):
             with torch.inference_mode():
@@ -102,19 +102,19 @@ def attribution(source: Path, model, method: str):
         model.zero_grad(set_to_none=True)
 
 
-def to_native(values: np.ndarray, coarse_affine, image, order: int):
+def to_native(values: np.ndarray, coarse_affine, image, order: int, cropped: bool = False):
     """Resample a 128^3 coarse array onto the saved source grid exactly as the vessel mask is."""
     import nibabel as nib
     from nibabel.processing import resample_from_to
     coarse = nib.Nifti1Image(values.astype(np.float32 if order else np.uint8), coarse_affine)
-    restored = resample_from_to(coarse, (image.shape, image.affine), order=order, mode='nearest')
+    restored = resample_from_to(coarse, (image.shape, image.affine), order=order, mode='constant' if cropped else 'nearest', cval=0)
     return np.asarray(restored.dataobj)
 
 
-def alignment(roi: np.ndarray, coarse_affine, image, saved_mask: Path) -> dict:
+def alignment(roi: np.ndarray, coarse_affine, image, saved_mask: Path, cropped: bool = False) -> dict:
     """Re-derive the native-grid mask through the same transform and compare it with the saved mask."""
     import nibabel as nib
-    restored = to_native(roi.astype(np.uint8), coarse_affine, image, order=0) > 0
+    restored = to_native(roi.astype(np.uint8), coarse_affine, image, order=0, cropped=cropped) > 0
     saved = nib.load(str(saved_mask))
     if saved.shape != image.shape or not np.allclose(saved.affine, image.affine, atol=1e-5):
         return dict(status='FAIL', reason='Saved mask geometry differs from the source')
@@ -125,9 +125,9 @@ def alignment(roi: np.ndarray, coarse_affine, image, saved_mask: Path) -> dict:
                 native_shape=list(image.shape), check='re-derived model mask vs saved mask_source.nii.gz, same affine path')
 
 
-def save_native(values: np.ndarray, coarse_affine, image, path: Path) -> str:
+def save_native(values: np.ndarray, coarse_affine, image, path: Path, cropped: bool = False) -> str:
     import nibabel as nib
-    native = to_native(values, coarse_affine, image, order=1)
+    native = to_native(values, coarse_affine, image, order=1, cropped=cropped)
     scaled = np.uint8(np.clip(native, 0, 1) * 255)
     result = nib.Nifti1Image(scaled, image.affine)
     result.header.set_xyzt_units('mm')

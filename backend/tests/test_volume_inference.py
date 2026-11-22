@@ -25,7 +25,7 @@ def nifti(tmp_path):
 
 def test_source_preparation_parity_and_native_geometry(tmp_path):
     path = nifti(tmp_path)
-    source, canonical, tensor, affine = volume.prepare_input(path)
+    source, canonical, tensor, affine, roi = volume.prepare_input(path)
     original = np.asarray(nib.as_closest_canonical(nib.load(path)).dataobj,dtype=np.float32)
     expected = ((zoom(np.clip(original,-200,800),np.array([128]*3)/original.shape,
                       order=1,prefilter=False)+200)/1000).astype(np.float16).astype(np.float32)
@@ -190,3 +190,28 @@ def test_real_checkpoint_executes_and_persists_geometry(tmp_path):
     assert nib.load(tmp_path/'outputs/probability_coarse.nii.gz').shape == (128,128,128)
     assert all((tmp_path/'outputs'/f'overlay_{axis}.png').is_file() for axis in range(3))
     json.dumps(result,allow_nan=False)
+
+
+def test_heart_roi_centres_whole_chest_scans_and_leaves_cardiac_fov_alone():
+    import numpy as np
+    from app import volume_inference as volume
+    chest = np.full((300, 300, 120), -900, np.float32)          # 0.9 mm in-plane: 270 mm field of view
+    zz, yy, xx = np.ogrid[:300, :300, :120]
+    chest[((zz - 190) ** 2 + (yy - 120) ** 2 + (xx - 60) ** 2) < 40 ** 2] = 350   # contrast "chamber"
+    chest[(((zz - 80) ** 2 + (yy - 220) ** 2) < 8 ** 2) & (xx >= 0)] = 350           # thin "aorta" tube
+    roi = volume.locate_heart_roi(chest, (0.9, 0.9, 1.5))
+    assert roi is not None
+    centre = (np.array(roi['lo']) + np.array(roi['hi'])) / 2
+    assert abs(centre[0] - 190) < 6 and abs(centre[1] - 120) < 6
+    assert volume.locate_heart_roi(chest[:180, :180], (0.9, 0.9, 1.5)) is None   # 162 mm: already heart-sized
+
+
+def test_cropped_restore_is_empty_outside_the_crop():
+    import nibabel as nib
+    import numpy as np
+    from app import volume_inference as volume
+    source = nib.Nifti1Image(np.zeros((60, 60, 30), np.int16), np.diag([1.0, 1.0, 2.0, 1.0]))
+    shift = np.eye(4); shift[:3, 3] = (20, 20, 10)
+    coarse_affine = source.affine @ shift @ np.diag([*((np.array([20, 20, 10]) - 1) / 127), 1.])
+    restored = np.asarray(volume.restore_mask(np.ones((128, 128, 128), np.uint8), coarse_affine, source, cropped=True).dataobj)
+    assert restored[25, 25, 15] == 1 and restored[5, 5, 5] == 0 and restored[55, 55, 25] == 0

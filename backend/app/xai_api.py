@@ -82,7 +82,33 @@ class ExplanationIn(BaseModel):
     constrained: bool = False
 
 
+def recover_interrupted(paths) -> int:
+    """After a restart no generation or verification thread survives: mark such records as interrupted."""
+    count = 0
+    for path in paths:
+        try:
+            record = json.loads(path.read_text())
+        except (OSError, ValueError):
+            continue
+        changed = False
+        if record.get('status') == 'generating':
+            record.update(status='failed', error='Generation was interrupted by an application restart; generate again')
+            changed = True
+        verification = record.get('verification') or {}
+        if verification.get('status') == 'running':
+            record['verification'] = dict(status='failed', error='Verification was interrupted by an application restart; run it again',
+                                          deletion='NOT_TESTED', insertion='NOT_TESTED', randomization='NOT_TESTED')
+            changed = True
+        if changed:
+            path.write_text(json.dumps(record, allow_nan=False))
+            count += 1
+    return count
+
+
 def install(app, *, get_db, current_user, accessible_case, case_out, storage: Path, audit, Image, AnalysisEvent, Case, event_out):
+    recovered = recover_interrupted((storage / 'xai').glob('*/*.json'))
+    if recovered:
+        LOG.warning('xai_records_recovered count=%s', recovered)
     from . import trained_release as tr
     root = storage / 'xai'
 

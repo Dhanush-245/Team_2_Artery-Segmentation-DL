@@ -10,7 +10,7 @@ import numpy as np
 from scipy.ndimage import distance_transform_edt, convolve, map_coordinates, label
 from skimage.morphology import skeletonize
 
-METHOD = 'lee-skeleton-local-bilateral-sections-v6'
+METHOD = 'lee-skeleton-local-bilateral-sections-v7'
 REFERENCE_GUARD = 7
 REFERENCE_SAMPLES = 4
 REFERENCE_MAX_CV = .20
@@ -55,7 +55,7 @@ def saved_measurement(path):
     """Reuse geometry only when both its source hash and method match."""
     path = Path(path)
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
-    cache = path.parent / f'geometry-sections-v6-{digest}.json'
+    cache = path.parent / f'geometry-sections-v7-{digest}.json'
     if cache.is_file():
         result = json.loads(cache.read_text())
         if (result.get('mask_sha256') == digest
@@ -174,7 +174,7 @@ def measure(path):
             continue
         narrowing = float(max(0, (1-minimum/reference)*100))
         if narrowing < 25:
-            withheld[path_record['id']] = 'narrowing_below_25_percent'
+            withheld[path_record['id']] = 'cross_section_narrowing_below_25_percent'
             continue
         sensitivity = []
         for step in SECTION_STEPS_MM:

@@ -220,11 +220,11 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
             {reportError ? <p role="alert">{reportError}</p> : !report ? <p role="status">Loading saved-run report…</p> : <>
               {report.experimental_geometry && <section aria-label="Experimental 3D geometry">
                 <VolumeMeasurementPanel candidates={report.experimental_geometry.candidates ?? []} />
-                <div className="volume-subsection-heading"><h4>Candidate measurements</h4><span>{(report.experimental_geometry.paths ?? []).length} paths · {(report.experimental_geometry.paths ?? []).reduce((sum,path)=>sum+path.length_mm,0).toFixed(2)} mm traced</span></div>
-                <table className="stenosis-summary"><thead><tr><th>Candidate / path</th><th>Minimum width</th><th>Reference width</th><th>Narrowing</th><th>Experimental grade</th><th>RAS location (mm)</th></tr></thead>
+                <div className="volume-subsection-heading"><h4>Strict candidate measurements</h4><span>{(report.experimental_geometry.paths ?? []).length} paths · {(report.experimental_geometry.paths ?? []).reduce((sum,path)=>sum+path.length_mm,0).toFixed(2)} mm traced</span></div>
+                {(report.experimental_geometry.candidates ?? []).length > 0 && <table className="stenosis-summary"><thead><tr><th>Candidate / path</th><th>Minimum width</th><th>Reference width</th><th>Narrowing</th><th>Experimental grade</th><th>RAS location (mm)</th></tr></thead>
                   <tbody>{(report.experimental_geometry.candidates ?? []).map(candidate=><tr key={candidate.id}><td>{candidate.id} / {candidate.path_id}</td><td>{candidate.minimum_diameter_mm.toFixed(2)} mm<br/>{candidate.minimum_area_mm2?.toFixed(2)} mm²</td><td>{candidate.reference_diameter_mm.toFixed(2)} mm<br/>{candidate.reference_area_mm2?.toFixed(2)} mm²</td><td>Diameter {candidate.narrowing_percent.toFixed(2)}%<br/>Area {candidate.area_narrowing_percent?.toFixed(2)}%</td><td>{candidate.severity}</td><td>{candidate.location_ras_mm.map(value=>value.toFixed(2)).join(', ')}</td></tr>)}</tbody>
-                </table>
-                {!(report.experimental_geometry.candidates ?? []).length && <p className="muted">No path met the strict candidate rules (length, stable bilateral reference, ≥ 25 % narrowing). Exploratory per-path estimates are listed below.</p>}
+                </table>}
+                {!(report.experimental_geometry.candidates ?? []).length && <p className="message info">No path met the strict candidate rules: enough centreline (27+ samples) for a guarded reference on both sides, a stable reference, and ≥ 25 % narrowing measured on perpendicular cross-sections. Exploratory per-path mask-width estimates are listed below.</p>}
                 {estimates.length > 0 && <div className="volume-estimates">
                   <div className="volume-subsection-heading"><h4>Lumen estimates by path <span className="research-tag">exploratory research estimate</span></h4><span>{estimates.length} narrowest of {(report.experimental_geometry.paths ?? []).length} paths</span></div>
                   <div className="table-scroll"><table className="stenosis-summary">
