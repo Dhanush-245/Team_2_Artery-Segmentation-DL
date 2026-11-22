@@ -8,7 +8,7 @@ import ResearchProgress from "./ResearchProgress";
 
 export type ModelStatus = {
   task_connections?:Array<{id:string;title:string;connected:boolean;state:string;dimension:string;anatomy:string;modality:string;checkpoint_sha256:string|null;limitation:string}>;
-  trained_release?: { configured: boolean; ready: boolean; version: string; input_contract: string; limitations: string[]; models: Array<{ task: string; architecture: string; sha256: string; validation_dice: number; validation_images: number; validation_status: string }>; research_evidence?: { scope: string; limitations: string[]; tasks: Array<{ task_id: string; title: string; validation_support: string; baseline_result: string; outcome: string; inference_connected: boolean }>; calibration_studies: Array<{ task: string; cases: number; raw_NLL: number; crossfit_NLL: number; raw_Brier: number; crossfit_Brier: number }> } };
+  trained_release?: { configured: boolean; ready: boolean; version: string; input_contract: string; limitations: string[]; models: Array<{ task: string; architecture: string; sha256: string; validation_dice: number; validation_images: number; validation_status: string }>; protected_test?: { date: string; dataset: string; test_images: number; checkpoint_sha256: string; score_threshold: number; metrics: { arcade_official_f1: number; instance_precision: number; instance_recall: number; instance_f1: number; tp: number; fp: number; fn: number; pixel_dice: number } }; research_evidence?: { scope: string; limitations: string[]; tasks: Array<{ task_id: string; title: string; validation_support: string; baseline_result: string; outcome: string; inference_connected: boolean }>; calibration_studies: Array<{ task: string; cases: number; raw_NLL: number; crossfit_NLL: number; raw_Brier: number; crossfit_Brier: number }> } };
   models_ready: boolean;
   model_version: string;
   instance_models_ready?: boolean;
@@ -126,6 +126,7 @@ export default function ModelWorkspace({ token }: { token: string }) {
         <thead><tr><th>Dataset / task</th><th>Selected model</th><th>Recorded metric</th><th>Evaluation scope</th></tr></thead>
         <tbody>
           {status?.trained_release?.models.map(model => <tr key={model.task}><th scope="row">ARCADE · {model.task === 'syntax' ? 'Artery segmentation' : 'Stenosis masks'}</th><td>{model.architecture}</td><td>Dice {model.validation_dice.toFixed(6)}</td><td>{model.validation_images} validation images · {model.validation_status}</td></tr>)}
+          {status?.trained_release?.protected_test && (({ metrics: m, test_images, score_threshold }) => <tr><th scope="row">ARCADE · Stenosis detector, protected test</th><td>Same checkpoint ({status.trained_release.protected_test.checkpoint_sha256.slice(0, 8)}…)</td><td>Official F1 {m.arcade_official_f1.toFixed(3)} · Precision {m.instance_precision.toFixed(3)} · Recall {m.instance_recall.toFixed(3)}</td><td>{test_images} test images, evaluated once at score ≥ {score_threshold} · {m.tp} TP / {m.fp} FP / {m.fn} FN · not used for selection</td></tr>)(status.trained_release.protected_test)}
           <tr><th scope="row">ImageCAS · Coronary CTA segmentation</th><td>3D U-Net · epoch 75</td><td>Dice 0.793693 · Recall 0.787919</td><td>Retained validation report · checkpoint b77271b1780f3210…</td></tr>
         </tbody>
       </table></div>

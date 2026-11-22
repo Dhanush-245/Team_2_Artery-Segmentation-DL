@@ -14,6 +14,17 @@ RELEASE = json.loads((ROOT / 'ml/releases/corovision_20261023.json').read_text()
 LOCK = threading.Lock()
 
 
+# One-time ARCADE stenosis test of the served detector (reports/stenosis_protected_test_20261122).
+PROTECTED_TEST = dict(
+    date='2026-11-22', dataset='ARCADE stenosis official test split', test_images=300,
+    checkpoint_sha256='f0bc898c95b6efdd53863d5a430fb4b850c2451b440c5a53b92a73e73c5be2e3',
+    score_threshold=0.25, used_for_selection=False, clinical_validation=False,
+    metrics=dict(arcade_official_f1=0.39598195933136454, instance_precision=0.2450638792102207,
+                 instance_recall=0.5466321243523317, instance_f1=0.3384121892542101, tp=211, fp=650, fn=175,
+                 pixel_dice=0.5366448565565837, pixel_auc_roc=0.861850007338669),
+    report='reports/stenosis_protected_test_20261122/README.md')
+
+
 def artifact_root():
     return Path(os.environ.get('COROVISION_TRAINED_RELEASE', ROOT / 'models/trained_release')).resolve()
 
@@ -64,7 +75,7 @@ def status():
     return dict(version=RELEASE['version'], configured=configured(), ready=ready() if configured() else False,
                 input_contract='512x512 prepared coronary X-ray; grayscale0..1 artery,RGB0..1 stenosis; no extra autocontrast or morphology',
                 models=RELEASE['models'], limitations=RELEASE['limitations'], research_only=True,
-                research_evidence=current_research_evidence(),
+                research_evidence=current_research_evidence(), protected_test=PROTECTED_TEST,
                 clinical_calibration=False, training_controls_connected=False)
 
 

@@ -37,7 +37,7 @@ These measurements cover loopback liveness GETs. Dashboard, inference, report ge
 - Milestone 1 **PARTIAL** overall. Local foundation passes, with PostgreSQL upgrade and rollback open.
 - Milestones 2 and 3 **PARTIAL**. Development workflows are demonstrated, with independent segmentation, measurement, severity and attribution evidence outstanding.
 - Milestone 4 **PARTIAL**. Local reports and focused regression pass. Browser, documentation and operational items remain open as listed above.
-- Model evaluation and selection **PARTIAL**. The retained baselines have development evidence. Threshold selection and protected evaluation remain open. No new optimizer run occurred.
+- Model evaluation and selection **PARTIAL**. The retained baselines have development evidence. The score threshold was fixed on validation (20 Nov), and the stenosis detector was then scored once on the protected ARCADE test split (22 Nov: official F1 0.396, precision 0.245, recall 0.547; [report](stenosis_protected_test_20261122/README.md)). No new optimizer run occurred.
 - Deployment readiness **BLOCKED** for runtime acceptance. Actual deployment **NOT_TESTED**.
 - Independent research validation **BLOCKED** on eligible unseen-patient data and qualified references. Clinical validation **BLOCKED** on scientific evidence and governance.
 - Full original project acceptance **PARTIAL**. Current scope remains a research demonstration.

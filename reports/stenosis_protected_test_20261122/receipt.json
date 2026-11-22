@@ -1,0 +1,33 @@
+{
+ "state": "completed",
+ "evaluation": "one-time protected ARCADE stenosis test",
+ "source": "Kaggle notebook mokshagnamannam/corovision-stenosis-protected-test-20261122, version 2, CPU (no accelerator)",
+ "runner_sha256": "0ed636e305282beea2d0c63f8663484613c4fb25a5f8bda3a10d04ceb9e8b7d2",
+ "checkpoint_sha256": "f0bc898c95b6efdd53863d5a430fb4b850c2451b440c5a53b92a73e73c5be2e3",
+ "test_annotation_sha256": "3d0bcbf7d4263199cf26eb0eab8db1b111ce5dee65013170c2973136cb166d2d",
+ "score_threshold": 0.25,
+ "pixel_threshold": 0.5,
+ "training": false,
+ "weights_changed": false,
+ "architecture": "maskrcnn_resnet50_fpn",
+ "selection_source": "official ARCADE validation split",
+ "test_split_used_for_training_or_selection": false,
+ "clinical_validation": false,
+ "test_images": 300,
+ "metrics": {
+  "arcade_official_f1": 0.39598195933136454,
+  "pixel_accuracy_union_mask": 0.9905647786458334,
+  "pixel_precision_union_mask": 0.5074896746069146,
+  "pixel_recall_sensitivity_union_mask": 0.5693541398623823,
+  "pixel_specificity_union_mask": 0.9946460903131259,
+  "pixel_dice_union_mask": 0.5366448565565837,
+  "pixel_iou_union_mask": 0.36672222663174325,
+  "pixel_auc_roc_union_score": 0.861850007338669,
+  "instance_precision_iou50": 0.2450638792102207,
+  "instance_recall_iou50": 0.5466321243523317,
+  "instance_f1_iou50": 0.3384121892542101,
+  "matched_instance_dice_iou50": 0.7810036951543661,
+  "matched_instance_iou_iou50": 0.6446610160693574,
+  "instance_counts": {"tp": 211, "fp": 650, "fn": 175}
+ }
+}

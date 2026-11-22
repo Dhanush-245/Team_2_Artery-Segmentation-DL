@@ -189,3 +189,13 @@ def test_invalid_prediction_arrays_fail_closed(tmp_path, monkeypatch, invalid):
     monkeypatch.setattr(trained_release, 'predict_masks', lambda _: (mask, mask, raw, raw, []))
     with pytest.raises(ValueError):
         trained_release.analyze(tmp_path / 'not-read-by-mock.png')
+
+
+def test_protected_test_result_belongs_to_the_served_stenosis_checkpoint():
+    from app import trained_release
+    record = trained_release.status()['protected_test']
+    served = next(m for m in trained_release.RELEASE['models'] if m['task'] == 'stenosis')
+    assert record['checkpoint_sha256'] == served['sha256']
+    assert record['test_images'] == 300 and record['used_for_selection'] is False
+    assert record['metrics']['tp'] == 211 and record['metrics']['fp'] == 650 and record['metrics']['fn'] == 175
+    assert round(record['metrics']['instance_precision'], 3) == 0.245
