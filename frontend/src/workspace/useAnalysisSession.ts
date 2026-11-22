@@ -91,6 +91,13 @@ export function useAnalysisSession({ token, user, caseList, activeView, setActiv
       setError("The requested analysis case is unavailable for this account.");
       return;
     }
+    // Volume-only cases (CT/CTA/MRA) have no 2D frames; the case link alone opens the 3D workspace.
+    if (!allowedCase.images.length && !target.imageId) {
+      requestedRun.current = null;
+      setSelectedId(allowedCase.id);
+      setActiveView("analysis", { replace: true });
+      return;
+    }
     const image = savedImageForRequest(allowedCase.images, target.imageId, requestedRun.current);
     if (!image) {
       requestedRun.current = null;
@@ -169,7 +176,13 @@ export function useAnalysisSession({ token, user, caseList, activeView, setActiv
 
   // Mirror the open saved run into the address bar so it can be bookmarked and shared.
   useEffect(() => {
-    if (activeView !== "analysis" || !selected || !selectedImage || !selectedAnalysis || caseListToken !== token) return;
+    if (activeView !== "analysis" || !selected || caseListToken !== token) return;
+    if (!selected.images.length) {
+      const volumeLink = `${window.location.pathname}?case_id=${encodeURIComponent(selected.id)}`;
+      if (volumeLink !== window.location.pathname + window.location.search) navigate(volumeLink, { replace: true });
+      return;
+    }
+    if (!selectedImage || !selectedAnalysis) return;
     const next = analysisLocation(window.location.href, selected.id, selectedImage.id, selectedAnalysis.id);
     if (next !== window.location.pathname + window.location.search + window.location.hash) navigate(next, { replace: true });
   }, [activeView, selected?.id, selectedImage?.id, selectedAnalysis?.id, caseListToken, token]);

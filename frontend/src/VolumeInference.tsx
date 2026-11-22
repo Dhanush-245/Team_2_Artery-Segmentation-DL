@@ -3,6 +3,7 @@ import { apiUrl } from './api';
 import { Button } from './components/prismui/button';
 import VolumeOrbit from './VolumeOrbit';
 import VolumeMeasurementPanel from './VolumeMeasurementPanel';
+import VolumeMprViewer from './VolumeMprViewer';
 import { utcDate } from "./lib/time";
 
 type VolumeRun = { id: string; status: string; error: string | null; created_at: string;model_key?:string;
@@ -142,7 +143,7 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
   if (historyOnly) return <section className="volume-inference" aria-label="3D analysis history">
     <h3>3D analysis history</h3>
     {error && <p role="alert">{error}</p>}
-    {!runs.length ? <p>No saved volume analyses.</p> : <table className="stenosis-summary">
+    {!runs.length ? <p className="muted">No saved volume analyses yet. Upload a NIfTI or DICOM series in Upload or prepare a volume, then run 3D analysis.</p> : <table className="stenosis-summary">
       <thead><tr><th>Date</th><th>Run</th><th>Status</th><th>Model</th><th>Duration</th></tr></thead>
       <tbody>{runs.map(run => <tr key={run.id}><td>{utcDate(run.created_at).toLocaleString()}</td><td>{run.id}</td><td>{run.status}</td><td>{run.result?.model_id ?? run.model_key ?? 'Unavailable'}</td><td>{run.result ? `${run.result.duration_seconds.toFixed(2)} s` : 'Unavailable'}</td></tr>)}</tbody>
     </table>}
@@ -165,7 +166,7 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
     {error && <p id="volume-error" role="alert" className="message error">{error}</p>}
     <section className="volume-saved-results" aria-label="Saved 3D results">
       <h4>Saved 3D analyses</h4>
-      {!runs.length ? <p>No 3D analyses yet.</p> : <>
+      {!runs.length ? <p className="muted">No 3D analyses yet. Use Upload or prepare a volume above to add a CT, CTA or MRA study; results appear here when the run completes.</p> : <>
         <label>Analysis run<select value={selected?.id || ''} onChange={e => { setChosen(e.target.value); setViewingRun(''); }}>{runs.map(run => <option key={run.id} value={run.id}>{utcDate(run.created_at).toLocaleString()} · {run.status} · {run.id.slice(0,8)}</option>)}</select></label>
         <p role="status">Status: {selected?.status}{selected?.error ? ` — ${selected.error}` : ''}</p>
         {selected?.result && <>
@@ -193,7 +194,8 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
             {viewingRun === selected.id && <VolumeOrbit key={selected.id} url={selected.preview_url} token={token}
               shape={selected.result.source_shape} slices={selected.result.slices} previews={previews} />}
           </section>}
-          <details open={selected.input_kind !== 'synthetic_fixture'} key={selected.id}><summary>{selected.input_kind === 'synthetic_fixture' ? 'Show synthetic test slices (not medical images)' : 'Slice previews from three directions'}</summary>
+          {selected.status === 'completed' && <VolumeMprViewer key={`mpr-${selected.id}`} caseId={caseId} runId={selected.id} token={token} shape={selected.result.source_shape} />}
+          <details key={selected.id}><summary>{selected.input_kind === 'synthetic_fixture' ? 'Show synthetic test slices (not medical images)' : 'Saved coarse-grid previews (model input resolution)'}</summary>
           <div className="volume-slices">{selected.result.slices.map(slice => <figure key={slice.artifact}>
             {previews[slice.artifact] ? <img src={previews[slice.artifact]} alt={`Predicted coronary overlay on ${slice.axis} slice ${slice.coarse_index}`} /> : <p>Loading saved preview…</p>}
             <figcaption>{slice.axis} · coarse slice {slice.coarse_index}</figcaption></figure>)}</div></details>

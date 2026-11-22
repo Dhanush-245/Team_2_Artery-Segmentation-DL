@@ -13,6 +13,7 @@ def test_external_record_is_separate_and_labelled():
     assert {"Lesion recall", "Lesion precision", "Lesion F1", "Frame sensitivity", "Frame specificity", "Frame AUC-ROC"} <= names
     assert run["confusion"]["tp"] >= 0 and run["severity_agreement"]["graded"] >= 0
     assert run["evidence_source"]["report_sha256"]
+    assert {"p50_70", "p70_90"} <= set(run["recall_by_label"]) and run["frame_confusion"]["tn"] >= 0
     # ARCADE records keep Dice and IoU first and are untouched by the external record.
     arcade = [r for r in runs if r["record_type"] == "imported_release_validation_report"]
     assert len(arcade) == 2 and all(r["metrics"][0]["name"] == "Dice" for r in arcade)

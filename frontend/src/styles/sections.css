@@ -394,3 +394,69 @@ details[open] > summary .evaluation-chevron { transform: rotate(180deg); }
 .analysis-console .workbench-compare-select select:focus-visible { outline:2px solid var(--console-accent); outline-offset:1px; }
 .analysis-console .workbench-compare-legend { color:var(--console-muted); }
 @media(max-width:650px) { .workbench-compare-range { max-width:none; } .workbench-compare-legend { white-space:normal; } }
+
+/* 3D multiplanar slice viewer. */
+.volume-mpr { margin: 1rem 0; padding: 1rem; border: 1px solid #e4e4e7; border-radius: 12px; background: #fff; }
+.dark .volume-mpr { background: #18181b; border-color: #3f3f46; }
+.volume-mpr-heading { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: .75rem; margin-bottom: .75rem; }
+.volume-mpr-heading h4 { margin: .15rem 0 0; font-size: 1rem; }
+.volume-mpr-axes { display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: #f4f4f5; }
+.dark .volume-mpr-axes { background: #27272a; }
+.volume-mpr-axes button { min-height: 34px; padding: 0 .9rem; border: 0; border-radius: 8px; background: transparent; color: inherit; font-weight: 600; font-size: .82rem; cursor: pointer; }
+.volume-mpr-axes button.active { background: #18181b; color: #fff; }
+.dark .volume-mpr-axes button.active { background: #fafafa; color: #18181b; }
+.volume-mpr-stage { position: relative; display: grid; place-items: center; min-height: 320px; aspect-ratio: 1 / 1; max-height: 70vh; margin: 0 auto; border-radius: 8px; background: #050708; overflow: hidden; outline: none; }
+.volume-mpr-stage:focus-visible { box-shadow: 0 0 0 3px #2f8fdb; }
+.volume-mpr-stage img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.volume-mpr-busy { position: absolute; top: 10px; right: 10px; display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 6px; background: rgba(0,0,0,.6); color: #fff; font-size: .75rem; }
+.volume-mpr-error { position: absolute; inset: auto 12px 12px; margin: 0; padding: 8px 10px; border-radius: 6px; background: rgba(127,29,29,.85); color: #fff; font-size: .8rem; }
+.volume-mpr-controls { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; margin-top: .75rem; font-size: .82rem; }
+.volume-mpr-controls label { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.volume-mpr-controls select, .volume-mpr-controls input[type=number] { height: 34px; padding: 0 8px; border: 1px solid #d4d4d8; border-radius: 8px; background: inherit; color: inherit; font: inherit; font-weight: 500; }
+.volume-mpr-controls input[type=number] { width: 78px; }
+.dark .volume-mpr-controls select, .dark .volume-mpr-controls input[type=number] { border-color: #3f3f46; color-scheme: dark; }
+.volume-mpr-slice { display: flex; align-items: center; gap: 6px; flex: 1 1 260px; }
+.volume-mpr-slice input[type=range] { flex: 1; accent-color: #0891b2; }
+.volume-mpr-slice button { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid #d4d4d8; border-radius: 8px; background: inherit; color: inherit; cursor: pointer; }
+.volume-mpr-slice button:disabled { opacity: .4; cursor: not-allowed; }
+.volume-mpr-count { min-width: 72px; text-align: right; font-variant-numeric: tabular-nums; }
+.volume-mpr-opacity input { accent-color: #0891b2; width: 110px; }
+.volume-mpr-download { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
+@media (max-width: 650px) { .volume-mpr-stage { min-height: 240px; } .volume-mpr-count { min-width: 0; } }
+@keyframes cv-spin { to { transform: rotate(360deg); } }
+.spin { animation: cv-spin 1s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+
+/* 3D workspace header aligned with the 2D console. */
+.volume-workspace { display: grid; gap: 1rem; }
+.volume-workspace-bar { align-items: end; }
+.volume-workspace-bar > button { min-height: 44px; }
+
+/* Reviewer caliper tool. */
+.caliper-layer { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; z-index: 3; }
+.measure-toggle.active { background: #184e77 !important; color: #e4f4ff !important; border-color: #61b2ee !important; }
+.workbench-toolbar .measure-toggle { width: auto; padding-inline: .8rem; font-weight: 600; }
+.caliper-panel { grid-column: 1 / -1; margin-top: .6rem; padding: .8rem 1rem; border: 1px solid #d4d4d8; border-radius: 10px; background: #fff; font-size: .84rem; }
+.analysis-console .caliper-panel { border-color: var(--console-line); background: var(--console-panel); color: var(--console-text); }
+.caliper-heading { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.caliper-heading h4 { margin: 0; font-size: .95rem; }
+.caliper-badge { margin-left: auto; padding: 2px 8px; border-radius: 999px; font-size: .72rem; font-weight: 700; }
+.caliper-badge.ok { background: rgba(34,197,94,.15); color: #15803d; }
+.caliper-badge.warn { background: rgba(217,119,6,.15); color: #b45309; }
+.analysis-console .caliper-badge.ok { color: #86efac; } .analysis-console .caliper-badge.warn { color: #fcd34d; }
+.caliper-steps { margin: .6rem 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.caliper-steps li { display: flex; align-items: center; gap: 8px; opacity: .7; }
+.caliper-steps li.active { opacity: 1; font-weight: 600; }
+.caliper-steps .dot { width: 10px; height: 10px; border-radius: 50%; }
+.caliper-steps .dot.mld { background: #ef4444; } .caliper-steps .dot.rvd { background: #22c55e; }
+.caliper-actions { display: flex; flex-wrap: wrap; align-items: end; gap: .6rem; }
+.caliper-actions label { display: grid; gap: 4px; font-weight: 600; font-size: .78rem; }
+.caliper-actions label.grow { flex: 1 1 180px; }
+.caliper-actions input { height: 34px; padding: 0 8px; border: 1px solid #d4d4d8; border-radius: 8px; background: inherit; color: inherit; font: inherit; min-width: 70px; }
+.analysis-console .caliper-actions input { border-color: var(--console-line); background: #242b35; }
+.caliper-actions button, .caliper-export { display: inline-flex; align-items: center; gap: 5px; height: 34px; padding: 0 .8rem; border: 1px solid #d4d4d8; border-radius: 8px; background: inherit; color: inherit; font-weight: 600; cursor: pointer; }
+.caliper-actions button.primary { background: #184e77; border-color: #61b2ee; color: #e4f4ff; }
+.caliper-actions button:disabled { opacity: .45; cursor: not-allowed; }
+.caliper-estimate { display: grid; min-width: 90px; font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.caliper-estimate small { font-size: .68rem; font-weight: 500; opacity: .75; }
+.caliper-export { margin-top: .5rem; }

@@ -262,13 +262,6 @@ html[data-design=existing] .overview-hero button[data-ui-variant=outline] { back
 @media(max-width:1100px) { .volume-view-controls { grid-template-columns:1fr; align-items:start; } .volume-view-controls > div:first-child { flex-wrap:wrap; } .volume-orbit-support {grid-template-columns:1fr;} }
 
 /* ---- Section header, milestones, palette, toasts, error boundary, skeletons ---- */
-.cv-section-meta { display:grid; gap:8px; margin:0 0 20px; padding:12px 16px; border:1px solid var(--theme-line); border-radius:12px; background:var(--theme-surface); color:var(--theme-muted); font-size:.8125rem; }
-.cv-section-meta-description { margin:0; color:var(--theme-ink); font-size:.875rem; }
-.cv-section-meta dl { display:flex; flex-wrap:wrap; gap:6px 24px; margin:0; }
-.cv-section-meta dl > div { display:flex; gap:6px; min-width:0; }
-.cv-section-meta dt { font-weight:600; }
-.cv-section-meta dd { margin:0; display:flex; flex-wrap:wrap; gap:4px; overflow-wrap:anywhere; }
-.cv-section-meta code { font-size:.75rem; }
 .cv-status { display:inline-block; padding:2px 10px; border-radius:999px; font-size:.75rem; font-weight:600; border:1px solid var(--theme-line); }
 .cv-status-verified { background:#e9f6ee; color:#205d38; border-color:#9acaae; }
 .cv-status-partial { background:#fff8e6; color:#7a4f00; border-color:#e8cf8f; }
@@ -305,3 +298,28 @@ html[data-design=existing] .overview-hero button[data-ui-variant=outline] { back
 .cv-skeleton { display:block; border-radius:6px; background:linear-gradient(90deg, var(--theme-selected) 25%, var(--theme-canvas) 50%, var(--theme-selected) 75%); background-size:200% 100%; animation:cv-skeleton 1.4s ease-in-out infinite; }
 @keyframes cv-skeleton { from { background-position:200% 0; } to { background-position:-200% 0; } }
 @media (prefers-reduced-motion: reduce) { .cv-skeleton { animation:none; } }
+
+/* Keyboard and screen-reader navigation. */
+.skip-link { position: fixed; top: 8px; left: 8px; z-index: 1000; padding: 10px 14px; border-radius: 8px; background: #18181b; color: #fff; font-weight: 600; transform: translateY(-160%); transition: transform .15s; }
+.skip-link:focus { transform: translateY(0); outline: 2px solid #60a5fa; outline-offset: 2px; }
+.content:focus { outline: none; }
+.content:focus-visible { box-shadow: inset 0 0 0 2px #60a5fa; }
+
+/* Glossary hints and panel. */
+.cv-term { text-decoration: underline dotted; text-underline-offset: 3px; cursor: help; }
+.cv-term:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; border-radius: 2px; }
+.cv-glossary { margin-top: 1rem; border: 1px solid var(--theme-line, #e4e4e7); border-radius: 12px; padding: .75rem 1rem; }
+.cv-glossary summary { cursor: pointer; font-weight: 600; }
+.cv-glossary dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: .75rem 1.5rem; margin: .75rem 0 0; }
+.cv-glossary dt { font-weight: 600; }
+.cv-glossary dd { margin: .15rem 0 0; color: var(--theme-muted, #52525b); font-size: .85rem; line-height: 1.45; }
+.cv-bar-list { display: grid; gap: 6px; margin: .5rem 0 1rem; }
+.cv-bar-row { display: grid; grid-template-columns: minmax(110px, 180px) 1fr 70px; align-items: center; gap: 10px; font-size: .82rem; }
+.cv-bar-track { height: 10px; border-radius: 999px; background: var(--theme-line, #e4e4e7); overflow: hidden; }
+.cv-bar-fill { height: 100%; border-radius: 999px; background: #0891b2; }
+.cv-bar-fill.warn { background: #d97706; }
+.cv-bar-row output { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Let wide tables scroll inside their card instead of widening the page. */
+.cv-milestones > *, .content > *, .model-analytics > * { min-width: 0; }
+.table-scroll { max-width: 100%; overflow-x: auto; }

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import CommandPalette, { buildCommands } from "../components/CommandPalette";
 import ErrorBoundary from "../components/ErrorBoundary";
@@ -13,7 +13,7 @@ import NotificationBell from "../NotificationBell";
 import { canCreateCases, canOpenSection } from "../permissions";
 import { DEFAULT_SECTION, SECTION_PATHS, sectionPath } from "../routes";
 import { SECTION_META } from "../sectionMeta";
-import SectionHeader, { useDocumentTitle } from "./SectionHeader";
+import { useDocumentTitle } from "./SectionHeader";
 import { useWorkspace } from "./WorkspaceContext";
 
 const ViewerWorkspace = lazy(() => import("../ViewerWorkspace"));
@@ -53,7 +53,14 @@ export default function WorkspaceLayout() {
   const workspace = useWorkspace();
   const { token, user, session, activeView, setActiveView, caseList, selected, selectCase, startNewCase, startFindCase } = workspace;
   const location = useLocation();
+  const contentRef = useRef<HTMLElement>(null);
+  const firstRender = useRef(true);
   useDocumentTitle(activeView);
+  // After in-app navigation, move keyboard and screen-reader focus to the new page instead of leaving it in the sidebar.
+  useEffect(() => {
+    if (firstRender.current) { firstRender.current = false; return; }
+    contentRef.current?.focus({ preventScroll: true });
+  }, [location.pathname]);
   const commands = useMemo(() => buildCommands({
     sections: (Object.keys(SECTION_PATHS) as SidebarView[]).filter((view) => canOpenSection(view, user.role, user.permissions)),
     cases: caseList.cases,
@@ -75,6 +82,7 @@ export default function WorkspaceLayout() {
 
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content" onClick={(event) => { event.preventDefault(); contentRef.current?.focus(); }}>Skip to content</a>
       <header className="topbar">
         <div className="brand"><span className="brand-mark" aria-hidden="true"><img src="/corovision-heart-mark.png" alt="" /></span><span>CoroVision AI <small>VASCULAR IMAGING RESEARCH</small></span></div>
         <div className="account"><CommandPalette commands={commands} /><NotificationBell key={user.id} token={token} onOpenCase={(id) => { selectCase(id); setActiveView("cases"); }} /><div className="theme-switch"><SwitchMode width={76} height={38} /></div></div>
@@ -84,8 +92,8 @@ export default function WorkspaceLayout() {
           savedAccounts={session.savedAccounts} onSwitchAccount={session.onSwitchAccount}>
           <SidebarCaseList />
         </MacOSSidebar>
-        <section className="content">
-          <SectionHeader view={activeView} />
+        <section className="content" id="main-content" ref={contentRef} tabIndex={-1} aria-label={SECTION_META[activeView].title}>
+          <p className="sr-only" role="status" aria-live="polite">{SECTION_META[activeView].title}</p>
           <ErrorBoundary label={SECTION_META[activeView].title} resetKey={location.pathname}>
             <Suspense fallback={<SectionLoading />}>{content}</Suspense>
           </ErrorBoundary>

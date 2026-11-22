@@ -21,3 +21,14 @@ def test_unknown_api_and_asset_paths_still_404():
         assert api.status_code == 404 and api.headers["content-type"].startswith("application/json")
         assert client.get("/assets/missing-file.js").status_code == 404
         assert client.get("/missing.png").status_code == 404
+
+
+@pytest.mark.skipif(not (main.frontend_dist / "manifest.webmanifest").is_file(), reason="frontend not built")
+def test_private_app_metadata_is_served():
+    with TestClient(main.app) as client:
+        robots = client.get("/robots.txt")
+        assert robots.status_code == 200 and "Disallow: /" in robots.text
+        manifest = client.get("/manifest.webmanifest")
+        assert manifest.status_code == 200 and manifest.headers["content-type"].startswith("application/manifest+json")
+        assert manifest.json()["start_url"] == "/overview"
+        assert 'name="robots" content="noindex, nofollow"' in client.get("/cases").text

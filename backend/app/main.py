@@ -2922,6 +2922,10 @@ def operations_metrics(user: User = Depends(require_roles('admin'))):
 
 from .model_registry import install as install_model_registry  # noqa: E402
 install_model_registry(app, require_roles, ROLE_MODEL_MANAGERS)
+from .reference_measurements import install as install_reference_measurements  # noqa: E402
+install_reference_measurements(app, get_db=get_db, current_user=require_case_role, accessible_case=accessible_case,
+                               storage=STORAGE, audit=audit, Image=Image, Case=Case,
+                               reviewer_roles=ROLE_CLINICAL_REVIEWERS)
 
 
 frontend_dist = BASE_DIR / "frontend" / "dist"
@@ -2933,12 +2937,13 @@ if frontend_dist.is_dir():
     if assets_dir.is_dir():
         app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
 
-    for static_name in ["favicon.ico", "favicon-48.png", "corovision-heart-favicon-20261014.png", "apple-touch-icon.png", "auth-7.avif", "corovision-heart-mark.png", "corovision-heart.png"]:
+    static_types = {"manifest.webmanifest": "application/manifest+json", "robots.txt": "text/plain"}
+    for static_name in ["favicon.ico", "favicon-48.png", "corovision-heart-favicon-20261014.png", "apple-touch-icon.png", "auth-7.avif", "corovision-heart-mark.png", "corovision-heart.png", "manifest.webmanifest", "robots.txt"]:
         file_path = frontend_dist / static_name
         if file_path.is_file():
-            def make_static_endpoint(fp: Path):
-                return lambda: FileResponse(fp)
-            app.get(f"/{static_name}")(make_static_endpoint(file_path))
+            def make_static_endpoint(fp: Path, media_type: str | None):
+                return lambda: FileResponse(fp, media_type=media_type)
+            app.get(f"/{static_name}")(make_static_endpoint(file_path, static_types.get(static_name)))
 
     @app.get("/")
     def serve_frontend_index():

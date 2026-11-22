@@ -13,6 +13,7 @@ import WidthProfileReview from './WidthProfileReview';
 
 const LAYER_LABELS: Record<string, string> = { source: "Original", processed: "Processed", overlay: "AI overlay", mask: "Artery mask", centerline: "Centerline graph", contours: "Vessel contours", artery_probability: "Artery probability", probability: "Stenosis probability", attention: "Feature activation", gradcam: "Grad-CAM", gradcampp: "Grad-CAM++", localization: "Localization" };
 const COMPARE_KEYS = ["source", "processed", "overlay", "mask", "centerline", "contours", "artery_probability", "probability", "attention", "gradcam", "gradcampp"];
+import { CaliperLayer, CaliperPanel, emptyCalipers, type CaliperState } from "./ReviewerCalipers";
 import { utcDate } from "./lib/time";
 
 type Props = {
@@ -53,6 +54,8 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
   const [xaiLoading, setXaiLoading] = useState(false);
   const [focusedCandidate, setFocusedCandidate] = useState('');
   const [compareLayer, setCompareLayer] = useState('');
+  const [measuring, setMeasuring] = useState(false);
+  const [calipers, setCalipers] = useState<CaliperState>(emptyCalipers);
   const [split, setSplit] = useState(50);
   const [runtime, setRuntime] = useState<number | null>(null);
   const canvas = useRef<HTMLDivElement>(null);
@@ -136,6 +139,10 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
   // Split compare: a second saved layer revealed right of a draggable divider (no recomputation).
   const layerSource = (key: string) => key === "source" ? source : key === "processed" ? processedPreview : key === "overlay" ? overlay : xaiLayers[key];
   const compareSrc = compareLayer && compareLayer !== mode ? layerSource(compareLayer) : "";
+  const canMeasure = !!selectedCase?.permissions?.can_review && !!selectedImage;
+  // Measurements use the prepared 512 grid, so the original-resolution view is not measurable.
+  const aiVisible = mode !== "processed" || showCandidates || !!compareSrc;
+  useEffect(() => { setCalipers(emptyCalipers()); setMeasuring(false); }, [selectedImage?.id]);
   const renderedImage = mode === "source" ? (source || verifiedFallback)
     : mode === "processed" || mode === "localization" ? (processedPreview || overlay || verifiedFallback)
     : mode === "overlay" ? (overlay || processedPreview || verifiedFallback)
@@ -220,6 +227,7 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
           <div ref={canvas} className="workbench-canvas" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }}>
             {verifiedFallback ? <div className="workbench-image-stack" style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})` }}>
               {mode === "overlay" && processedPreview && overlay ? <><img src={processedPreview} alt="Preprocessed angiography image" draggable={false} /><img className="workbench-overlay" src={overlay} alt="AI artery and suspected stenosis overlay" style={{ opacity: opacity / 100 }} draggable={false} /></> : <img src={renderedImage} alt={mode === "source" ? "Original uploaded study" : (mode === "processed" || mode === "localization") ? "Prepared angiography with saved candidate localization" : mode === "overlay" ? "Saved AI artery and suspected stenosis overlay" : mode === "contours" ? "Saved vessel contours in prepared image coordinates" : mode === "mask" ? "Saved artery mask" : mode === "centerline" ? "Algorithmic centerline paths, branch nodes, and endpoints" : mode === "attention" ? "Detector backbone feature activation visualization" : mode === "artery_probability" ? "Uncalibrated artery pixel probability heatmap" : mode === "probability" ? "Uncalibrated stenosis pixel probability heatmap" : "Grad-CAM saliency map for stenosis detector output"} draggable={false} />}
+              {measuring && mode !== "source" && <CaliperLayer state={calipers} onChange={setCalipers} />}
               {compareSrc && <><img src={compareSrc} alt={`Comparison layer: ${LAYER_LABELS[compareLayer] ?? compareLayer}`} draggable={false} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", clipPath: `inset(0 0 0 ${split}%)` }} /><div aria-hidden="true" style={{ position: "absolute", top: 0, bottom: 0, left: `${split}%`, width: 2, background: "rgba(255,255,255,.85)", pointerEvents: "none" }} /></>}
               {["localization", "processed", "overlay", "centerline", "contours", "mask"].includes(mode) && showCandidates && !!analysis?.structured_result?.candidates.length &&
                 <svg viewBox="0 0 512 512" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Saved stenosis candidate bounds and uncalibrated scores"
@@ -250,6 +258,7 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
             </div> : <p role="status">{sourceError || "No verified image artifact is available for this saved run."}</p>}
           </div>
           <div className="workbench-toolbar" role="group" aria-label="Viewer controls">
+            {canMeasure && <button type="button" className={`measure-toggle ${measuring ? "active" : ""}`} aria-pressed={measuring} onClick={() => { const next = !measuring; setMeasuring(next); if (next && mode === "source") setMode("processed"); }}>Measure</button>}
             <button type="button" aria-label="Zoom out" onClick={() => updateZoom(zoom - .25)} disabled={zoom <= 1}><ZoomOut size={18} /></button>
             <span aria-live="polite">{Math.round(zoom * 100)}%</span>
             <button type="button" aria-label="Zoom in" onClick={() => updateZoom(zoom + .25)} disabled={zoom >= 5}><ZoomIn size={18} /></button>
@@ -257,6 +266,7 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
             <button type="button" aria-label="Fit image to screen" onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }}><Maximize2 size={18} /></button>
             {([['Left', 40, 0], ['Right', -40, 0], ['Up', 0, 40], ['Down', 0, -40]] as const).map(([label, x, y]) => <button key={label} className="pan-control" type="button" disabled={zoom <= 1} onClick={() => setOffset(p => ({ x: p.x + x, y: p.y + y }))}>Pan {label}</button>)}
           </div>
+          {measuring && canMeasure && selectedCase && selectedImage && <CaliperPanel token={token} caseId={selectedCase.id} imageId={selectedImage.id} runId={analysis?.id} state={calipers} onChange={setCalipers} aiVisible={aiVisible} />}
           <div className="workbench-compare" role="group" aria-label="Split compare">
             <label className="workbench-compare-select">Compare with
               <select value={compareLayer} onChange={event => setCompareLayer(event.target.value)} aria-label="Layer shown right of the divider">

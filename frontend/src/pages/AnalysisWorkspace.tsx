@@ -4,6 +4,7 @@ import Alert1 from "../components/watermelon/alert-1";
 import { canCreateCases } from "../permissions";
 import { useWorkspace } from "../workspace/WorkspaceContext";
 import VolumeWorkspace from "./VolumeWorkspace";
+import GlossaryPanel from "../components/GlossaryPanel";
 
 const AnalysisWorkbench = lazy(() => import("../AnalysisWorkbench"));
 const ReviewAssessment = lazy(() => import("../ReviewAssessment"));
@@ -33,5 +34,8 @@ export default function AnalysisWorkspace({ reviewMode }: { reviewMode: boolean 
       onCaseChange={selectCase} onImageChange={run.setSelectedImageId}
       onRun={run.handleAnalysis} onSelectAnalysis={run.showAnalysis} onUpload={() => setActiveView("cases")} onReports={() => setActiveView("reports")} />}
     <VolumeWorkspace />
+    {selected && <GlossaryPanel terms={volumeOnly
+      ? ["MPR", "Window / level", "MLD", "RVD", "Narrowing %", "Abstained", "Dice"]
+      : ["MLD", "RVD", "Narrowing %", "Abstained", "Operating point", "Grad-CAM", "Grad-CAM++", "Dice"]} />}
   </>;
 }

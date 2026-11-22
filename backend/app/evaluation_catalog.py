@@ -104,6 +104,7 @@ def external_runs():
         "prediction_artifacts": [], "sample_evaluations": [], "limitations": data["limitations"],
         "confusion": data["confusion"], "operating_point": data.get("operating_point"),
         "severity_agreement": data["severity_agreement"],
+        "recall_by_label": data.get("recall_by_cadica_label", {}), "frame_confusion": data.get("frame_confusion"),
         "evidence_source": {"file": f"ml/releases/{EXTERNAL_FILE.name}", "sha256": hashlib.sha256(raw).hexdigest(),
                             "report": data.get("report"), "report_sha256": data.get("report_sha256")},
     }]

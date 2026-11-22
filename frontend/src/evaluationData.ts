@@ -12,6 +12,9 @@ export type EvaluationRun = {
   confusion?: ConfusionCounts | null;
   operating_point?: { score_threshold?: number; mask_threshold?: number; decision?: string } | null;
   evidence_source?: { file: string; sha256: string; scope?: string; report?: string; report_sha256?: string } | null;
+  recall_by_label?: Record<string, { detected: number; total: number; recall: number }>;
+  frame_confusion?: ConfusionCounts | null;
+  severity_agreement?: { lesions: number; measured: number; graded: number; abstention_reasons: Record<string, number>; protocol?: string } | null;
 };
 export type ConfusionCounts = { level: string; tp: number | null; fp: number | null; fn: number | null; tn: number | null };
 /** One training epoch: `epoch`, `train_loss` and `val_*` validation metrics, flat. */

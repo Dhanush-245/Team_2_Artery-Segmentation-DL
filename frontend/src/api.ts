@@ -1,4 +1,3 @@
-import { recordApiSuccess } from "./lib/apiActivity";
 
 export function apiUrl(path: string): string {
   if (!path) return "";
@@ -36,7 +35,6 @@ export async function request<T>(
     throw new Error(message);
   }
   const result = await response.json() as T;
-  recordApiSuccess(path);
   return result;
 }
 
