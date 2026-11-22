@@ -1,5 +1,4 @@
 import { type ReactNode, useEffect, useState } from "react";
-import "./model-workspace.css";
 import { request } from "./api";
 import { Card } from "./components/prismui/card";
 import ModelAnalytics from "./ModelAnalytics";

@@ -76,7 +76,7 @@ export default function AccountPanel({
     if (linked === "google") {
       setMessage("Google account connected.");
       url.searchParams.delete("oauth_linked");
-      window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+      window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
     }
     refresh().catch((cause: Error) => setError(cause.message));
   }, [token, isViewer]);

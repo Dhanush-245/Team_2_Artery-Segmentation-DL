@@ -10,7 +10,9 @@ import { candidateViewport } from './reviewEvidence';
 import ImagePanelGallery from './ImagePanelGallery';
 import StenosisMeasurements from './StenosisMeasurements';
 import WidthProfileReview from './WidthProfileReview';
-import "./analysis-console.css";
+
+const LAYER_LABELS: Record<string, string> = { source: "Original", processed: "Processed", overlay: "AI overlay", mask: "Artery mask", centerline: "Centerline graph", contours: "Vessel contours", artery_probability: "Artery probability", probability: "Stenosis probability", attention: "Feature activation", gradcam: "Grad-CAM", gradcampp: "Grad-CAM++", localization: "Localization" };
+const COMPARE_KEYS = ["source", "processed", "overlay", "mask", "centerline", "contours", "artery_probability", "probability", "attention", "gradcam", "gradcampp"];
 import { utcDate } from "./lib/time";
 
 type Props = {
@@ -50,6 +52,8 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
   const [xaiFailures, setXaiFailures] = useState<string[]>([]);
   const [xaiLoading, setXaiLoading] = useState(false);
   const [focusedCandidate, setFocusedCandidate] = useState('');
+  const [compareLayer, setCompareLayer] = useState('');
+  const [split, setSplit] = useState(50);
   const [runtime, setRuntime] = useState<number | null>(null);
   const canvas = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
@@ -129,6 +133,9 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
   }
   const canAnalyze = !!selectedImage && (selectedImage.modality || selectedCase?.modality) === "XCA" && modelsReady;
   const verifiedFallback = processedPreview || overlay || source || xaiLayers.mask || xaiLayers.centerline || xaiLayers.artery_probability || xaiLayers.probability;
+  // Split compare: a second saved layer revealed right of a draggable divider (no recomputation).
+  const layerSource = (key: string) => key === "source" ? source : key === "processed" ? processedPreview : key === "overlay" ? overlay : xaiLayers[key];
+  const compareSrc = compareLayer && compareLayer !== mode ? layerSource(compareLayer) : "";
   const renderedImage = mode === "source" ? (source || verifiedFallback)
     : mode === "processed" || mode === "localization" ? (processedPreview || overlay || verifiedFallback)
     : mode === "overlay" ? (overlay || processedPreview || verifiedFallback)
@@ -210,9 +217,17 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
           <div className="workbench-layer-tabs" role="group" aria-label="Image layer">
             {(["localization", "source", "processed", "mask", "overlay", "centerline", "contours", "artery_probability", "probability", "attention", "gradcam", "gradcampp"] as const).map((item) => { const available = item === 'source' ? !!source : item === 'processed' || item === 'localization' ? !!(processedPreview || overlay) : item === 'overlay' ? !!overlay : !!xaiLayers[item]; return <button key={item} type="button" disabled={!available} title={available ? undefined : 'No valid saved artifact is available for this layer'} aria-pressed={mode === item} className={mode === item ? "active" : ""} onClick={() => setMode(item)}>{item === "localization" ? "Localization" : item === "source" ? "Original" : item === "processed" ? "Processed" : item === 'mask' ? 'Artery mask' : item === "overlay" ? "AI overlay" : item === "contours" ? "Vessel contours" : item === "centerline" ? "Centerline graph" : item === "artery_probability" ? "Artery probability" : item === "attention" ? "Feature activation" : item === "probability" ? "Stenosis probability" : item === "gradcampp" ? "Grad-CAM++" : "Grad-CAM"}</button>; })}
           </div>
+          <div className="workbench-compare-controls" style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", margin: "8px 0" }}>
+            <label>Split compare <select value={compareLayer} onChange={event => setCompareLayer(event.target.value)} aria-label="Layer to compare against the current view">
+              <option value="">Off</option>
+              {COMPARE_KEYS.filter(key => key !== mode && !!layerSource(key)).map(key => <option key={key} value={key}>{LAYER_LABELS[key]}</option>)}
+            </select></label>
+            {compareSrc && <label style={{ display: "flex", alignItems: "center", gap: 8 }}>Divider <input type="range" min={0} max={100} value={split} onChange={event => setSplit(Number(event.target.value))} aria-label="Split position" /><small>left: {LAYER_LABELS[mode] ?? mode} · right: {LAYER_LABELS[compareLayer]}</small></label>}
+          </div>
           <div ref={canvas} className="workbench-canvas" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }}>
             {verifiedFallback ? <div className="workbench-image-stack" style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})` }}>
               {mode === "overlay" && processedPreview && overlay ? <><img src={processedPreview} alt="Preprocessed angiography image" draggable={false} /><img className="workbench-overlay" src={overlay} alt="AI artery and suspected stenosis overlay" style={{ opacity: opacity / 100 }} draggable={false} /></> : <img src={renderedImage} alt={mode === "source" ? "Original uploaded study" : (mode === "processed" || mode === "localization") ? "Prepared angiography with saved candidate localization" : mode === "overlay" ? "Saved AI artery and suspected stenosis overlay" : mode === "contours" ? "Saved vessel contours in prepared image coordinates" : mode === "mask" ? "Saved artery mask" : mode === "centerline" ? "Algorithmic centerline paths, branch nodes, and endpoints" : mode === "attention" ? "Detector backbone feature activation visualization" : mode === "artery_probability" ? "Uncalibrated artery pixel probability heatmap" : mode === "probability" ? "Uncalibrated stenosis pixel probability heatmap" : "Grad-CAM saliency map for stenosis detector output"} draggable={false} />}
+              {compareSrc && <><img src={compareSrc} alt={`Comparison layer: ${LAYER_LABELS[compareLayer] ?? compareLayer}`} draggable={false} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", clipPath: `inset(0 0 0 ${split}%)` }} /><div aria-hidden="true" style={{ position: "absolute", top: 0, bottom: 0, left: `${split}%`, width: 2, background: "rgba(255,255,255,.85)", pointerEvents: "none" }} /></>}
               {["localization", "processed", "overlay", "centerline", "contours", "mask"].includes(mode) && showCandidates && !!analysis?.structured_result?.candidates.length &&
                 <svg viewBox="0 0 512 512" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Saved stenosis candidate bounds and uncalibrated scores"
                   style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}>

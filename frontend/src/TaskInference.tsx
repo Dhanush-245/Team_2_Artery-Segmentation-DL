@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { apiUrl, request } from './api';
-import './task-inference.css';
 import CadicaSourceGrades from './CadicaSourceGrades';
 import { utcDate } from "./lib/time";
 type Run={id:string;image_id:string;task_id:string;status:string;error:string|null;created_at:string;artifacts:Record<string,string>;result:null|{checkpoint_sha256:string;threshold:number;preprocessing:string;runtime_seconds:number;limitations:string[];records:unknown[]}};

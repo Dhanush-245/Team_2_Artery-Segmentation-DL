@@ -2,7 +2,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { MoreVertical, Trash2 } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
-import "./inline-disclosure-menu.css";
 
 export interface MenuItemProps { icon: ReactNode; label: string; onClick?: () => void; className?: string; disabled?: boolean; }
 export interface InlineDisclosureMenuProps {

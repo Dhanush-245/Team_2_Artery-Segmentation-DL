@@ -36,7 +36,8 @@ export function saveUserDesign(userId: string, design: DesignVariant) {
   localStorage.setItem(preferenceKey(userId), design);
   const url = new URL(window.location.href);
   url.searchParams.delete("design");
-  window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+  // Keep the router's history entry state so back/forward still work.
+  window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
   applyDesign(design);
 }
 function subscribe(listener: () => void) {

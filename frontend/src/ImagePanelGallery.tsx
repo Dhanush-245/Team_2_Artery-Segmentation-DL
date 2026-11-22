@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { apiUrl, request } from './api';
-import './image-panel-gallery.css';
 
 export type ImagePanel = { key: string; title: string; description: string; available: boolean; url: string | null };
 

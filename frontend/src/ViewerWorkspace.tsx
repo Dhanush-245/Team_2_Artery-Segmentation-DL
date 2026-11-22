@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Card } from "./components/prismui/card";
 import { Button } from "./components/prismui/button";
 import { FolderHeart, Stethoscope, ClipboardCheck, FileText, ArrowUpRight, ShieldCheck, Search } from "lucide-react";
-import "./viewer-workspace.css";
 import { utcDate } from "./lib/time";
 
 export default function ViewerWorkspace({ cases, selected, onSelect, page, onCases, onSettings }: {

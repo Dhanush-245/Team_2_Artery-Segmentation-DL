@@ -1,0 +1,209 @@
+/* Foundation layer, loaded first. Component styles that historically preceded the
+   Tailwind preflight stay ahead of it so the cascade is unchanged; then Tailwind and the theme tokens. */
+
+/* ---- from case-analysis.css ---- */
+.case-analysis-entry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+}
+
+.case-analysis-entry > div { flex: 1 1 28rem; }
+.case-analysis-entry h3 { margin: 0 0 .5rem; font-size: 1.25rem; }
+.case-analysis-entry p { max-width: 62ch; margin: .35rem 0; line-height: 1.5; }
+.case-analysis-entry .primary { min-height: 44px; }
+
+.case-findings-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: .75rem;
+  flex: 1 0 100%;
+  margin: 0;
+}
+
+.case-findings-summary > div {
+  padding: .75rem 1rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: .625rem;
+}
+
+.case-findings-summary dt { color: hsl(var(--muted-foreground)); font-size: .875rem; }
+.case-findings-summary dd { margin: .25rem 0 0; font-weight: 650; }
+
+.case-analysis-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .625rem;
+}
+
+.case-analysis-actions > button { min-height: 44px; }
+
+/* ---- from alert-1.css ---- */
+.cv-alert { display: flex; align-items: flex-start; gap: 12px; padding: 16px; margin: 12px 0; border: 1px solid var(--theme-line); border-left: 3px solid var(--theme-accent); border-radius: 10px; background: var(--theme-surface); color: var(--theme-ink); text-align: left; min-width: 0; }
+.cv-alert-icon { flex-shrink: 0; margin-top: 1px; color: var(--theme-accent); }
+.cv-alert-content { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.cv-alert-title { font-size: 14px; font-weight: 600; line-height: 1.6; }
+.cv-alert-description { margin-top: 5px; color: var(--theme-muted); font-size: 13px; line-height: 1.6; }
+.cv-alert-description p { margin: 5px 0; }
+.cv-alert.is-unread { background: var(--theme-selected); }
+.cv-alert-dismiss { display: grid; place-items: center; flex-shrink: 0; width: 44px; min-height: 44px; margin: -10px -10px -6px 0; border: 0; border-radius: 7px; color: var(--theme-muted); background: transparent; cursor: pointer; }
+.cv-alert-dismiss:hover { background: var(--theme-selected); }
+.app-shell .notification-panel { background: var(--theme-surface); color: var(--theme-ink); border-color: var(--theme-line); }
+.notification-list .cv-alert { margin: 0; padding: 12px; gap: 10px; }
+.notification-list .cv-alert-title { font-size: 13px; }
+.app-shell .notification-list .cv-alert small { color: var(--theme-muted); font-size: 11px; }
+.app-shell .account .notification-list .cv-alert button { min-height: 44px; border: 1px solid var(--theme-line); border-radius: 8px; background: var(--theme-surface); color: var(--theme-ink); width: auto; margin-top: 8px; padding: 8px 12px; font-size: 12px; }
+.app-shell .account .notification-list .cv-alert button:hover:not(:disabled) { background: var(--theme-selected); }
+.notification-list .cv-alert button:disabled { opacity: .55; cursor: wait; }
+.app-shell .notification-panel { width: min(460px,calc(100vw - 32px)); }
+.notification-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.notification-tabs { margin: 12px 0; }
+.app-shell .account .notification-tabs button[aria-pressed=true] { background: var(--theme-selected); border-color: var(--theme-accent); }
+.notification-feedback { font-size: 12px; color: var(--theme-muted); line-height: 1.6; }
+.notification-select { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 12px; cursor: pointer; }
+.notification-panel input[type=checkbox] { width: 18px; height: 18px; min-height: 18px; margin: 0; flex-shrink: 0; }
+.notification-select { padding-left: 4px; }
+.notification-delete-confirm p { flex-basis: 100%; font-size: 12px; line-height: 1.6; }
+.notification-heading-actions { display: flex; align-items: center; gap: 8px; }
+.app-shell .account .notification-heading-actions button { min-height: 44px; padding: 8px 12px; color: var(--theme-ink); background: var(--theme-surface); border: 1px solid var(--theme-line); border-radius: 22px; cursor: pointer; font-size: 12px; }
+.notification-select-all { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0 12px; }
+.notification-select-all label { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; font-size: 13px; }
+.notification-select-all small { color: var(--theme-muted); font-size: 11px; }
+.notification-list.is-selecting > li { display: flex; align-items: center; gap: 8px; border-radius: 10px; cursor: pointer; }
+.notification-list.is-selecting > li.is-selected { background: var(--theme-selected); outline: 1px solid var(--theme-accent); outline-offset: -1px; }
+.notification-list.is-selecting .cv-alert { flex: 1; min-width: 0; background: transparent; border: 0; }
+.notification-list.is-selecting .notification-select { position: relative; display: grid; place-items: center; flex: 0 0 44px; min-height: 44px; padding: 0; cursor: pointer; }
+.notification-list.is-selecting .notification-select input { position: absolute; opacity: 0; width: 44px; height: 44px; cursor: pointer; }
+.notification-check-circle { width: 24px; height: 24px; border: 2px solid var(--theme-muted); border-radius: 50%; display: grid; place-items: center; box-sizing: border-box; }
+.notification-select input:checked + .notification-check-circle { border-color: var(--theme-accent); background: var(--theme-accent); color: var(--theme-on-accent); }
+.notification-select input:focus-visible + .notification-check-circle { outline: 3px solid var(--theme-accent); outline-offset: 4px; }
+.notification-selection-footer { position: sticky; bottom: -16px; margin: 12px -4px -4px; padding: 12px 4px 4px; background: var(--theme-surface); }
+.notification-selection-toolbar { display: flex; justify-content: space-around; align-items: center; gap: 12px; padding: 8px 12px; border: 1px solid var(--theme-line); border-radius: 32px; background: var(--theme-surface); box-shadow: 0 4px 18px #0001; }
+.app-shell .account .notification-selection-toolbar button, .app-shell .account .notification-delete-confirm button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 8px 14px; border: 0; border-radius: 22px; color: var(--theme-ink); background: transparent; cursor: pointer; font-size: 12px; }
+.app-shell .account .notification-selection-toolbar button:hover:not(:disabled) { background: var(--theme-selected); }
+.app-shell .account .notification-selection-toolbar button:disabled { opacity: .45; cursor: not-allowed; }
+.notification-delete-confirm { padding: 12px; border: 1px solid var(--theme-line); border-radius: 12px; margin-bottom: 12px; }
+
+/* ---- from inline-disclosure-menu.css ---- */
+.cv-inline-menu { position: relative; display: inline-flex; flex-shrink: 0; }
+.cv-inline-menu-trigger { display: grid; place-items: center; width: 44px; min-height: 44px; border: 1px solid var(--theme-line); border-radius: 10px; background: var(--theme-surface); color: var(--theme-ink); cursor: pointer; }
+.cv-inline-menu-trigger:hover { background: var(--theme-selected); }
+.cv-inline-menu-panel { position: absolute; top: calc(100% + 8px); right: 0; width: min(280px,calc(100vw - 32px)); z-index: 80; border: 1px solid var(--theme-line); border-radius: 14px; background: var(--theme-surface); color: var(--theme-ink); box-shadow: 0 12px 32px #0002; transform-origin: top right; }
+.cv-inline-menu-heading { padding: 12px 16px; border-bottom: 1px solid var(--theme-line); border-radius: 14px 14px 0 0; background: var(--theme-selected); font-size: 12px; font-weight: 600; color: var(--theme-muted); }
+.cv-inline-menu-items { padding: 6px; display: grid; gap: 4px; }
+.cv-inline-menu-panel [role=menuitem] { display: flex; width: 100%; align-items: center; gap: 12px; min-height: 44px; padding: 10px 12px; border: 0; border-radius: 8px; background: transparent; color: var(--theme-ink); text-align: left; font-size: 14px; line-height: 1.5; cursor: pointer; white-space: normal; }
+.cv-inline-menu-panel [role=menuitem]:hover, .cv-inline-menu-panel [role=menuitem]:focus-visible { background: var(--theme-selected); }
+.cv-inline-menu-panel [role=menuitem]:disabled { opacity: .5; cursor: not-allowed; }
+.cv-inline-menu-items svg { width: 19px; height: 19px; }
+.cv-inline-menu-confirm { border-top: 1px solid var(--theme-line); padding: 6px; }
+.cv-inline-menu-panel p { margin: 8px 12px; font-size: 12px; color: var(--theme-muted); }
+.screen-share-options.cv-selection-disclosure { padding: 0; border-radius: 12px; box-shadow: 0 5px 16px #0001; }
+.cv-selection-disclosure > .cv-inline-menu-heading { border-radius: 12px 12px 0 0; }
+.cv-selection-disclosure [role=option] { margin: 4px 6px; border-radius: 8px; }
+/* Options overlay the form rather than becoming another grid row. */
+.screen-share-select { position: relative; align-self: start; }
+.screen-share-select.is-open { z-index: 90; }
+.screen-share-select > .screen-share-options { position: absolute; top: calc(100% + 6px); left: 0; width: 100%; box-sizing: border-box; z-index: 90; margin: 0; max-height: min(280px,45vh); overflow-y: auto; overscroll-behavior: contain; }
+.screen-share-select > .screen-share-options[data-side=above] { top: auto; bottom: calc(100% + 6px); }
+.app-shell .screen-share-select > button > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cv-case-page .new-case label { align-content: start; }
+
+/* ---- from create-new-disclosure.css ---- */
+.cv-case-disclosure { margin: 18px 0; min-width: 0; }
+.sidebar-case-actions { display: grid; gap: 10px; margin: 20px 0; }
+.cv-case-page { max-width: 1100px; width: 100%; margin: 0 auto; }
+.cv-case-page-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+.cv-case-page-heading h1 { font-family: var(--theme-display); font-size: clamp(26px,3vw,36px); margin: 8px 0 12px; line-height: 1.25; }
+.cv-case-page-heading p:not(.eyebrow) { max-width: 650px; color: var(--theme-muted); line-height: 1.7; }
+.app-shell .cv-case-page .cv-case-disclosure-trigger, .cv-case-page .cv-case-disclosure-panel > header { display: none; }
+.cv-case-page .cv-case-disclosure-panel { padding: 24px; border-radius: 14px; background: var(--theme-surface); }
+.cv-case-page .cv-case-disclosure-choices { max-width: 520px; margin-bottom: 24px; gap: 16px; }
+.cv-case-page .cv-case-disclosure-choices > button { flex-direction: row; flex-wrap: wrap; min-height: 70px; padding: 16px; gap: 10px; }
+.cv-case-page .cv-case-disclosure-content { padding: 0; }
+.cv-case-page .new-case { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px; margin: 0; }
+.cv-case-page .new-case label { display: grid; gap: 10px; margin: 0; font-size: 14px; font-weight: 600; line-height: 1.5; }
+.cv-case-page .new-case :is(.case-code-field,.caption,.cv-alert) { grid-column: 1 / -1; }
+.cv-case-page .new-case input { min-height: 48px; width: 100%; padding: 12px; border: 1px solid var(--theme-line); border-radius: 8px; background: var(--theme-surface); color: var(--theme-ink); box-sizing: border-box; }
+.cv-case-page .screen-share-select > button { min-height: 48px; }
+.cv-case-page .new-case > button { justify-self: start; min-width: 200px; }
+.cv-case-page .case-list-controls { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; margin: 0 0 24px; }
+.cv-case-page .case-list-controls > .sr-only { position: static; width: auto; height: auto; clip: auto; overflow: visible; grid-column: 1 / -1; }
+.cv-case-page .case-list-controls > #case-search { grid-column: 1 / -1; }
+.app-shell .cv-case-page .case-list-controls > div { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px 16px; grid-column: 1 / -1; }
+.cv-case-page label[for=case-filter] { grid-column: 1; grid-row: 1; }
+.cv-case-page label[for=case-sort] { grid-column: 2; grid-row: 1; }
+.cv-case-page .case-list-controls > div > .screen-share-select { grid-row: 2; }
+.cv-case-page .case-list-controls > div > .sr-only { position: static; width: auto; height: auto; clip: auto; overflow: visible; }
+.case-find-results { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--theme-line); }
+.case-find-results h2 { font-size: 18px; margin: 0 0 16px; }
+.case-find-results > button { display: grid; grid-template-columns: 1fr auto; width: 100%; gap: 8px; text-align: left; padding: 20px; margin: 12px 0; border: 1px solid var(--theme-line); border-radius: 10px; background: var(--theme-surface); color: var(--theme-ink); cursor: pointer; }
+.case-find-results > button:hover { background: var(--theme-selected); }
+.case-find-results small, .case-find-results > button > span { color: var(--theme-muted); font-size: 13px; }
+@media(max-width:700px) { .cv-case-page-heading { flex-direction: column; } .cv-case-page .new-case,.cv-case-page .case-list-controls { grid-template-columns: minmax(0,1fr); } .cv-case-page .cv-case-disclosure-panel { padding: 16px; } .case-find-results > button { grid-template-columns: 1fr; } }
+.app-shell .cv-case-disclosure-trigger { width: 100%; min-height: 44px; display: flex; gap: 9px; justify-content: flex-start; padding: 10px 12px; border-radius: 10px; }
+.cv-disclosure-hint { margin-left: auto; font-size: 11px; color: var(--theme-muted); }
+.cv-case-disclosure-panel { margin-top: 10px; padding: 8px; border: 1px solid var(--theme-line); border-radius: 14px; background: var(--theme-selected); }
+.cv-case-disclosure-panel > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; padding: 6px 2px 12px 6px; }
+.cv-case-disclosure-panel > header strong { font-size: 13px; line-height: 1.5; }
+.cv-case-disclosure-panel > header p { margin: 4px 0 0; font-size: 12px; line-height: 1.5; color: var(--theme-muted); }
+.cv-case-disclosure-panel > header button { flex-shrink: 0; min-width: 44px; min-height: 44px; }
+.cv-case-disclosure-choices { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+.cv-case-disclosure-choices > button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; padding: 14px 6px; min-height: 94px; border: 1px solid var(--theme-line); border-radius: 10px; color: var(--theme-ink); background: var(--theme-surface); cursor: pointer; }
+.cv-case-disclosure-choices > button[aria-pressed=true] { outline: 2px solid var(--theme-accent); outline-offset: -2px; }
+.cv-case-disclosure-choices > button:hover { background: var(--theme-selected); }
+.cv-case-disclosure-choices strong { font-size: 12px; }
+.cv-case-disclosure-choices small { color: var(--theme-muted); font-size: 11px; }
+.cv-case-disclosure-content { margin-top: 12px; padding: 12px; background: var(--theme-surface); border-radius: 10px; min-width: 0; }
+.app-shell .cv-case-disclosure-content .new-case { margin: 0; }
+.cv-case-disclosure-content .case-list-controls:first-child { margin-top: 0; }
+.app-shell .cv-case-disclosure-content .case-list-controls > div { grid-template-columns: minmax(0,1fr); }
+.app-shell button[data-ui-variant]:not([data-ui-variant=link]) { min-height: 44px; border-radius: 8px; gap: 8px; }
+@media(prefers-reduced-motion:reduce) { .cv-case-disclosure-panel { transform: none !important; } }
+
+/* ---- from prismui.css ---- */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Theme tokens adapted from Codehagen/Prismui src/app/globals.css (AGPL-3.0). */
+:root {
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+  --primary: 240 5.9% 10%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 240 4.8% 95.9%;
+  --secondary-foreground: 240 5.9% 10%;
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+  --accent: 240 4.8% 95.9%;
+  --accent-foreground: 240 5.9% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --ring: 240 5.9% 10%;
+  --radius: .5rem;
+}
+
+.dark {
+  --background: 240 10% 5%;
+  --foreground: 0 0% 96%;
+  --card: 240 8% 10%;
+  --card-foreground: 0 0% 96%;
+  --primary: 0 0% 96%;
+  --primary-foreground: 240 10% 8%;
+  --secondary: 240 5% 17%;
+  --secondary-foreground: 0 0% 96%;
+  --muted: 240 5% 17%;
+  --muted-foreground: 240 4% 68%;
+  --accent: 240 5% 20%;
+  --accent-foreground: 0 0% 96%;
+  --border: 240 5% 26%;
+  --input: 240 5% 26%;
+  --ring: 240 4% 78%;
+}

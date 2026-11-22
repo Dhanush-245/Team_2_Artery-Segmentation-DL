@@ -7,9 +7,11 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
+        // Keep the React runtime in one long-cached chunk; let Rollup place every other
+        // dependency (motion, icon sets) with the lazy sections that use it, so the
+        // sign-in route does not download the whole workspace's libraries.
         manualChunks(id) {
-          if (!id.includes('node_modules')) return;
-          return 'vendor';
+          if (/node_modules\/(react|react-dom|scheduler|react-router|react-router-dom)\//.test(id)) return 'react-vendor';
         },
       },
     },

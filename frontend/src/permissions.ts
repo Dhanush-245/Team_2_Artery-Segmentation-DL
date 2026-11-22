@@ -10,7 +10,7 @@ export const canExportReports = (role?: string) => !!role && EXPORT_ROLES.includ
 
 /** Navigation policy mirrors backend capabilities; never grants API access. */
 export function canOpenSection(view: string, role?: string, permissions?: string[]): boolean {
-  if (view === "overview" || view === "account") return !!role;
+  if (view === "overview" || view === "account" || view === "milestones") return !!role;
   if (["admin", "permissions", "access", "audit"].includes(view)) return role === "admin";
   if (view === "reviews") return role === "doctor" || role === "clinician" || role === "admin";
   if (view === "uploads") return role === "researcher" || role === "technician" || role === "admin";

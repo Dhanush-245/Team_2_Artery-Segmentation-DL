@@ -1,3 +1,5 @@
+import { recordApiSuccess } from "./lib/apiActivity";
+
 export function apiUrl(path: string): string {
   if (!path) return "";
   if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("blob:") || path.startsWith("data:")) {
@@ -33,6 +35,8 @@ export async function request<T>(
       : typeof detail === "string" ? detail : `Request failed (${response.status})`;
     throw new Error(message);
   }
-  return response.json() as Promise<T>;
+  const result = await response.json() as T;
+  recordApiSuccess(path);
+  return result;
 }
 

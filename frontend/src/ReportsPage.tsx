@@ -6,6 +6,7 @@ import type { AnalysisResult, CaseRecord, ClinicalReviewRecord, ImageRecord } fr
 import { Button } from './components/prismui/button';
 import { Card } from './components/prismui/card';
 import { canExportReports } from './permissions';
+import { toast } from './lib/toast';
 import ImagePanelGallery, { type ImagePanel } from './ImagePanelGallery';
 import { utcDate } from "./lib/time";
 
@@ -63,7 +64,8 @@ export default function ReportsPage({ token, role, cases, selectedCase, selected
       setSnapshot(saved);
       const versions = await request<ReportIndex[]>(`/api/cases/${selectedCase.id}/research-reports`, token);
       if (context.current === selection) setReports(versions);
-    } catch (cause) { setError((cause as Error).message); }
+      toast.success(`Research report v${saved.version} saved.`);
+    } catch (cause) { setError((cause as Error).message); toast.error('Report could not be saved.'); }
     finally { setBusy(false); }
   }
   async function openReport(id: string) {
@@ -93,7 +95,8 @@ export default function ReportsPage({ token, role, cases, selectedCase, selected
       const link = document.createElement('a'); link.href = url;
       link.download = `${snapshot.case.case_code.replace(/[^a-z0-9_-]/gi, '_')}-research-v${snapshot.version}.${format}`;
       link.click(); window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-    } catch (cause) { setError((cause as Error).message); }
+      toast.success(`${format === 'zip' ? 'Evidence ZIP' : format.toUpperCase()} export downloaded.`);
+    } catch (cause) { setError((cause as Error).message); toast.error(`${format.toUpperCase()} export failed.`); }
     finally { setBusy(false); }
   }
   const result = snapshot?.analysis;

@@ -4,7 +4,6 @@ import { useEffect, useId, useRef, type ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { FolderPlus, Search, X, Plus } from "lucide-react";
 import { Button } from "../prismui/button";
-import "./create-new-disclosure.css";
 
 export function CreateNewDisclosure({ mode, onModeChange, canCreate, createContent, findContent }: {
   mode: "create" | "find" | null;

@@ -4,7 +4,6 @@ import { useState, type ReactNode } from "react";
 import { Activity, ArrowUpRight, ClipboardCheck, FileImage, FileText, FolderOpen, Plus, ScanLine, Search } from "lucide-react";
 import { Button } from "../prismui/button";
 import { Input } from "../prismui/input";
-import "./corovision-library-dashboard.css";
 import { utcDate } from "../../lib/time";
 
 type Study = { id: string; case_code: string; status: string; created_at: string; images: { id: string }[]; latest_review?: { id: string } | null };

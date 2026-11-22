@@ -5,6 +5,7 @@ import { reviewLabels } from './reviewLabels';
 import { reviewsForRun } from './reviewEvidence';
 import { Button } from './components/prismui/button';
 import { utcDate } from "./lib/time";
+import { toast } from './lib/toast';
 
 export default function ReviewAssessment({ token, role, caseRecord, analysis, onSaved }: {
   token: string; role: string; caseRecord: CaseRecord; analysis: AnalysisResult | null; onSaved: (record: CaseRecord) => void;
@@ -26,7 +27,7 @@ export default function ReviewAssessment({ token, role, caseRecord, analysis, on
         decision, stenosis_severity: severity, notes: notes.trim() || null,
         image_id: analysis.image_id, analysis_event_id: analysis.id,
       }, 'POST');
-      onSaved(updated); setNotes(''); setMessage('Human assessment saved for this exact analysis run.');
+      onSaved(updated); setNotes(''); setMessage('Human assessment saved for this exact analysis run.'); toast.success('Review saved for this analysis run.');
     } catch (cause) { setError((cause as Error).message); }
     finally { setBusy(false); }
   }

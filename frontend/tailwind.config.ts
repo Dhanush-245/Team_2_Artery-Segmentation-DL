@@ -18,6 +18,20 @@ export default {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+        // CoroVision semantic tokens (styles/theme.css). They follow the selected design and light/dark mode.
+        cv: {
+          ink: "var(--theme-ink)",
+          muted: "var(--theme-muted)",
+          accent: "var(--theme-accent)",
+          "on-accent": "var(--theme-on-accent)",
+          surface: "var(--theme-surface)",
+          canvas: "var(--theme-canvas)",
+          line: "var(--theme-line)",
+          selected: "var(--theme-selected)",
+        },
+      },
+      fontFamily: {
+        cv: "var(--theme-font)",
       },
       borderRadius: {
         lg: "var(--radius)",

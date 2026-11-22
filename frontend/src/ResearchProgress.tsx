@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiUrl, request } from "./api";
-import "./research-progress.css";
 
 type Evidence = {id:string; label:string; available:boolean; url:string|null; updated_at:string|null;evidence_class:'PRESERVED_MODEL_EVIDENCE'|'BROWSER_VERIFIED'|'SYNTHETIC_KNOWN_TRUTH'|'SOFTWARE_INTEGRATION_TEST'};
 type DemonstrationRow={id:string;title:string;evidence_class:string;expected:Record<string,unknown>;actual:Record<string,unknown>;outcome:string;absolute_error_percentage_points?:number};

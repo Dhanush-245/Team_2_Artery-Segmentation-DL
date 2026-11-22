@@ -1,7 +1,6 @@
 // Adapted from https://registry.watermelon.sh/r/alert-1.json.
 import type { ReactNode } from "react";
 import { CircleAlert, CircleCheck, Info, TriangleAlert, X } from "lucide-react";
-import "./alert-1.css";
 
 export type AlertTone = "info" | "success" | "warning" | "error";
 export default function Alert1({ title, children, tone = "info", announce = true, onDismiss, unread = false }: {

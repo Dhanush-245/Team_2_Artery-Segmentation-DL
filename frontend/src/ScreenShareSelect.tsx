@@ -1,7 +1,6 @@
 import { Children, isValidElement, useEffect, useLayoutEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
-import "./components/watermelon/inline-disclosure-menu.css";
 
 type Props = {
   id?: string;
