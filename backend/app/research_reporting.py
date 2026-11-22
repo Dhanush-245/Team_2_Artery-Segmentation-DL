@@ -103,6 +103,8 @@ def evidence_zip(snapshot, pdf, saved_artifacts=None):
     structured = snapshot['analysis'].get('structured_result') or {}
     files['candidates.json'] = json.dumps(structured.get('candidates', []), indent=2).encode()
     files['measurements.json'] = json.dumps(snapshot.get('automatic_measurements', []), indent=2).encode()
+    if snapshot.get('vessel_segments'):
+        files['vessel_segments.json'] = json.dumps(snapshot['vessel_segments'], indent=2).encode()
     files['model_provenance.json'] = json.dumps(snapshot.get('provenance', {}), indent=2).encode()
     manifest = {
         'schema_version': 1,
@@ -285,6 +287,14 @@ def pdf_bytes(snapshot, image_paths):
             cell(f"{row['narrowing_percent']:.2f}%" if row['eligible'] else 'Unavailable'), cell(row['status']), cell(row['severity'] or 'Indeterminate')])
     report.story.append(table(candidate_data, [66, 42, 54, 108, 68, 70, 87]))
     report.story.append(Spacer(1, 10))
+    segments = snapshot.get('vessel_segments') or {}
+    if segments.get('status') == 'completed' and segments.get('records'):
+        labels = {'assigned': None, 'unreliable_segment': 'side branch, not named', 'ambiguous': 'ambiguous',
+                  'no_vessel_predicted': 'not assessable', 'region_unavailable': 'not assessable'}
+        parts = [f"{r['candidate_id']}: " + (f"segment {r['segment']} ({r['anatomy']}), vote share {r['vote_share']:.0%}"
+                 if r['outcome'] == 'assigned' else labels.get(r['outcome'], 'not assessable')) for r in segments['records']]
+        report.paragraph('Likely vessel segment (research label, frozen protocol corovision-lesion-to-segment-v1; '
+                         'validation-only evidence, side-branch lesions may be named as the parent vessel): ' + '; '.join(parts) + '.')
     for row in abstained:
         exploratory = ''
         if row.get('exploratory_narrowing_percent') is not None or row.get('exploratory_severity'):

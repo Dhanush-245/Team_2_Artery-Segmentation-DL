@@ -2786,6 +2786,47 @@ def get_automatic_measurements(case_id: str, event_id: str,
     return sorted(records, key=lambda record: record.get('created_at', ''), reverse=True)
 
 
+@app.get('/api/cases/{case_id}/vessel-segments/{event_id}')
+def get_vessel_segments(case_id: str, event_id: str,
+        user: User = Depends(require_case_role), db: Session = Depends(get_db)):
+    """Research-only likely SYNTAX segment for each saved candidate (frozen lesion-to-segment protocol)."""
+    from . import vessel_segments as vs
+    case = accessible_case(case_id, user, db, required_action='read')
+    event = db.get(AnalysisEvent, event_id)
+    image = db.get(Image, event.image_id) if event else None
+    if image is None or image.case_id != case.id:
+        raise HTTPException(404, 'Saved analysis not found in this case')
+    base = dict(schema_version='corovision.vessel-segments.v1', evidence_class='EXPLORATORY_RESEARCH_ESTIMATE',
+                case_id=case.id, analysis_event_id=event.id, model_id=vs.MODEL_ID,
+                checkpoint_sha256=vs.CHECKPOINT_SHA256, protocol=vs.PROTOCOL, clinical_validated=False)
+    image_modality = json.loads(image.preprocessing_config_json or '{}').get('modality', case.modality)
+    if image_modality != 'XCA' or case.anatomy != 'coronary':
+        return {**base, 'status': 'not_applicable', 'reason': 'Segment labels apply to coronary XCA images only', 'records': []}
+    if not vs.available():
+        return {**base, 'status': 'unavailable', 'reason': 'The verified segment model is not installed', 'records': []}
+    candidates = (event_out(event).get('structured_result') or {}).get('candidates', [])
+    if not candidates:
+        return {**base, 'status': 'completed', 'records': []}
+    prepared = Path(image.preview_path)
+    if not prepared.is_file():
+        return {**base, 'status': 'unavailable', 'reason': 'The prepared image for this run is unavailable', 'records': []}
+    source_sha = hashlib.sha256(prepared.read_bytes()).hexdigest()
+    folder = STORAGE / 'vessel_segments'
+    target = folder / f'{event.id}-{source_sha[:16]}-{vs.CHECKPOINT_SHA256[:12]}.json'
+    if target.is_file():
+        return json.loads(target.read_text())
+    try:
+        records = vs.label_candidates(prepared, candidates)
+    except (ValueError, OSError, RuntimeError) as error:
+        logging.getLogger('corovision.operations').warning('vessel_segments_failed run=%s error=%s', event.id, error)
+        return {**base, 'status': 'failed', 'reason': 'Segment labelling could not run on this saved image', 'records': []}
+    result = {**base, 'status': 'completed', 'prepared_image_sha256': source_sha,
+              'created_at': now().isoformat(), 'records': records}
+    folder.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(result, allow_nan=False))
+    return result
+
+
 @app.post('/api/cases/{case_id}/research-reports', status_code=201)
 def create_research_report(case_id: str, data: ResearchReportIn,
                            user: User = Depends(require_case_role), db: Session = Depends(get_db)):
@@ -2818,6 +2859,7 @@ def create_research_report(case_id: str, data: ResearchReportIn,
         select(StenosisMeasurement).where(StenosisMeasurement.case_id == case.id,
         StenosisMeasurement.analysis_event_id == event.id).order_by(StenosisMeasurement.created_at.desc()))]
     snapshot['automatic_measurements'] = get_automatic_measurements(case.id, event.id, user, db)
+    snapshot['vessel_segments'] = get_vessel_segments(case.id, event.id, user, db)
     report.snapshot_json = json.dumps(snapshot, default=str)
     db.add(report)
     audit(db, user.id, f'research_report_generated:v{version}:{event.id}', case.id)

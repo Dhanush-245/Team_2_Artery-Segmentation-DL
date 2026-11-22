@@ -39,6 +39,16 @@ function MeasurementDemo() {
     </div>
   </details>;
 }
+type SegmentRecord={candidate_id:string;outcome:string;segment:string|null;anatomy:string|null;vote_share:number};
+type SegmentResult={status:string;reason?:string;records:SegmentRecord[]};
+const segmentCell=(result:SegmentResult|null,id:string)=>{
+  if(!result)return 'Loading…';
+  if(result.status!=='completed')return result.status==='unavailable'?'Model not installed':result.status==='not_applicable'?'Not applicable':'Unavailable';
+  const row=result.records.find(r=>r.candidate_id===id);
+  if(!row)return 'Unavailable';
+  if(row.outcome==='assigned')return <>{row.segment} · {row.anatomy}<span className="research-tag" title={`Vote share ${Math.round(row.vote_share*100)}% · validation-only evidence`}>likely segment</span></>;
+  return row.outcome==='unreliable_segment'?'Side branch · not named':row.outcome==='ambiguous'?'Ambiguous':'Not assessable';
+};
 type AutomaticCandidate={candidate_id:string;status:string;quality_status?:string;eligible_for_reference_validation?:boolean;reasons:string[];minimum_diameter?:number|null;reference_diameter?:number|null;narrowing_percent?:number|null;association?:{path_id:string;status:string};sensitivity?:{narrowing_range_percentage_points?:number[]};severity?:{category?:string|null;reason?:string};minimum_cross_section?:{endpoints:number[][]};reference_cross_sections?:{endpoints:number[][]}[];cross_section_assessment?:{status?:string;reasons?:string[]}};
 const automaticEligible=(candidate?:AutomaticCandidate)=>!!candidate
   && candidate.status!=='abstained'
@@ -68,6 +78,14 @@ export default function StenosisMeasurements({token,caseId,imageId,runId,candida
     if(decision==='authorize'&&!authorizationChecked)return;
     setSaving(true);try{const r=await fetch(apiUrl('/api/research/severity-protocol'),{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({protocol_id:selectedProtocol,protocol_version:'1.0.0',research_mode_only:true,decision})});if(!r.ok)throw Error('Protocol decision could not be saved');setProtocolStatus((await r.json()).status);setAuthorizationChecked(false)}catch(e){setError((e as Error).message)}finally{setSaving(false)}
   }
+  const [segments,setSegments]=useState<SegmentResult|null>(null);
+  const hasCandidates=candidates.length>0;
+  useEffect(()=>{setSegments(null);if(!runId||!hasCandidates)return;let active=true;
+    fetch(apiUrl(`/api/cases/${caseId}/vessel-segments/${runId}`),{headers:{Authorization:`Bearer ${token}`}})
+      .then(r=>{if(!r.ok)throw Error('unavailable');return r.json()})
+      .then(body=>{if(active)setSegments(body)})
+      .catch(()=>{if(active)setSegments({status:'failed',records:[]})});
+    return()=>{active=false}},[caseId,runId,token,candidateKey,hasCandidates]);
   const [automatic,setAutomatic]=useState<{id:string;evidence_class?:string;records:AutomaticCandidate[]}[]>([]);
   async function assessSavedRun(){
     setSaving(true);setError('');
@@ -132,7 +150,7 @@ export default function StenosisMeasurements({token,caseId,imageId,runId,candida
     {candidates.length > 0 && <div className="stenosis-summary-scroll" tabIndex={0} role="region" aria-label="Candidate measurement summary">
       <table className="stenosis-summary">
         <caption>Saved candidate measurements</caption>
-        <thead><tr>{['Candidate', 'Vessel path', 'Minimum lumen', 'Reference lumen', 'Research severity', 'Narrowing', 'Evidence'].map(label => <th key={label} scope="col">{label}</th>)}</tr></thead>
+        <thead><tr>{['Candidate', 'Likely segment', 'Vessel path', 'Minimum lumen', 'Reference lumen', 'Research severity', 'Narrowing', 'Evidence'].map(label => <th key={label} scope="col">{label}</th>)}</tr></thead>
         <tbody>{candidates.map(id => {
           const reviewed = rows.find(row => row.result.candidate_id === id)?.result;
           const assessed = automatic[0]?.records.find(candidate => candidate.candidate_id === id);
@@ -147,6 +165,7 @@ export default function StenosisMeasurements({token,caseId,imageId,runId,candida
           const diameter = (value?: number | null) => value == null ? 'Unavailable' : <>{value.toFixed(2)} {unit}{tag}</>;
           return <tr key={id}>
             <th scope="row">{id}</th>
+            <td>{segmentCell(segments,id)}</td>
             <td>{reviewed?.reference_segment_id ?? assessed?.association?.path_id ?? 'Unavailable'}</td>
             <td>{diameter(shown?.minimum_diameter)}</td>
             <td>{diameter(shown?.reference_diameter)}</td>
@@ -157,6 +176,7 @@ export default function StenosisMeasurements({token,caseId,imageId,runId,candida
         })}</tbody>
       </table>
     </div>}
+    {candidates.length > 0 && segments?.status==='completed' && <p className="caption">Likely segment: a research label from a 26-class ARCADE SYNTAX segment model, named only for 11 main segments when most predicted vessel pixels around the candidate agree. Validation-only accuracy ≈90% on those segments; a narrowing on a side branch may be named as its parent vessel. Not a clinical localisation.</p>}
     <details className="evidence-details"><summary>Research protocol · {protocolStatus.replaceAll('_',' ')}</summary><label>Protocol to review<select value={selectedProtocol} onChange={e=>{setSelectedProtocol(e.target.value);setAuthorizationChecked(false)}}><option value="COROVISION_CADRADS_INFORMED_XCA">CAD-RADS-informed XCA Research Severity · v1.0.0</option><option value="COROVISION_XCA_RESEARCH_5CLASS">Original five-category experiment · v1.0.0</option></select></label><p>Experimental research adaptation, not official CAD-RADS patient reporting or clinically validated severity.</p>{selectedProtocol==='COROVISION_CADRADS_INFORMED_XCA'?<p>No measured narrowing: exactly 0%; Minimal: (0,25%); Mild: [25,50%); Moderate: [50,70%); Severe: [70,100%). The continuous intervals are an XCA research adaptation of published CCTA terminology.</p>:<p>Normal: exactly 0%; Mild: (0,50%); Moderate: [50,70%); Severe: [70,90%); Critical: [90,100%).</p>}<p>A 100% calculation requires separate possible-occlusion assessment. Measurements crossing boundaries under sensitivity remain indeterminate. Selecting an option does not activate it; new assessments use the recorded authorization.</p>{canAuthorize&&<><label><input type="checkbox" checked={authorizationChecked} onChange={e=>setAuthorizationChecked(e.target.checked)}/> I authorize the selected definitions for experimental Research Mode only. Quality gates remain required.</label><button type="button" disabled={saving||!authorizationChecked} onClick={()=>protocolDecision('authorize')}>Record researcher authorization</button><button type="button" disabled={saving||protocolStatus!=='researcher_authorized'} onClick={()=>protocolDecision('deactivate')}>Deactivate research protocol</button></>}</details>
     <h4>Saved-run automatic measurement assessment</h4>
     <p className="caption">Runs the saved-mask measurement workflow against the selected immutable analysis. It starts automatically for every compatible saved run. Missing vessel association, stable reference evidence or uncertainty is reported as not assessable instead of producing an unsupported severity.</p>

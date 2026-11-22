@@ -1,0 +1,14 @@
+# Optional research "likely vessel segment" labels for 2D stenosis candidates.
+# The checkpoint is not published; place it at models/segment_release/syntax_segments_26c.pt
+# (sha256 f74ee0da6ab23a55878e5a211099ce7d06a8fa1fa49f11c90e95a343d9ec44c5) or set COROVISION_SEGMENT_MODEL_DIR.
+services:
+  app:
+    environment:
+      COROVISION_SEGMENT_CHECKPOINT: /models/segment_release/syntax_segments_26c.pt
+    volumes:
+      - type: bind
+        source: ${COROVISION_SEGMENT_MODEL_DIR:-./models/segment_release}
+        target: /models/segment_release
+        read_only: true
+        bind:
+          create_host_path: false
