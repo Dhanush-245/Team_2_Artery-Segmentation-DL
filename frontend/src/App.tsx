@@ -21,7 +21,6 @@ const ReportsRoutePage = lazy(() => import("./pages/ReportsRoutePage"));
 const ModelsPage = lazy(() => import("./pages/ModelsPage"));
 const AccountPage = lazy(() => import("./pages/AccountPage"));
 const AdminPage = lazy(() => import("./pages/AdminPage"));
-const MilestonesPage = lazy(() => import("./pages/MilestonesPage"));
 
 const EMPTY_HANDOFF: LoginHandoff = { email: "", error: "", invitation: "", mfa: null, oauthMfaTicket: null };
 
@@ -202,7 +201,6 @@ function App() {
           <Route path={SECTION_PATHS.permissions} element={<AdminPage section="permissions" />} />
           <Route path={SECTION_PATHS.access} element={<AdminPage section="access" />} />
           <Route path={SECTION_PATHS.audit} element={<AdminPage section="audit" />} />
-          <Route path={SECTION_PATHS.milestones} element={<MilestonesPage />} />
         </Route>
         <Route path="*" element={<Navigate to={{ pathname: landingPath(location.search), search: location.search }} replace />} />
       </Routes>

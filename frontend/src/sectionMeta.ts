@@ -58,10 +58,6 @@ export const SECTION_META: Record<SidebarView, SectionMeta> = {
     title: "Audit Logs",
     description: "Recorded security and workflow events across the workspace.",
   },
-  milestones: {
-    title: "Milestone Tracker",
-    description: "The four delivery milestones, their tasks, verified status and the screen that delivers each.",
-  },
 };
 
 export function documentTitle(view: SidebarView): string {

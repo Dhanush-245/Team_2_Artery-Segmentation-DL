@@ -9,13 +9,19 @@ test("private metadata keeps the app out of search indexes", async ({ request })
 
 test("sections have their own URLs, titles and working back navigation", async ({ page }) => {
   await signIn(page, "researcher");
-  await page.goto("/milestones");
-  await expect(page.getByRole("heading", { name: /milestone tracker/i })).toBeVisible();
-  await expect(page).toHaveTitle(/Milestone Tracker · CoroVision AI/);
+  await page.goto("/reports");
+  await expect(page).toHaveTitle(/Reports · CoroVision AI/);
   await page.goto("/models");
   await expect(page).toHaveTitle(/Model Evaluation · CoroVision AI/);
   await page.goBack();
-  await expect(page).toHaveURL(/\/milestones$/);
+  await expect(page).toHaveURL(/\/reports$/);
+});
+
+test("the retired milestone tracker address returns to the workspace", async ({ page }) => {
+  await signIn(page, "researcher");
+  await page.goto("/milestones");
+  await expect(page).not.toHaveURL(/\/milestones/);
+  await expect(page.getByRole("button", { name: /milestone tracker/i })).toHaveCount(0);
 });
 
 test("a case with an uploaded image opens in the analysis workspace by link", async ({ page, request }) => {

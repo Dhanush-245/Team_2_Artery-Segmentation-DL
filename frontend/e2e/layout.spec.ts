@@ -9,7 +9,7 @@ test("pages fit the screen and offer a skip link", async ({ page, request }) => 
     multipart: { file: { name: "synthetic-angiogram.png", mimeType: "image/png", buffer: syntheticPng() } } })).json();
 
   await signIn(page, "researcher");
-  for (const path of ["/overview", "/cases", "/milestones", `/analysis?case_id=${caseRecord.id}&image_id=${image.id}`]) {
+  for (const path of ["/overview", "/cases", "/models", `/analysis?case_id=${caseRecord.id}&image_id=${image.id}`]) {
     await page.goto(path);
     await page.waitForLoadState("networkidle");
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

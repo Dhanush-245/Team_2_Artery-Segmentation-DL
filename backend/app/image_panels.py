@@ -13,8 +13,8 @@ PANELS = [
     ('artery_probability', 'Artery probability evidence', 'Saved uncalibrated artery pixel scores. Colour intensity is not patient-level confidence.'),
     ('probability', 'Stenosis probability evidence', 'Saved score-weighted stenosis mask evidence. Colour intensity is not severity or diagnostic confidence.'),
     ('attention', 'Detector feature activation', 'Saved backbone activation energy for compatible detector runs. This is not an attention-gate weight or a clinically validated explanation.'),
-    ('gradcam', 'Grad-CAM attribution', 'Available only when the saved model has a verified target and convolutional layer contract. Not a clinical explanation.'),
-    ('gradcampp', 'Grad-CAM++ attribution', 'Second-order Grad-CAM weighting of the same detector targets; better coverage when several candidates are present. Not a clinical explanation.'),
+    ('gradcam', 'Grad-CAM attribution (mask-constrained)', 'Limited to each candidate mask, so its location follows the prediction. Did not pass the model-randomization sanity check in research testing. Not a clinical explanation.'),
+    ('gradcampp', 'Grad-CAM++ attribution (mask-constrained)', 'Limited to each candidate mask. Failed the model-randomization sanity check in research testing, so it is shown for comparison only. Not a clinical explanation.'),
 ]
 
 

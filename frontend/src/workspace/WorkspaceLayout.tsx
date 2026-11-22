@@ -22,7 +22,7 @@ const ViewerWorkspace = lazy(() => import("../ViewerWorkspace"));
 export const SectionLoading = () => <SectionSkeleton />;
 
 /** Sections a viewer sees directly; everything else is presented through the read-only viewer portal. */
-const VIEWER_DIRECT_SECTIONS: SidebarView[] = ["account", "milestones"];
+const VIEWER_DIRECT_SECTIONS: SidebarView[] = ["account"];
 
 function SidebarCaseList() {
   const { user, caseList, newCase, startNewCase, startFindCase, openCaseFromList } = useWorkspace();

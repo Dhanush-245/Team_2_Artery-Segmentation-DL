@@ -17,8 +17,8 @@ export const GLOSSARY: Record<string, string> = {
   "Narrowing %": "(RVD − MLD) ÷ RVD × 100. Research estimate from the predicted mask, not a validated QCA measurement.",
   Abstained: "The measurement failed a quality check (for example low edge contrast or an ambiguous branch), so no value is reported rather than a guess.",
   "Operating point": "The fixed score and mask thresholds the model uses to decide what counts as a detection.",
-  "Grad-CAM": "Heatmap of the image regions that most increased the detector's score for a candidate.",
-  "Grad-CAM++": "A Grad-CAM variant with sharper weighting when several regions support one prediction.",
+  "Grad-CAM": "Heatmap of image regions that increased the detector's score for a candidate. In this app it is limited to the candidate's predicted mask, so its location follows that mask.",
+  "Grad-CAM++": "A Grad-CAM variant with second-order weighting. It failed the model-randomization sanity check in this project's research tests, so it is shown for comparison only, not as a faithful explanation.",
   MPR: "Multiplanar reconstruction: viewing a 3D volume as slices in three directions.",
   "Window / level": "CT display contrast: the window is the range of Hounsfield units shown, the level is its centre.",
 };
