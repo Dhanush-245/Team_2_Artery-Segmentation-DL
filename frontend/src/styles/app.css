@@ -661,13 +661,13 @@ input { width: 100%; min-height: 46px; padding: .7rem .9rem; border: 1px solid #
 .processing-stepper li.active { border-color: #719b3a; color: #263d16; }
 .processing-stepper li.active > span, .processing-stepper li.complete > span { background: #719b3a; color: #fff; }
 .processing-stepper li.complete { border-color: #719b3a; color: #263d16; }
-.message.warning { background: #fff8e6; color: #7a4f00; }
+.message.warning { background: #f4f4f5; color: #27272a; border-left: 3px solid #18181b; }
 .dark .upload-mode-picker, .dark .preprocessing-profile, .dark .upload-mode-picker button, .dark .dataset-intake-note { border-color: #444751; }
 .dark .upload-mode-picker button.active { background: #37422c; }
 .dark .upload-mode-picker button small, .dark .preprocessing-profile label small, .dark .preprocessing-options small, .dark .upload-privacy-note { color: #b7b7c2; }
 .dark .preprocessing-options, .dark .dataset-intake-note { background: #25252b; }
 .dark .dataset-intake-note code { background: #18181b; color: #e4e4e7; }
-.dark .message.warning { background: #4a3510; color: #f5d68c; }
+.dark .message.warning { background: #27272a; color: #f4f4f5; border-left-color: #fafafa; }
 .dark .processing-stepper li { border-color: #444751; color: #b7b7c2; }
 .dark .processing-stepper li.active, .dark .processing-stepper li.complete { border-color: #83b64d; color: #e2f2c8; }
 .dark .processing-stepper li > span { background: #444751; color: #e4e4e7; }

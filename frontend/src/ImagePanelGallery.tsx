@@ -3,8 +3,15 @@ import { apiUrl, request } from './api';
 
 export type ImagePanel = { key: string; title: string; description: string; available: boolean; url: string | null };
 
-export default function ImagePanelGallery({ token, imageId, runId, modelVersion, panels }: {
-  token: string; imageId: string; runId: string; modelVersion: string; panels?: ImagePanel[];
+const ATTRIBUTION_KEYS = ['gradcam', 'gradcampp'];
+function missingReason(key: string, candidateCount?: number) {
+  if (!ATTRIBUTION_KEYS.includes(key)) return 'Not produced by this saved run';
+  if (candidateCount === 0) return 'No detected candidate to explain';
+  return 'Not produced by this saved run · run the analysis again to create it';
+}
+
+export default function ImagePanelGallery({ token, imageId, runId, modelVersion, panels, candidateCount }: {
+  token: string; imageId: string; runId: string; modelVersion: string; panels?: ImagePanel[]; candidateCount?: number;
 }) {
   const [items, setItems] = useState<ImagePanel[]>([]);
   const [urls, setUrls] = useState<Record<string, string>>({});
@@ -55,7 +62,7 @@ export default function ImagePanelGallery({ token, imageId, runId, modelVersion,
     {(error || failed.length > 0) && <button type="button" onClick={() => setRetry(n => n + 1)}>Retry unavailable images</button>}
     <div className="image-evidence-grid">{items.map(panel => <figure key={panel.key}>
       {urls[panel.key] && !failed.includes(panel.key) ? <a href={urls[panel.key]} target="_blank" rel="noreferrer" aria-label={`Open ${panel.title}`}><img src={urls[panel.key]} alt={panel.title} loading="lazy" onError={() => setFailed(prev => [...prev, panel.key])} /></a>
-        : <div className="image-evidence-empty">{!panel.available ? 'No saved image for this run' : failed.includes(panel.key) ? 'Image could not be displayed' : 'Loading…'}</div>}
+        : <div className="image-evidence-empty">{!panel.available ? missingReason(panel.key, candidateCount) : failed.includes(panel.key) ? 'Image could not be displayed' : 'Loading…'}</div>}
       <figcaption><strong>{panel.title}</strong><p>{panel.description}</p>
         {urls[panel.key] && !failed.includes(panel.key) && <a href={urls[panel.key]}
           download={`${runId}-${panel.key}${extensions[panel.key] ?? ''}`}

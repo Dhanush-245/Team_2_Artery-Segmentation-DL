@@ -1,6 +1,6 @@
 import type { ConfusionCounts, EpochMetric } from "../evaluationData";
 
-const COLORS = ["var(--cv-accent, #0d9488)", "#d97706", "#dc2626", "#7c3aed"];
+const COLORS = ["currentColor", "#71717a", "#a1a1aa", "#3f3f46"];
 
 /** Dependency-free learning curve: train loss (left axis) and validation metrics (0–1, right axis). */
 export function LearningCurve({ history, title }: { history: EpochMetric[]; title: string }) {

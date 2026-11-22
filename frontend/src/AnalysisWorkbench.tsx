@@ -351,7 +351,7 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
         {!!xaiFailures.length && <p role="alert" className="xai-error">Some saved explanation artifacts could not be loaded. The analysis result is unchanged.</p>}
       </Card>}
       {analysis && <Card className="panel"><details className="evidence-details"><summary>Model provenance, structured explanation & limitations</summary><pre className="provenance-json">{JSON.stringify({ model: analysis.model_version, models: analysis.structured_result?.models, preprocessing: analysis.structured_result?.input || selectedImage.processing_record }, null, 2)}</pre><ResultEvidence result={analysis.structured_result} /></details></Card>}
-      {analysis && <Card className="panel"><ImagePanelGallery token={token} imageId={selectedImage.id} runId={analysis.id} modelVersion={analysis.model_version} /></Card>}
+      {analysis && <Card className="panel"><ImagePanelGallery token={token} imageId={selectedImage.id} runId={analysis.id} modelVersion={analysis.model_version} candidateCount={analysis.structured_result?.candidates.length} /></Card>}
       {analysis && selectedCase && <div id="severity-assessment"><Card className="panel"><StenosisMeasurements key={analysis.id} token={token} caseId={selectedCase.id} imageId={selectedImage.id} runId={analysis.id} candidates={analysis.structured_result?.candidates.map(c=>c.candidate_id)||[]} canReview={!!selectedCase.permissions?.can_review} canAssess={!!(selectedCase.permissions?.can_run_analysis||selectedCase.permissions?.can_review)} /></Card></div>}
       <AnalysisHistory imageId={selectedImage.id} token={token} history={history} onSelect={onSelectAnalysis} />
     </>}
