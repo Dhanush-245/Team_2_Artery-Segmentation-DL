@@ -3076,8 +3076,9 @@ if frontend_dist.is_dir():
         path = request.url.path
         last = path.rsplit("/", 1)[-1]
         index_file = frontend_dist / "index.html"
+        reserved = {"/api", "/docs", "/docs/oauth2-redirect", "/redoc"}
         if (exc.status_code == 404 and request.method == "GET" and not path.startswith(("/api/", "/assets/"))
-                and path != "/api" and "." not in last and index_file.is_file()
+                and path.rstrip("/") not in reserved and "." not in last and index_file.is_file()
                 and getattr(exc, "detail", None) == "Not Found"):
             return FileResponse(index_file, headers={"Cache-Control": "no-cache"})
         return await http_exception_handler(request, exc)

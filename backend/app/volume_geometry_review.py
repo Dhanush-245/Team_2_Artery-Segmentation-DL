@@ -145,9 +145,17 @@ def install(app, *, get_db, current_user, accessible_case, storage: Path, audit,
     def listing(case_id: str, run_id: str, user=Depends(current_user), db=Depends(get_db)):
         accessible_case(case_id, user, db)
         completed_run(case_id, run_id, db)
+        can_review = user.role in reviewer_roles
+        if can_review:
+            try:
+                accessible_case(case_id, user, db, required_action='review')
+            except HTTPException as exc:
+                if exc.status_code != 403:
+                    raise
+                can_review = False
         rows = records(storage, run_id)
         return dict(schema_version=SCHEMA, history=rows, current=current(rows),
-                    can_review=user.role in reviewer_roles, arteries=list(ARTERIES))
+                    can_review=can_review, arteries=list(ARTERIES))
 
     @router.post('', status_code=201)
     def create(case_id: str, run_id: str, body: GeometryReviewIn, user=Depends(current_user), db=Depends(get_db)):

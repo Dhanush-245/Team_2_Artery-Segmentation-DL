@@ -6,6 +6,7 @@ from zipfile import ZipFile
 
 import nibabel as nib
 import numpy as np
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import STORAGE, app
@@ -102,3 +103,34 @@ def test_cpr_and_reviewer_geometry_edits_are_authorized_computed_and_reported():
         archive = ZipFile(io.BytesIO(client.get(f'{base}/evidence.zip', headers=owner).content))
         assert len(json.loads(archive.read('geometry_review.json'))) == 2
         assert 'interactive_cpr' not in json.loads(archive.read('manifest.json'))['unavailable']
+
+
+@pytest.mark.parametrize("role", ["clinician", "admin"])
+def test_cpr_permissions_distinguish_read_and_review_grants(role):
+    with TestClient(app) as client:
+        _, owner = make_user(f"geo-owner-{uuid4().hex}@example.org", "researcher")
+        reviewer, headers = make_user(f"geo-reviewer-{uuid4().hex}@example.org", role)
+        case, run = _run(client, owner)
+        base = f"/api/cases/{case['id']}/volumes/analyses/{run}"
+        access = f"/api/cases/{case['id']}/access"
+        geometry = client.get(f"{base}/report/json", headers=owner).json()["experimental_geometry"]
+        path = geometry["paths"][0]["id"]
+        urls = (f"{base}/cpr.png?path_id={path}", f"{base}/geometry-review")
+        body = dict(path_id=path, mask_sha256=geometry["mask_sha256"], decision="uncertain")
+
+        for url in urls:
+            assert client.get(url, headers=headers).status_code == 404
+        assert client.post(urls[1], headers=headers, json=body).status_code == 404
+        for level, can_review in [("read", False), ("review", True), ("read", False)]:
+            assert client.post(access, headers=owner, json={
+                "user_email_or_id": reviewer["email"], "access_level": level,
+            }).status_code == 201
+            assert client.get(urls[0], headers=headers).status_code == 200
+            listing = client.get(urls[1], headers=headers)
+            assert listing.status_code == 200
+            assert listing.json()["can_review"] is can_review
+            saved = client.post(urls[1], headers=headers, json=body)
+            assert saved.status_code == (201 if can_review else 403)
+            if can_review:
+                assert saved.json()["reviewer_role"] == role
+        assert len(listing.json()["history"]) == 1

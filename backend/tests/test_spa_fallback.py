@@ -32,3 +32,12 @@ def test_private_app_metadata_is_served():
         assert manifest.status_code == 200 and manifest.headers["content-type"].startswith("application/manifest+json")
         assert manifest.json()["start_url"] == "/overview"
         assert 'name="robots" content="noindex, nofollow"' in client.get("/cases").text
+
+
+@pytest.mark.skipif(main._DOCS, reason="requires API documentation disabled")
+@pytest.mark.parametrize("path", ["/docs", "/docs/", "/docs/oauth2-redirect", "/redoc", "/openapi.json"])
+def test_disabled_documentation_paths_do_not_serve_the_app_shell(path):
+    with TestClient(main.app) as client:
+        response = client.get(path)
+        assert response.status_code == 404
+        assert response.headers["content-type"].startswith("application/json")
