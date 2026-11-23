@@ -22,6 +22,7 @@ const ModelsPage = lazy(() => import("./pages/ModelsPage"));
 const XaiDashboardPage = lazy(() => import("./pages/XaiDashboardPage"));
 const AccountPage = lazy(() => import("./pages/AccountPage"));
 const AdminPage = lazy(() => import("./pages/AdminPage"));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 const EMPTY_HANDOFF: LoginHandoff = { email: "", error: "", invitation: "", mfa: null, oauthMfaTicket: null };
 
@@ -36,6 +37,19 @@ function oauthErrorMessage(code: string) {
 /** "/" and unknown paths land on the overview, except a Google account-link return, which belongs to Account. */
 function landingPath(search: string) {
   return sectionPath(new URLSearchParams(search).has("oauth_linked") ? "account" : DEFAULT_SECTION);
+}
+
+/** The root address, sign-in addresses and retired pages return to the workspace; any other unknown address gets a 404 page. */
+const REDIRECTED_PATHS = new Set([
+  "/", "/milestones", "/milestone-tracker",
+  // Sign-in entry addresses: after a successful sign-in the address is still the one the person typed.
+  "/login", "/signin", "/sign-in", "/signup", "/sign-up", "/register", "/forgot-password", "/reset-password",
+]);
+function UnknownRoute() {
+  const location = useLocation();
+  const path = location.pathname.length > 1 ? location.pathname.replace(/\/+$/, "") : location.pathname;
+  if (REDIRECTED_PATHS.has(path)) return <Navigate to={{ pathname: landingPath(location.search), search: location.search }} replace />;
+  return <NotFoundPage />;
 }
 
 /** Path + query without the given query parameters (and optionally without the hash). */
@@ -204,7 +218,7 @@ function App() {
           <Route path={SECTION_PATHS.access} element={<AdminPage section="access" />} />
           <Route path={SECTION_PATHS.audit} element={<AdminPage section="audit" />} />
         </Route>
-        <Route path="*" element={<Navigate to={{ pathname: landingPath(location.search), search: location.search }} replace />} />
+        <Route path="*" element={<UnknownRoute />} />
       </Routes>
     </Suspense>
   );

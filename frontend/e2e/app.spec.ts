@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { apiToken, signIn, syntheticPng } from "./helpers";
+import { account, apiToken, signIn, syntheticPng } from "./helpers";
 
 test("private metadata keeps the app out of search indexes", async ({ request }) => {
   const html = await (await request.get("/overview")).text();
@@ -76,4 +76,36 @@ test("the Explainable AI research page lists only this user's evidence and state
   await expect(page).toHaveTitle(/Explainable AI · CoroVision AI/);
   await expect(page.getByText("Only cases you can open are counted.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Saved volumetric explanations" })).toBeVisible();
+});
+
+test("unknown addresses show a page-not-found screen with a way back", async ({ page }) => {
+  await signIn(page, "researcher");
+  await page.goto("/no-such-page");
+  await expect(page.getByRole("heading", { level: 1, name: "Page not found" })).toBeVisible();
+  await expect(page).toHaveTitle(/Page not found/);
+  await page.getByRole("link", { name: "Back to the dashboard" }).click();
+  await expect(page).toHaveURL(/\/overview/);
+});
+
+test("the logo returns to the dashboard and every section has one main heading and its own description", async ({ page }) => {
+  await signIn(page, "researcher");
+  const descriptions = new Set<string>();
+  for (const path of ["/cases", "/models", "/xai", "/reports", "/account"]) {
+    await page.goto(path);
+    await expect(page.locator("h1")).toHaveCount(1);
+    descriptions.add((await page.locator('meta[name="description"]').getAttribute("content")) ?? "");
+  }
+  expect(descriptions.size).toBe(5);
+  await page.getByRole("link", { name: /go to the dashboard/i }).click();
+  await expect(page).toHaveURL(/\/overview/);
+});
+
+test("signing in from the /login address lands on the dashboard, not a 404", async ({ page }) => {
+  const { email, password } = account("researcher");
+  await page.goto("/login");
+  await page.getByLabel(/username or email/i).fill(email);
+  await page.getByLabel(/^password$/i).fill(password);
+  await page.getByRole("button", { name: /^sign in$/i }).click();
+  await expect(page).toHaveURL(/\/overview/);
+  await expect(page.getByText("Page not found")).toHaveCount(0);
 });

@@ -8,6 +8,7 @@ import RoleWorkspace from "./RoleWorkspace";
 import CorovisionLibraryDashboard from "./components/watermelon/corovision-library-dashboard";
 import type { SidebarView } from "./components/watermelon/macos-sidebar";
 import { utcDate } from "./lib/time";
+import { formatAuditAction } from "./lib/auditLabel";
 
 type CaseSummary = {
   id: string;
@@ -178,7 +179,7 @@ export default function OverviewPanel({
       <div className="overview-queues">
         <Card className="panel overview-task-list"><div className="viewer-heading"><h3>My next steps</h3><span>{tasks.length} task{tasks.length === 1 ? "" : "s"}</span></div>{tasks.length ? tasks.map((item) => <button key={item.case_id} type="button" onClick={() => onOpenTask(item.case_id, item.view)}><strong>{item.case_code}</strong><span>{item.title}</span><small>{item.workflow_status.replaceAll("_", " ")}</small></button>) : <p className="muted">No action is waiting for your role.</p>}</Card>
       </div>
-      <Card className="panel overview-activity"><div className="viewer-heading"><h3>Recent activity</h3><span>Your account actions</span></div>{activity.length ? <ul>{activity.map((item) => <li key={item.id}><span>{item.action.replaceAll("_", " ")}</span><time dateTime={item.created_at}>{utcDate(item.created_at).toLocaleString()}</time></li>)}</ul> : <p className="muted">No recorded activity yet.</p>}</Card>
+      <Card className="panel overview-activity"><div className="viewer-heading"><h3>Recent activity</h3><span>Your account actions</span></div>{activity.length ? <ul>{activity.map((item) => <li key={item.id}><span>{formatAuditAction(item.action)}</span><time dateTime={item.created_at}>{utcDate(item.created_at).toLocaleString()}</time></li>)}</ul> : <p className="muted">No recorded activity yet.</p>}</Card>
 
     </div>
   );

@@ -8,6 +8,7 @@ import { Building2 } from "lucide-react";
 import AccessRequests from "./AccessRequests";
 import { designOptions, saveUserDesign, useDesignVariant } from "./designPreview";
 import { utcDate } from "./lib/time";
+import { formatAuditAction } from "./lib/auditLabel";
 
 export type User = {
   id: string;
@@ -238,7 +239,7 @@ export default function AccountPanel({
           <div className="simple-list" id="account-activity">
             {audit.length === 0 && <p className="muted">No activity yet.</p>}
             {(showAllActivity ? audit : audit.slice(0, 10)).map((item) => (
-              <div key={item.id} className="list-row"><span>{item.action.replaceAll("_", " ")}</span><time>{utcDate(item.created_at).toLocaleString()}</time></div>
+              <div key={item.id} className="list-row"><span>{formatAuditAction(item.action)}</span><time>{utcDate(item.created_at).toLocaleString()}</time></div>
             ))}
           </div>
           {audit.length > 10 && <Button type="button" variant="outline" aria-expanded={showAllActivity} aria-controls="account-activity" onClick={() => setShowAllActivity(value => !value)}>{showAllActivity ? "Show less" : `Show all activity (${audit.length})`}</Button>}

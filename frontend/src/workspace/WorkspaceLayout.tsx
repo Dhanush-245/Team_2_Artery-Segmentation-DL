@@ -22,6 +22,8 @@ const ViewerWorkspace = lazy(() => import("../ViewerWorkspace"));
 export const SectionLoading = () => <SectionSkeleton />;
 
 /** Sections a viewer sees directly; everything else is presented through the read-only viewer portal. */
+/** These pages already show their own visible h1; every other section gets a screen-reader heading. */
+const SECTIONS_WITH_VISIBLE_H1: SidebarView[] = ["overview", "cases", "uploads"];
 const VIEWER_DIRECT_SECTIONS: SidebarView[] = ["account"];
 
 function SidebarCaseList() {
@@ -85,7 +87,7 @@ export default function WorkspaceLayout() {
     <div className="app-shell">
       <a className="skip-link" href="#main-content" onClick={(event) => { event.preventDefault(); contentRef.current?.focus(); }}>Skip to content</a>
       <header className="topbar">
-        <div className="brand"><span className="brand-mark" aria-hidden="true"><img src="/corovision-heart-mark.png" alt="" /></span><span>CoroVision AI <small>VASCULAR IMAGING RESEARCH</small></span></div>
+        <a className="brand" href={sectionPath(DEFAULT_SECTION)} aria-label="CoroVision AI, go to the dashboard" onClick={(event) => { event.preventDefault(); setActiveView(DEFAULT_SECTION); }}><span className="brand-mark" aria-hidden="true"><img src="/corovision-heart-mark.png" alt="" /></span><span>CoroVision AI <small>VASCULAR IMAGING RESEARCH</small></span></a>
         <div className="account"><CommandPalette commands={commands} /><NotificationBell key={user.id} token={token} onOpenCase={(id) => { selectCase(id); setActiveView("cases"); }} /><div className="theme-switch"><SwitchMode width={76} height={38} /></div></div>
       </header>
       <main className="workspace">
@@ -95,6 +97,7 @@ export default function WorkspaceLayout() {
         </MacOSSidebar>
         <section className="content" id="main-content" ref={contentRef} tabIndex={-1} aria-label={SECTION_META[activeView].title}>
           <p className="sr-only" role="status" aria-live="polite">{SECTION_META[activeView].title}</p>
+          {!SECTIONS_WITH_VISIBLE_H1.includes(activeView) && <h1 className="sr-only">{SECTION_META[activeView].title}</h1>}
           <ErrorBoundary label={SECTION_META[activeView].title} resetKey={location.pathname}>
             <Suspense fallback={<SectionLoading />}>{content}</Suspense>
           </ErrorBoundary>

@@ -103,7 +103,7 @@ export default function CaseWorkflow({ caseRecord, token, role, onUpdated, onDel
       {caseRecord.workflow_status === "validation_failed" && <p className="message error">The latest image failed validation. Correct the file or metadata and upload it again.</p>}
       {caseRecord.workflow_status === "pending_review" && <p className="muted">AI results are ready for an authorized doctor. They are research findings until reviewed.</p>}
       {caseRecord.workflow_status === "changes_requested" && <p className="muted">Changes were requested. Review the notes below, correct the study or rerun analysis, then request another clinical review.</p>}
-      {caseRecord.report_status === "approved" && <p className="message success"><FileCheck2 size={17} aria-hidden="true" /> Report v{caseRecord.report_version} approved{caseRecord.report_approved_at ? ` on ${new Date(caseRecord.report_approved_at).toLocaleString()}` : ""}.</p>}
+      {caseRecord.report_status === "approved" && <p className="message success"><FileCheck2 size={17} aria-hidden="true" /> Report v{caseRecord.report_version} approved{caseRecord.report_approved_at ? ` on ${utcDate(caseRecord.report_approved_at).toLocaleString()}` : ""}.</p>}
       {canSubmit && <Button type="button" className="primary" disabled={busy} onClick={() => act(`/api/cases/${caseRecord.id}/reports/submit`, {}, "POST", "Report submitted for approval.")}>Submit reviewed report for approval</Button>}
       {canApprove && <div className="workflow-approval">
         <label>Approval notes (optional)<textarea value={decisionNotes} onChange={(event) => setDecisionNotes(event.target.value)} maxLength={1000} rows={2} placeholder="Reason for approval or requested changes" /></label>
