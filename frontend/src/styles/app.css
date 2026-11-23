@@ -222,7 +222,7 @@ input { width: 100%; min-height: 46px; padding: .7rem .9rem; border: 1px solid #
 .wm-auth-message { margin: .9rem 0 0; border: 1px solid #e4e4e7; border-radius: 14px; padding: .7rem .95rem; background: #f6f6f7; color: #3f3f46; font-size: .85rem; line-height: 1.45; }
 .wm-auth-error { border-color: #f3c7c7; background: #fff5f5; color: #9e2929; }
 .wm-auth-switch { margin: 0; }
-.wm-auth-disclaimer { margin: 0; padding: 0 1.5rem 1.4rem; color: #85858b; font-size: .72rem; text-align: center; }
+.wm-auth-disclaimer { margin: 0; padding: 0 1.5rem 1.4rem; color: #62626a; font-size: .72rem; text-align: center; }
 .wm-auth-image-panel { position: relative; height: 100%; min-height: calc(100vh - 2rem); overflow: hidden; border-radius: 2rem; background: #47566b; }
 .wm-auth-image-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 25%, #0d152990 100%); }
 .wm-auth-image-copy { position: absolute; right: clamp(2rem, 5vw, 5rem); bottom: clamp(2rem, 5vw, 5rem); left: clamp(2rem, 5vw, 5rem); color: white; text-shadow: 0 2px 10px #0005; }

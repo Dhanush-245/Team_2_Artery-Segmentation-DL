@@ -16,6 +16,7 @@ from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from .static_delivery import ImmutableAssets, TextGzipMiddleware
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from sqlalchemy import select, func, update
 from sqlalchemy.exc import IntegrityError
@@ -97,6 +98,7 @@ app = FastAPI(title="CoroVision AI API", version="0.1.0", lifespan=lifespan,
               docs_url="/docs" if _DOCS else None, redoc_url="/redoc" if _DOCS else None,
               openapi_url="/openapi.json" if _DOCS else None)
 install_telemetry(app)
+app.add_middleware(TextGzipMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=None if os.getenv('COROVISION_ENV') == 'production' else r"^https?://(localhost|127\.0\.0\.1|0\.0\.0\.0|192\.168\.\d+\.\d+)(:\d+)?$",
@@ -3045,7 +3047,7 @@ if not frontend_dist.is_dir():
 if frontend_dist.is_dir():
     assets_dir = frontend_dist / "assets"
     if assets_dir.is_dir():
-        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+        app.mount("/assets", ImmutableAssets(directory=str(assets_dir)), name="assets")
 
     static_types = {"manifest.webmanifest": "application/manifest+json", "robots.txt": "text/plain"}
     for static_name in ["favicon.ico", "favicon-48.png", "corovision-heart-favicon-20261014.png", "apple-touch-icon.png", "auth-7.avif", "corovision-heart-mark.png", "corovision-heart.png", "manifest.webmanifest", "robots.txt"]:

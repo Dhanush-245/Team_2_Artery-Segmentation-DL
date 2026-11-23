@@ -29,7 +29,7 @@ export default function Auth7({ title, description, social, children, footer }: 
             {social && (
               <div className="relative my-6 flex items-center" aria-hidden="true">
                 <div className="grow border-t border-neutral-200" />
-                <span className="px-4 text-sm text-neutral-400">or</span>
+                <span className="px-4 text-sm text-neutral-600">or</span>
                 <div className="grow border-t border-neutral-200" />
               </div>
             )}
@@ -44,7 +44,7 @@ export default function Auth7({ title, description, social, children, footer }: 
 
       <aside className="relative hidden min-h-screen p-4 lg:block lg:w-1/2" aria-label="CoroVision AI visual">
         <div className="wm-auth-image-panel">
-          <img src="/auth-7.avif" alt="" fetchPriority="high" className="absolute inset-0 h-full w-full object-cover" />
+          <img src="/auth-7.avif" alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
           <div className="wm-auth-image-overlay" />
           <div className="wm-auth-image-copy">
             <span>ADVANCED CORONARY IMAGING</span>
