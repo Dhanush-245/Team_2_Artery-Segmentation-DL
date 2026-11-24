@@ -15,6 +15,7 @@ export const SECTION_PATHS: Record<SidebarView, string> = {
   permissions: "/admin/permissions",
   access: "/admin/access",
   audit: "/admin/audit",
+  operations: "/admin/operations",
 };
 
 const PATH_SECTIONS = new Map(Object.entries(SECTION_PATHS).map(([view, path]) => [path, view as SidebarView]));

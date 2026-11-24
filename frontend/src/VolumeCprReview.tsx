@@ -9,7 +9,7 @@ type Site = { position_mm: number; mask_width_mm: number; section_diameter_mm: n
 type Review = { id: string; path_id: string; decision: string; artery: string | null; notes: string | null; reviewer_role: string; reviewed_at: string;
   measurement: null | { minimum: Site; reference: Site; minimum_diameter_mm: number; reference_diameter_mm: number; narrowing_percent: number; diameter_method: string } };
 type Listing = { current: Review[]; history: Review[]; can_review: boolean; arteries: string[] };
-type Props = { caseId: string; runId: string; token: string; paths: GeometryPath[]; estimates: Estimate[]; maskSha256?: string; onSaved: () => void };
+type Props = { caseId: string; runId: string; token: string; paths: GeometryPath[]; estimates: Estimate[]; maskSha256?: string; onSaved: () => void; focusPathId?: string; focusNonce?: number };
 
 const PROFILE_HEIGHT = 70;
 /** Server default half-width (mm) across the vessel; the CPR image is 2 × this tall. */
@@ -40,13 +40,14 @@ function WidthProfile({ path, minimum, reference, onPick }: { path: GeometryPath
 }
 
 /** Straightened view along one saved path, with reviewer accept/reject, artery label and lumen markers. */
-export default function VolumeCprReview({ caseId, runId, token, paths, estimates, maskSha256, onSaved }: Props) {
+export default function VolumeCprReview({ caseId, runId, token, paths, estimates, maskSha256, onSaved, focusPathId, focusNonce }: Props) {
   const ordered = useMemo(() => {
     const narrowing = new Map(estimates.map(row => [row.path_id, row.narrowing_percent]));
     return [...paths].sort((a, b) => (narrowing.get(b.id) ?? -1) - (narrowing.get(a.id) ?? -1) || b.length_mm - a.length_mm);
   }, [paths, estimates]);
   const narrowing = useMemo(() => new Map(estimates.map(row => [row.path_id, row.narrowing_percent])), [estimates]);
   const [pathId, setPathId] = useState(ordered[0]?.id ?? "");
+  useEffect(() => { if (focusPathId && ordered.some(item => item.id === focusPathId)) setPathId(focusPathId); }, [focusNonce]); // eslint-disable-line react-hooks/exhaustive-deps
   const path = ordered.find(item => item.id === pathId) ?? ordered[0];
   const [rotation, setRotation] = useState(0);
   const [win, setWin] = useState(800);

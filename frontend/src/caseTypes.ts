@@ -1,3 +1,4 @@
+import type { Screening } from "./lib/screening";
 export type ImageRecord = {
   modality?: string;
   id: string;
@@ -154,6 +155,7 @@ export type AnalysisResult = {
     };
   };
   interpretation: string;
+  screening?: Screening;
   research_only: boolean;
   created_at: string;
 };

@@ -1,4 +1,4 @@
-"""Read-only model version registry: releases, datasets, evidence and rollback status.
+"""Read-only model version registry: releases, datasets, evidence, architecture comparison and rollback status.
 
 Nothing here activates, downloads or trains a model. Rollback is reported as
 available only when a second verified release is actually installed.
@@ -10,6 +10,8 @@ from fastapi import APIRouter, Depends
 
 from . import trained_release
 from .evaluation_catalog import RELEASES, _evidence, training_histories
+
+COMPARISON = RELEASES / "model_comparison_20261124.json"
 
 router = APIRouter(prefix="/api/models", tags=["Model registry"])
 
@@ -58,8 +60,17 @@ def registry():
                 research_only=True)
 
 
+def comparison():
+    """Curated side-by-side architecture evidence, grouped by task (see the file for sources and rules)."""
+    return json.loads(COMPARISON.read_text())
+
+
 def install(app, require_roles, roles):
     @router.get("/registry")
     def model_registry(user=Depends(require_roles(*roles))):
         return registry()
+
+    @router.get("/comparison")
+    def model_comparison(user=Depends(require_roles(*roles))):
+        return comparison()
     app.include_router(router)

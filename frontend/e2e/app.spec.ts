@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { account, apiToken, signIn, syntheticPng } from "./helpers";
+import { account, apiToken, blobFrame, signIn, syntheticPng } from "./helpers";
 
 test("private metadata keeps the app out of search indexes", async ({ request }) => {
   const html = await (await request.get("/overview")).text();
@@ -108,4 +108,40 @@ test("signing in from the /login address lands on the dashboard, not a 404", asy
   await page.getByRole("button", { name: /^sign in$/i }).click();
   await expect(page).toHaveURL(/\/overview/);
   await expect(page.getByText("Page not found")).toHaveCount(0);
+});
+
+test("an administrator sees the operations page, sends a test alert and finds it in the event log", async ({ page }) => {
+  await signIn(page, "admin");
+  await page.goto("/admin/operations");
+  await expect(page.getByRole("heading", { level: 2, name: "Monitoring & alerts" })).toBeVisible();
+  await expect(page.getByText("Current signals")).toBeVisible();
+  await page.getByRole("button", { name: "Send a test alert" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Test alert sent to" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "alert_test" }).first()).toBeVisible();
+});
+
+test("non-administrators cannot open the operations page", async ({ page }) => {
+  await signIn(page, "researcher");
+  await page.goto("/admin/operations");
+  await expect(page).toHaveURL(/\/overview/);
+});
+
+test("a case with two frames offers alignment, shows the result and switches overlay views", async ({ page, request }) => {
+  const token = await apiToken(request, "researcher");
+  const headers = { Authorization: `Bearer ${token}` };
+  const caseRecord = await (await request.post("/api/cases", { headers, data: { case_code: `E2E-REG-${Date.now()}`, modality: "XCA", anatomy: "coronary" } })).json();
+  const upload = async (name: string, buffer: Buffer) => (await request.post(`/api/cases/${caseRecord.id}/images`, { headers,
+    multipart: { file: { name, mimeType: "image/png", buffer } } })).json();
+  const reference = await upload("reference-frame.png", blobFrame(0, 0));
+  const moving = await upload("shifted-frame.png", blobFrame(10, -6));
+  await signIn(page, "researcher");
+  await page.goto(`/analysis?case_id=${caseRecord.id}&image_id=${moving.id}`);
+  await expect(page.getByRole("heading", { name: "Align two images of this case" })).toBeVisible();
+  await expect(page.getByText(/^Aligned: image agreement rose/)).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText(/^Shift:/)).toBeVisible();
+  const overlay = page.getByRole("img", { name: /Overlay of the selected image aligned to the reference/ });
+  await expect(overlay).toBeVisible();
+  await page.getByRole("button", { name: "Checkerboard" }).click();
+  await expect(page.getByRole("img", { name: /Checkerboard/ })).toBeVisible();
+  expect(reference.id).not.toEqual(moving.id);
 });

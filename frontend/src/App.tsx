@@ -217,6 +217,7 @@ function App() {
           <Route path={SECTION_PATHS.permissions} element={<AdminPage section="permissions" />} />
           <Route path={SECTION_PATHS.access} element={<AdminPage section="access" />} />
           <Route path={SECTION_PATHS.audit} element={<AdminPage section="audit" />} />
+          <Route path={SECTION_PATHS.operations} element={<AdminPage section="operations" />} />
         </Route>
         <Route path="*" element={<UnknownRoute />} />
       </Routes>

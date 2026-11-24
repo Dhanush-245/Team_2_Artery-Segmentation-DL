@@ -414,3 +414,17 @@ class AccountInvitation(Base):
     email: Mapped[str] = mapped_column(String(255), index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     redeemed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class OperationalEvent(Base):
+    """Central operational log: service lifecycle, server errors, failed analyses, alerts and metric snapshots.
+
+    Holds counts, route templates and request ids only: no patient data, bodies, tokens or file paths.
+    """
+    __tablename__ = "operational_events"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
+    level: Mapped[str] = mapped_column(String(12), index=True)
+    kind: Mapped[str] = mapped_column(String(48), index=True)
+    message: Mapped[str] = mapped_column(String(255))
+    details_json: Mapped[str] = mapped_column(Text, default="{}")

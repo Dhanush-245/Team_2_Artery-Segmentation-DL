@@ -16,6 +16,8 @@ def test_operations_permissions_privacy_headers_and_readiness(monkeypatch, caplo
             response = client.get('/api/health/live?token=PRIVATE_SENTINEL', headers={'X-Request-ID': 'PRIVATE_SENTINEL'})
         assert response.status_code == 200
         assert response.headers['X-Content-Type-Options'] == 'nosniff'
+        assert response.headers['Cross-Origin-Resource-Policy'] == 'same-origin'
+        assert response.headers['Cross-Origin-Opener-Policy'] == 'same-origin'
         assert response.headers['Cache-Control'] == 'no-store'
         assert response.headers['X-Request-ID'] != 'PRIVATE_SENTINEL'
         entries = [json.loads(r.message) for r in caplog.records if r.name == 'corovision.operations']

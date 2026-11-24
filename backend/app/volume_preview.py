@@ -132,13 +132,14 @@ def mask_preview(path):
             'quality_status': 'abstained_disconnected_prediction' if component_count > 1
                               else 'research_geometry_only',
             'measurement_eligible': component_count == 1,
+            'world_centre_mm': [round(float(v), 4) for v in centre], 'world_radius_mm': round(radius, 4),
             'mesh': mesh,
             'components': components,
             # Preserve the legacy field for older clients.
             'points': [point for component in components for point in component['points']]}
 
 
-PREVIEW_VERSION = 'v2-watertight-components'
+PREVIEW_VERSION = 'v3-world-frame'
 
 
 def cached_preview(path, cache_dir):

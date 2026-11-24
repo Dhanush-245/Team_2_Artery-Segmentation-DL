@@ -1,5 +1,7 @@
 # Upload, analysis and review policy
 
+> Updated 24 Nov 2026: the administrator rules below now match the code and tests (administrators have default operational actions; case access is still ownership or assignment). The original 15 Oct wording is kept in parentheses where it changed.
+
 Implemented from the user's second pasted role/workflow specification. This is
 a research prototype on FastAPI/SQLAlchemy, not Express/Firestore.
 
@@ -22,10 +24,16 @@ state does not grant API authority.
   not a legally certified clinical signature or a clinical-validation claim.
 - ML engineers: recorded model registry and evaluation, without medical case
   access or activation. Training controls and candidate submission remain pending.
-- Administrators: governance and audited research-checkpoint activation, without
-  automatic case creation, upload, analysis or case-export permissions. Each of
-  these operational actions needs a grant by a different administrator; medical
-  record access still requires ownership/assignment.
+- Administrators: governance, audited research-checkpoint activation and, since
+  the later role update, the same default operations as doctors (create cases,
+  upload, run analysis, export, record clinical review). Medical record access
+  still requires ownership or an explicit case assignment, so an administrator
+  cannot open another person's case without it. (Superseded text from 15 Oct:
+  "without automatic case creation, upload, analysis or case-export permissions,
+  each needing a grant by a different administrator".) Operational grants for
+  these four actions are therefore redundant for administrators; disabling one
+  does not remove the default. See `backend/app/action_policy.py` and
+  `test_operational_policy.py`, and `AUTH_ROLES.md` for the current matrix.
 - Standard User / Viewer: unchanged read-only case details, recorded findings and
   assigned clinicians. No upload, analysis, clinical sign-off or model controls.
 

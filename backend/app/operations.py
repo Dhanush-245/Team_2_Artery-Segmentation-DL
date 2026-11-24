@@ -8,6 +8,10 @@ import threading
 import time
 from uuid import uuid4
 
+from starlette.responses import JSONResponse
+
+from . import monitoring
+
 logger = logging.getLogger('corovision.operations')
 
 # The bundled React app loads all scripts, styles, fonts and images from its own origin.
@@ -54,7 +58,11 @@ def install_telemetry(app):
         request_id = uuid4().hex  # Never trust a user-supplied correlation identifier in logs.
         started, status = time.monotonic(), 500
         try:
-            response = await call_next(request)
+            try:
+                response = await call_next(request)
+            except Exception as exc:  # noqa: BLE001 - last line of defence; the client gets no internals
+                logger.error(json.dumps({'event': 'unhandled_exception', 'request_id': request_id, 'type': type(exc).__name__}))
+                response = JSONResponse({'detail': 'Internal server error', 'request_id': request_id}, status_code=500)
             status = response.status_code
             response.headers['X-Request-ID'] = request_id
             response.headers['X-Content-Type-Options'] = 'nosniff'
@@ -63,6 +71,7 @@ def install_telemetry(app):
             response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
             response.headers.setdefault('Content-Security-Policy', CONTENT_SECURITY_POLICY)
             response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
+            response.headers['Cross-Origin-Resource-Policy'] = 'same-origin'
             forwarded = request.headers.get('x-forwarded-proto', '').split(',')[0].strip().lower()
             if request.url.scheme == 'https' or forwarded == 'https':
                 response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
@@ -75,6 +84,8 @@ def install_telemetry(app):
             # Route templates, not raw URLs/queries/filenames/user IDs.
             if not re.fullmatch(r'[/a-zA-Z0-9_{}:.\-]*', route):
                 route = 'other'
+            if status >= 500:
+                monitoring.record_server_error(request.method, route, status, request_id)
             key = (request.method, route, status // 100)
             with LOCK:
                 item = COUNTERS[key]

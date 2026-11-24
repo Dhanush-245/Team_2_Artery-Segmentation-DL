@@ -5,7 +5,7 @@ import { apiUrl } from './api';
 type Point = [number, number, number];
 type MaskComponent = { id: number; foreground_voxels: number; points: Point[] };
 type SurfaceMesh = { vertices: Point[]; faces: [number, number, number][]; face_components?: number[]; step_voxels?: number | null };
-type Preview = { foreground_voxels: number; component_count: number; mesh?: SurfaceMesh; components: MaskComponent[]; points: Point[] };
+type Preview = { world_centre_mm?: Point; world_radius_mm?: number; foreground_voxels: number; component_count: number; mesh?: SurfaceMesh; components: MaskComponent[]; points: Point[] };
 type View = { yaw: number; pitch: number; zoom: number };
 
 const INITIAL: View = { yaw: 0.55, pitch: 0.35, zoom: 1 };
@@ -30,7 +30,7 @@ function camera([x, y, z]: Point, view: View): Point {
   return [horizontal, cp * z - sp * toward, sp * z + cp * toward];
 }
 
-export default function VolumeOrbit({ url, token }: { url: string; token: string }) {
+export default function VolumeOrbit({ url, token, marker = null, compact = false }: { url: string; token: string; marker?: Point | null; compact?: boolean }) {
   const [data, setData] = useState<Preview | null>(null);
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
@@ -57,6 +57,13 @@ export default function VolumeOrbit({ url, token }: { url: string; token: string
     return () => { window.clearTimeout(timer); controller.abort(); };
   }, [url, token, attempt]);
 
+  /** The crosshair in the preview's normalised frame: (world - centre) / radius, using values the server saved with the mesh. */
+  const markerPoint = useMemo<Point | null>(() => {
+    if (!marker || !data?.world_centre_mm || !data.world_radius_mm) return null;
+    const [cx, cy, cz] = data.world_centre_mm, radius = data.world_radius_mm;
+    return [(marker[0] - cx) / radius, (marker[1] - cy) / radius, (marker[2] - cz) / radius];
+  }, [marker, data]);
+
   /** Visible geometry, re-centred and scaled to fill the view, plus the floor height for the grid. */
   const scene = useMemo(() => {
     if (!data) return null;
@@ -72,7 +79,7 @@ export default function VolumeOrbit({ url, token }: { url: string; token: string
     const centre = min.map((value, axis) => (value + max[axis]) / 2);
     const half = Math.max(...max.map((value, axis) => (value - min[axis]) / 2)) || 1;
     const fit = (p: Point): Point => [(p[0] - centre[0]) / half, (p[1] - centre[1]) / half, (p[2] - centre[2]) / half];
-    return { hasMesh, faces, vertices: hasMesh ? mesh!.vertices.map(fit) : [], points: points.map(fit),
+    return { hasMesh, faces, vertices: hasMesh ? mesh!.vertices.map(fit) : [], points: points.map(fit), fit,
       floor: (min[2] - centre[2]) / half - 0.08 };
   }, [data, showAll]);
 
@@ -121,6 +128,11 @@ export default function VolumeOrbit({ url, token }: { url: string; token: string
           context.beginPath(); context.arc(x, y, 1.6, 0, Math.PI * 2); context.fill();
         }
       }
+      if (markerPoint) {
+        const [mx, my] = screen(camera(scene.fit(markerPoint), view));
+        context.beginPath(); context.arc(mx, my, 6, 0, Math.PI * 2); context.strokeStyle = '#fde047'; context.lineWidth = 2; context.stroke();
+        context.beginPath(); context.arc(mx, my, 2, 0, Math.PI * 2); context.fillStyle = '#fde047'; context.fill();
+      }
       // Orientation marker: R (right), A (anterior), S (superior).
       const origin: [number, number] = [34, height - 34];
       for (const [label, axis, color] of [['R', [1, 0, 0], '#f87171'], ['A', [0, 1, 0], '#4ade80'], ['S', [0, 0, 1], '#60a5fa']] as const) {
@@ -135,7 +147,7 @@ export default function VolumeOrbit({ url, token }: { url: string; token: string
     const observer = new ResizeObserver(draw);
     observer.observe(element);
     return () => observer.disconnect();
-  }, [scene, view, grid]);
+  }, [scene, view, grid, markerPoint]);
 
   // Wheel zoom needs a non-passive listener so the page does not scroll while zooming.
   useEffect(() => {
@@ -160,7 +172,7 @@ export default function VolumeOrbit({ url, token }: { url: string; token: string
   const others = Math.max(0, data.component_count - 1);
   const presetActive = (p: { yaw: number; pitch: number }) => Math.abs(view.yaw - p.yaw) < 1e-3 && Math.abs(view.pitch - p.pitch) < 1e-3;
 
-  return <section className="volume-orbit" aria-labelledby="volume-orbit-title">
+  return <section className={`volume-orbit${compact ? ' compact' : ''}`} aria-labelledby="volume-orbit-title">
     <div className="volume-orbit-heading">
       <div><span className="eyebrow">3D SURFACE</span><h4 id="volume-orbit-title">Predicted vessel mask</h4></div>
       <div className="volume-orbit-presets" role="group" aria-label="View direction">

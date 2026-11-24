@@ -62,6 +62,10 @@ export const SECTION_META: Record<SidebarView, SectionMeta> = {
     title: "Audit Logs",
     description: "Recorded security and workflow events across the workspace.",
   },
+  operations: {
+    title: "Operations",
+    description: "Central operational log, live service signals and automatic alerts for administrators.",
+  },
 };
 
 export function documentTitle(view: SidebarView): string {

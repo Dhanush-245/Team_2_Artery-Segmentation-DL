@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { screeningCounts } from "./lib/screening";
 import { Button } from "./components/prismui/button";
 import { Card } from "./components/prismui/card";
 import type { User } from "./AccountPanel";
@@ -27,6 +28,7 @@ type DashboardAnalytics = {
   analysis_runs: number;
   model_flagged_cases: number;
   cases_without_model_flag: number;
+  screening_distribution?: Partial<Record<"abnormal_flagged" | "not_flagged" | "indeterminate", number>>;
   clinician_severity_distribution: Record<string, number>;
   processing_status: Record<string, number>;
   validation_performance: Record<string, { validation_dice: number; validation_images: number }>;
@@ -154,6 +156,7 @@ export default function OverviewPanel({
         <div className="overview-stats overview-stats-compact">
           <Card><span>Cases with model-flagged region</span><strong>{analytics.model_flagged_cases}</strong><small>Binary mask present; requires human review</small></Card>
           <Card><span>No model region flagged</span><strong>{analytics.cases_without_model_flag}</strong><small>Does not establish a normal result</small></Card>
+          <Card><span>Indeterminate screening</span><strong>{screeningCounts(analytics.screening_distribution).indeterminate}</strong><small>Weak segmentation or unstable scores; a miss means little</small></Card>
             </div>
         <div className="overview-analytics-grid">
           <Card className="panel"><div className="viewer-heading"><h3>Human-reviewed severity</h3><span>Latest review per case</span></div>

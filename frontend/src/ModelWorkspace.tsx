@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { request } from "./api";
 import { Card } from "./components/prismui/card";
+import ArchitectureComparison from "./ArchitectureComparison";
 import ModelAnalytics from "./ModelAnalytics";
 import EvaluationExplorer from "./EvaluationExplorer";
 import ExperimentLab from "./ExperimentLab";
@@ -48,11 +49,14 @@ export type ModelRegistry = {
   active_architecture?: string;
   model_version: string;
   models: { architecture: string; display_name: string; version: string; input_size?: number; available: boolean; active: boolean; mean_validation_dice: number | null; mean_validation_image_f1?: number | null; mean_validation_composite_score?: number | null; checkpoint_sha256: Record<string, string>; tasks: { task: string; train_images?: number; validation_images?: number; validation_dice?: number; epochs?: number; seed?: number; dataset?: string; threshold?: number }[] }[];
-  history: { event: string; architecture: string; version?: string; previous_architecture?: string; activated_at?: string | null; activated_by?: string }[];
+  history: { event: string; architecture: string; version?: string; previous_architecture?: string; rolled_back_from?: string; activated_at?: string | null; activated_by?: string }[];
+  can_rollback?: boolean;
+  rollback_target?: { architecture: string; display_name: string; version: string } | null;
+  rollback_note?: string | null;
 };
 
-function EvaluationSection({ title, children }: { title: string; children: ReactNode }) {
-  return <details className="evaluation-section"><summary><span>{title}</span><span className="evaluation-chevron" aria-hidden="true">⌄</span></summary><div className="evaluation-section-body">{children}</div></details>;
+function EvaluationSection({ title, children, open }: { title: string; children: ReactNode; open?: boolean }) {
+  return <details className="evaluation-section" open={open}><summary><span>{title}</span><span className="evaluation-chevron" aria-hidden="true">⌄</span></summary><div className="evaluation-section-body">{children}</div></details>;
 }
 
 export default function ModelWorkspace({ token }: { token: string }) {
@@ -86,6 +90,20 @@ export default function ModelWorkspace({ token }: { token: string }) {
       setStatus(nextStatus);
       setRegistry(nextRegistry);
       setNotice(`${result.detail}: ${result.model_version}. New analyses will use this version.`);
+    } catch (cause) { setError((cause as Error).message); }
+    finally { setActivationBusy(false); }
+  }
+
+  async function rollback() {
+    setActivationBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      const result = await request<{ detail: string; model_version: string }>("/api/analysis/models/rollback", token, {}, "POST");
+      const [nextStatus, nextRegistry] = await Promise.all([request<ModelStatus>("/api/analysis/status", token), request<ModelRegistry>("/api/analysis/models", token)]);
+      setStatus(nextStatus);
+      setRegistry(nextRegistry);
+      setNotice(`${result.detail}: ${result.model_version}. New analyses use this earlier version; existing saved runs keep their original model.`);
     } catch (cause) { setError((cause as Error).message); }
     finally { setActivationBusy(false); }
   }
@@ -133,6 +151,7 @@ export default function ModelWorkspace({ token }: { token: string }) {
       <p>Saved ImageCAS selection evidence records rejection of the attention candidate despite Dice 0.794519 because the gain and recall acceptance criteria failed.</p>
     </EvaluationSection>
     {status && <ModelAnalytics status={status} registry={registry} refreshing={refreshing} updatedAt={updatedAt} onRefresh={() => setRefreshKey(key => key + 1)} />}
+    <EvaluationSection title="Architecture comparison across tasks" open><ArchitectureComparison token={token} /></EvaluationSection>
     <EvaluationSection title="Pinned release report explorer"><EvaluationExplorer token={token} /></EvaluationSection>
 
     {status?.trained_release?.research_evidence && <section aria-labelledby="dataset-results-heading" className="evaluation-datasets">
@@ -165,10 +184,14 @@ export default function ModelWorkspace({ token }: { token: string }) {
       {status.instance_aware?.test_report?.final_test_results && <p className="caption">A final held-out report exists for {status.instance_aware.test_report.architecture}. It is displayed separately from validation and did not affect model selection.</p>}
     </EvaluationSection>}
     {registry && <EvaluationSection title="Registered models & deployment"><div className="viewer-heading"><div><p className="muted">{registry.can_activate ? "Activate a research checkpoint pair. Changes are audited; this is not authorization for clinical deployment." : "Read-only model registry. Model activation requires administrator approval; production deployment is not configured."}</p></div><span className="stage-badge">{registry.model_version}</span></div>
+      <div className="model-rollback">
+        <button type="button" className="model-activate" disabled={!registry.can_rollback || activationBusy} onClick={() => void rollback()}>{registry.rollback_target ? `Roll back to ${registry.rollback_target.display_name} (${registry.rollback_target.version})` : "Roll back to previous model"}</button>
+        <small>{registry.can_rollback ? "One step back to the model that was active before this one. Audited; saved runs keep the model they used." : registry.rollback_note || "Rollback needs administrator approval and an earlier recorded model."}</small>
+      </div>
       <div className="table-scroll"><table><thead><tr><th>Model / version</th><th>Status</th><th>Composite score*</th><th>Validation Dice</th><th>Mean image F1</th><th>Dataset provenance</th><th>Checkpoint fingerprints</th><th>Action</th></tr></thead><tbody>{registry.models.map((model) => <tr key={model.architecture}><td><strong>{model.display_name}</strong><br /><small>{model.version} · {model.input_size ?? 128}×{model.input_size ?? 128}</small></td><td>{model.active ? "Active" : model.available ? "Registered" : "Checkpoint missing"}</td><td>{model.mean_validation_composite_score == null ? "—" : model.mean_validation_composite_score.toFixed(3)}</td><td>{model.mean_validation_dice == null ? status?.trained_release?.models.map(item => `${item.task}: ${item.validation_dice.toFixed(4)}`).join(" · ") ?? "Unavailable" : model.mean_validation_dice.toFixed(3)}</td><td>{model.mean_validation_image_f1 == null ? "—" : model.mean_validation_image_f1.toFixed(3)}</td><td>{[...new Set(model.tasks.map((task) => task.dataset).filter(Boolean))].join(", ") || "Recorded in training report"}<br /><small>{model.tasks.map((task) => `${task.task}: ${task.validation_images ?? "—"} val / ${task.train_images ?? "—"} train`).join(" · ")}</small></td><td>{Object.entries(model.checkpoint_sha256).map(([task, hash]) => <small className="hash-line" key={task}>{task}: {hash.slice(0, 16)}…</small>)}</td><td><button type="button" className="model-activate" disabled={!registry.can_activate || activationBusy || !model.available || model.active} onClick={() => activate(model.architecture)}>{model.active ? "Active" : activationBusy ? "Activating…" : registry.can_activate ? "Activate / rollback" : "Approval required"}</button></td></tr>)}</tbody></table></div>
       <p className="caption">*Composite score is the unweighted mean of the nine listed metrics. Pixel accuracy can be inflated by background pixels, while recall/sensitivity and F1/Dice are duplicate pairs; inspect each metric and validation overlays. Scores use binary pixel masks and are not official ARCADE instance/category F1.</p>
     </EvaluationSection>}
-    {registry && <EvaluationSection title="Deployment history"><div className="viewer-heading"><span>{registry.history.length} events</span></div>{registry.history.length ? <div className="model-history-list">{registry.history.map((entry, index) => <div key={`${entry.activated_at || "initial"}-${index}`}><strong>{entry.version || entry.architecture}</strong><span>{entry.event === "initial_selection" ? "Initial selection" : `Activated ${entry.previous_architecture ? `from ${entry.previous_architecture}` : ""}`}</span><small>{entry.activated_at ? new Date(entry.activated_at).toLocaleString() : "Initial project configuration"} · {entry.activated_by || "system"}</small></div>)}</div> : <p className="muted">No model switches recorded yet.</p>}</EvaluationSection>}
+    {registry && <EvaluationSection title="Deployment history"><div className="viewer-heading"><span>{registry.history.length} events</span></div>{registry.history.length ? <div className="model-history-list">{registry.history.map((entry, index) => <div key={`${entry.activated_at || "initial"}-${index}`}><strong>{entry.version || entry.architecture}</strong><span>{entry.event === "initial_selection" ? "Initial selection" : entry.event === "model_rollback" ? `Rolled back ${entry.rolled_back_from ? `from ${entry.rolled_back_from}` : ""}` : `Activated ${entry.previous_architecture ? `from ${entry.previous_architecture}` : ""}`}</span><small>{entry.activated_at ? new Date(entry.activated_at).toLocaleString() : "Initial project configuration"} · {entry.activated_by || "system"}</small></div>)}</div> : <p className="muted">No model switches recorded yet.</p>}</EvaluationSection>}
     <EvaluationSection title="Architecture scope"><p className="muted">The installed task registry above covers the preserved 2D release and separate 3D volume adapters. Saved evaluation reports identify each model's task, dataset and metric. The legacy activation registry below manages the preserved 2D release.</p></EvaluationSection>
     {status?.comparison?.experiments?.length ? <EvaluationSection title="Architecture comparison"><div className="table-scroll"><table><thead><tr><th>Task</th><th>Architecture</th><th>Train images</th><th>Validation images</th><th>Composite*</th><th>Accuracy</th><th>Precision</th><th>Recall / Sensitivity</th><th>Specificity</th><th>F1 / Dice</th><th>IoU</th><th>AUC-ROC</th><th>Mean image F1</th></tr></thead><tbody>{status.comparison.experiments.map((row, index) => <tr key={`${row.task}-${row.architecture}-${index}`}><td>{row.task === "syntax" ? "Artery" : "Stenosis"}</td><td>{row.architecture}</td><td>{row.train_images}</td><td>{row.validation_images}</td><td>{row.best_validation.selection_score?.toFixed(3) ?? "—"}</td><td>{row.best_validation.pixel_accuracy?.toFixed(3) ?? "—"}</td><td>{row.best_validation.precision.toFixed(3)}</td><td>{(row.best_validation.sensitivity ?? row.best_validation.recall).toFixed(3)}</td><td>{row.best_validation.specificity?.toFixed(3) ?? "—"}</td><td>{row.best_validation.f1.toFixed(3)} / {row.best_validation.dice.toFixed(3)}</td><td>{row.best_validation.iou.toFixed(3)}</td><td>{row.best_validation.auc_roc?.toFixed(3) ?? "—"}</td><td>{row.best_validation.mean_image_pixel_f1?.toFixed(3) ?? "—"}</td></tr>)}</tbody></table></div><p className="caption">*The composite is the unweighted mean of accuracy, precision, recall, F1, AUC-ROC, Dice, IoU, sensitivity, and specificity. Recall/sensitivity and F1/Dice are duplicates; accuracy can be background-dominated. AUC uses 256 bins. These are binary-mask proxy metrics, not official ARCADE instance/category scores.</p></EvaluationSection> : <EvaluationSection title="Model comparison"><p className="muted">No legacy architecture comparison report is installed. Import compatible external experiments in the Experiment Lab above. This application does not launch training.</p></EvaluationSection>}
     {status?.test_report?.results?.length ? <EvaluationSection title="Held-out test report"><div className="table-scroll"><table><thead><tr><th>Task</th><th>Test images</th><th>Dice</th><th>IoU</th><th>Precision</th><th>Sensitivity</th><th>Specificity</th><th>F1</th><th>AUC-ROC</th><th>Pixel acc.</th></tr></thead><tbody>{status.test_report.results.map((row) => <tr key={`test-${row.task}`}><td>{row.task === "syntax" ? "Artery" : "Stenosis"}</td><td>{row.test_images}</td><td>{row.metrics.dice.toFixed(3)}</td><td>{row.metrics.iou.toFixed(3)}</td><td>{row.metrics.precision.toFixed(3)}</td><td>{(row.metrics.sensitivity ?? row.metrics.recall).toFixed(3)}</td><td>{row.metrics.specificity.toFixed(3)}</td><td>{row.metrics.f1.toFixed(3)}</td><td>{row.metrics.auc_roc?.toFixed(3) ?? "—"}</td><td>{row.metrics.pixel_accuracy?.toFixed(3) ?? "—"}</td></tr>)}</tbody></table></div><p className="caption">One-time evaluation of the validation-selected {status.test_report.architecture} checkpoint on the official ARCADE test split. This result did not affect checkpoint selection and is not clinical validation.</p></EvaluationSection> : null}

@@ -1,3 +1,5 @@
+FROM scratch AS model_archive
+
 FROM node:22-trixie-slim AS web
 WORKDIR /build/frontend
 COPY frontend/package*.json ./
@@ -26,10 +28,15 @@ COPY scripts/install_trained_release.py /app/scripts/install_trained_release.py
 COPY deploy/start.sh /app/deploy/start.sh
 COPY ml/ /app/ml/
 ARG COROVISION_MODEL_ARCHIVE_URL=https://github.com/springboardmentor01092s-tech/Team_2_Artery-Segmentation-DL/releases/download/corovision-mask-models-v1/CoroVision_application_mask_models_v1.zip
-RUN MODEL_URL="$COROVISION_MODEL_ARCHIVE_URL" python -c "import os,urllib.request; urllib.request.urlretrieve(os.environ['MODEL_URL'], '/tmp/corovision-models.zip')" \
-    && python /app/scripts/install_trained_release.py --install /tmp/corovision-models.zip \
-    && rm -f /tmp/corovision-models.zip \
-    && chown -R 10001:10001 /models
+RUN --mount=type=bind,from=model_archive,target=/tmp/model-archive \
+    set -eu; archive=/tmp/model-archive/models.zip; \
+    if [ ! -f "$archive" ]; then \
+      archive=/tmp/corovision-models.zip; \
+      MODEL_URL="$COROVISION_MODEL_ARCHIVE_URL" python -c "import os, shutil, urllib.request; response=urllib.request.urlopen(os.environ['MODEL_URL'], timeout=30); output=open('/tmp/corovision-models.zip', 'wb'); shutil.copyfileobj(response, output); output.close()"; \
+    fi; \
+    python /app/scripts/install_trained_release.py --install "$archive"; \
+    rm -f /tmp/corovision-models.zip; \
+    chown -R 10001:10001 /models
 # Keep application-source edits after the immutable model-release installation.
 # This avoids redownloading verified weights for routine application-only builds.
 COPY backend/app/ /app/backend/app/

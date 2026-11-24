@@ -17,6 +17,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from .static_delivery import ImmutableAssets, TextGzipMiddleware
+from . import monitoring
+from .screening import screening_from_result
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from sqlalchemy import select, func, update
 from sqlalchemy.exc import IntegrityError
@@ -42,7 +44,7 @@ from .evaluation_workspace import router as evaluation_workspace_router
 from .research_progress import router as research_progress_router
 from .demonstrations import router as demonstrations_router
 from .task_inference import router as task_inference_router
-from .models import TaskInferenceRun
+from .models import OperationalEvent, TaskInferenceRun
 from .analysis_result import build_result
 from .operations import install_telemetry, validate_deployment_environment, telemetry_snapshot, prometheus, api_docs_enabled
 from .inference_jobs import InferenceWorker
@@ -59,11 +61,38 @@ MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 SUPPORTED_IMAGE_EXTENSIONS = SUPPORTED_EXTENSIONS
 
 
+def research_protocol_state_body(protocol_id: str, status: str, authorized_by: str) -> dict:
+    informed = protocol_id == 'COROVISION_CADRADS_INFORMED_XCA'
+    return dict(protocol_id=protocol_id, protocol_version='1.0.0', status=status,
+        authorized_by=authorized_by, authorized_at=now().isoformat(), research_mode_only=True,
+        modalities=['XCA'], anatomies=['coronary'], validation_status='experimental_unvalidated',
+        clinical_validated=False,
+        boundaries=(dict(No_measured_narrowing='exactly 0', Minimal='(0,25)', Mild='[25,50)',
+            Moderate='[50,70)', Severe='[70,100)', occlusion='100: separate assessment') if informed else
+            dict(Normal='exactly 0', Mild='(0,50)', Moderate='[50,70)',
+            Severe='[70,90)', Critical='[90,100)', occlusion='100: separate assessment')),
+        reference='https://www.jacc.org/doi/10.1016/j.jcmg.2022.07.002' if informed else 'Researcher-defined experimental intervals',
+        adaptation='Per-lesion XCA research use; not official CCTA CAD-RADS reporting')
+
+
+def seed_default_research_protocol() -> None:
+    """Opt-in (CV_AUTHORIZE_RESEARCH_PROTOCOL=1): record the deployment owner's authorization of the
+    experimental research protocol once, so a fresh demo install shows reviewer severity bands without
+    a manual click. Never overrides an existing decision (including a deliberate deactivation)."""
+    target = STORAGE / 'research_protocol_authorization.json'
+    if os.getenv('CV_AUTHORIZE_RESEARCH_PROTOCOL') != '1' or target.exists():
+        return
+    STORAGE.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(research_protocol_state_body(
+        'COROVISION_CADRADS_INFORMED_XCA', 'researcher_authorized', 'deployment_owner')))
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     validate_deployment_environment()
     Base.metadata.create_all(bind=engine)
     upgrade_local_schema(engine)
+    seed_default_research_protocol()
     with SessionLocal() as db:
         for interrupted in db.scalars(select(TaskInferenceRun).where(TaskInferenceRun.status.in_(['queued','running']))):
             interrupted.status='failed'
@@ -86,9 +115,18 @@ async def lifespan(app: FastAPI):
     if os.getenv("COROVISION_INFERENCE_WORKER", "1") == "1":
         worker = InferenceWorker(execute_analysis_job)
         worker.start()
+    monitoring.record_event('info', 'service_started', 'CoroVision API started',
+                            {'environment': os.getenv('COROVISION_ENV', 'development'), 'inference_worker': bool(worker)})
+    if monitoring.enabled():
+        monitoring.MONITOR = monitoring.Monitor(STORAGE, service_ready, telemetry_snapshot)
+        monitoring.MONITOR.start()
     try:
         yield
     finally:
+        if monitoring.MONITOR:
+            monitoring.MONITOR.close()
+            monitoring.MONITOR = None
+        monitoring.record_event('info', 'service_stopping', 'CoroVision API is stopping')
         if worker:
             worker.close()
 
@@ -311,7 +349,7 @@ def audit(db: Session, user_id: str, action: str, case_id: str | None = None):
 
 # Model findings and failures are results the requester must see too; collaboration
 # events (comments, edits, assignments) are only news to the other case members.
-REQUESTER_ALERT_KINDS = {"model_stenosis_flag", "model_multiple_regions", "analysis_quality_review",
+REQUESTER_ALERT_KINDS = {"model_stenosis_flag", "model_multiple_regions", "model_severe_flag", "analysis_quality_review",
                          "model_uncertainty_review", "analysis_failed", "validation_failed"}
 
 
@@ -326,6 +364,34 @@ def notify_case(db: Session, case: Case, actor_id: str, kind: str, message: str,
         recipient = db.get(User, recipient_id)
         if recipient and recipient.status == "active" and (roles is None or recipient.role in roles):
             db.add(Notification(user_id=recipient_id, case_id=case.id, kind=kind, message=message))
+
+
+SEVERE_AUTOMATIC_CATEGORIES = {"severe", "critical"}
+
+
+def severe_automatic_candidates(records) -> list[str]:
+    """Candidate ids whose research-grade measurement falls in a severe band.
+
+    Works for 2D records (severity is a dict with a category) and 3D candidates (severity is the band name).
+    Abstained or ungraded records never count, so an alert needs an eligible measurement.
+    """
+    found = []
+    for record in records or []:
+        if not isinstance(record, dict) or record.get("status") == "abstained":
+            continue
+        grade = record.get("severity")
+        category = grade.get("category") if isinstance(grade, dict) else grade
+        if isinstance(category, str) and category.strip().lower() in SEVERE_AUTOMATIC_CATEGORIES:
+            found.append(str(record.get("candidate_id") or record.get("id") or "?"))
+    return found
+
+
+def notify_automatic_severe(db: Session, case: Case, actor_id: str, candidate_ids: list[str]) -> None:
+    """Alert for a severe research-grade finding. It is unvalidated; the human-confirmed alert stays separate."""
+    if candidate_ids:
+        notify_case(db, case, actor_id, "model_severe_flag",
+                    f"Research-grade measurement suggests severe stenosis in {case.case_code} "
+                    f"(candidate {', '.join(candidate_ids[:3])}). Unvalidated: clinician review required")
 
 
 def report_out(report: ReportRevision) -> dict:
@@ -807,7 +873,8 @@ def my_notifications(deleted: bool = False, user: User = Depends(current_user), 
     items = db.scalars(select(Notification).where(Notification.user_id == user.id,
                        Notification.id.in_(dismissed) if deleted else Notification.id.not_in(dismissed))
                        .order_by(Notification.created_at.desc()).limit(100)).all()
-    levels = {"model_stenosis_flag": "medium", "model_multiple_regions": "medium", "analysis_quality_review": "low",
+    levels = {"model_stenosis_flag": "medium", "model_multiple_regions": "medium", "model_severe_flag": "high", "ops_alert": "high", "ops_alert_critical": "critical", "ops_test": "informational",
+              "analysis_quality_review": "low",
               "model_uncertainty_review": "low",
               "validation_failed": "high", "analysis_failed": "high",
               "severe_stenosis_reviewed": "critical", "analysis_ready": "informational"}
@@ -863,7 +930,14 @@ def dashboard_analytics(user: User = Depends(require_case_role), db: Session = D
     for case in cases:
         key = case.get("processing_status", "unknown")
         processing[key] = processing.get(key, 0) + 1
-    return {"total_cases": len(cases), "cases_analyzed": len(latest_by_case),
+    screening_counts = {"abnormal_flagged": 0, "not_flagged": 0, "indeterminate": 0}
+    for event in latest_by_case.values():
+        try:
+            saved = json.loads(event.validation_json or "{}")
+        except ValueError:
+            saved = {}
+        screening_counts[screening_from_result(saved.get("structured_result"), saved.get("vessel_analysis"), event.artery_pixels)["label"]] += 1
+    return {"total_cases": len(cases), "cases_analyzed": len(latest_by_case), "screening_distribution": screening_counts,
             "analysis_runs": len(events), "model_flagged_cases": flagged,
             "cases_without_model_flag": len(latest_by_case) - flagged,
             "clinician_severity_distribution": severity, "processing_status": processing,
@@ -1461,12 +1535,27 @@ def _execute_volume_analysis(run_id):
                 case.processing_status = 'completed'
                 case.report_status = 'draft'
             audit(db, row.created_by, 'research_3d_inference_completed', row.case_id)
+            if case is not None:
+                notify_case(db, case, row.created_by, "analysis_ready",
+                            f"3D results for {case.case_code} await clinical review", ROLE_CLINICAL_REVIEWERS)
+                try:
+                    from .volume_measurements import saved_measurement
+                    geometry = saved_measurement(folder/'outputs'/'mask_source.nii.gz')
+                    notify_automatic_severe(db, case, row.created_by, severe_automatic_candidates(geometry.get('candidates')))
+                except Exception:
+                    import logging
+                    logging.getLogger('corovision.operations').warning('volume_severity_alert_skipped run=%s', row.id)
         except Exception:
             # Do not expose file paths, image metadata or model internals to clients.
             import logging
             logging.getLogger('corovision.operations').error('volume_inference_failed run=%s', row.id)
             row.status = 'failed'
             row.error = '3D inference failed. Check input eligibility and checkpoint installation; no result was produced.'
+            failed_case = db.get(Case, row.case_id)
+            if failed_case is not None:
+                notify_case(db, failed_case, row.created_by, "analysis_failed",
+                            f"3D analysis failed for {failed_case.case_code}; no result was produced")
+            monitoring.record_event('warning', 'analysis_failed', 'A 3D analysis failed', {'kind': '3d', 'run': row.id})
         db.commit()
 
 
@@ -1620,7 +1709,7 @@ def volume_artifact(case_id: str, run_id: str, name: str,
 @app.get('/api/cases/{case_id}/volumes/analyses/{run_id}/mpr.png')
 def volume_mpr(case_id: str, run_id: str, axis: int = 2, index: int = 0,
                window: float = 800, level: float = 300, opacity: float = .55,
-               xai: str | None = None, xai_opacity: float = .7,
+               xai: str | None = None, xai_opacity: float = .7, mask_version: int | None = None,
                user: User = Depends(require_case_role), db: Session = Depends(get_db)):
     from fastapi.responses import Response
     accessible_case(case_id, user, db)
@@ -1630,6 +1719,9 @@ def volume_mpr(case_id: str, run_id: str, axis: int = 2, index: int = 0,
     folder = STORAGE/'volumes'/row.id
     source = next(folder.glob('source.nii*'), None)
     mask = folder/'outputs'/'mask_source.nii.gz'
+    if mask_version is not None:
+        from .volume_mask_review import mask_for_version
+        mask = mask_for_version(STORAGE, row.id, mask_version)
     if source is None or not mask.is_file():
         raise HTTPException(404, 'Saved source and mask pair unavailable')
     try:
@@ -1643,6 +1735,36 @@ def volume_mpr(case_id: str, run_id: str, axis: int = 2, index: int = 0,
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
     return Response(payload, media_type='image/png', headers={'Cache-Control':'no-store'})
+
+
+@app.get('/api/cases/{case_id}/volumes/analyses/{run_id}/locate')
+def volume_locate(case_id: str, run_id: str, x: float | None = None, y: float | None = None, z: float | None = None,
+                  i: int | None = None, j: int | None = None, k: int | None = None,
+                  user: User = Depends(require_case_role), db: Session = Depends(get_db)):
+    """Convert between the saved source grid (i, j, k) and the world coordinates (RAS mm) used by the measurements,
+    so a candidate location can move every linked view to the same place."""
+    import nibabel as nib
+    import numpy as np
+    accessible_case(case_id, user, db)
+    row = db.get(VolumeAnalysis, run_id)
+    if row is None or row.case_id != case_id or row.status != 'completed':
+        raise HTTPException(404, 'Completed volume analysis unavailable')
+    mask = STORAGE/'volumes'/row.id/'outputs'/'mask_source.nii.gz'
+    if not mask.is_file():
+        raise HTTPException(404, 'Saved source-grid mask unavailable')
+    image = nib.load(mask)
+    shape = image.shape[:3]
+    if None not in (x, y, z):
+        voxel = nib.affines.apply_affine(np.linalg.inv(image.affine), [x, y, z])
+        ijk = [int(round(float(v))) for v in voxel]
+    elif None not in (i, j, k):
+        ijk = [i, j, k]
+    else:
+        raise HTTPException(422, 'Give x, y and z (RAS mm) or i, j and k (voxel indices)')
+    inside = all(0 <= ijk[a] < shape[a] for a in range(3))
+    clamped = [min(max(ijk[a], 0), shape[a]-1) for a in range(3)]
+    ras = [round(float(v), 3) for v in nib.affines.apply_affine(image.affine, clamped)]
+    return dict(ijk=clamped, ras_mm=ras, inside_volume=inside, shape=list(shape))
 
 
 @app.get('/api/cases/{case_id}/volumes/analyses/{run_id}/cpr.png')
@@ -1702,6 +1824,10 @@ def volume_evidence(case_id: str, run_id: str, user: User = Depends(require_case
     review_history = geometry_review_records(STORAGE, row.id)
     if review_history:
         members['geometry_review.json'] = json.dumps(review_history, indent=2).encode()
+    from .volume_mask_review import versions as mask_review_versions
+    mask_versions = mask_review_versions(STORAGE, row.id)
+    if mask_versions:
+        members['mask_review.json'] = json.dumps(mask_versions, indent=2).encode()
     for item in document.get('explainable_ai') or []:
         coarse = STORAGE/'volumes'/row.id/'xai'/f"{item['id']}.coarse.npy"
         if item.get('status') == 'ready' and coarse.is_file() and hashlib.sha256(coarse.read_bytes()).hexdigest() == (item.get('artifact_sha256') or {}).get('coarse'):
@@ -1823,6 +1949,7 @@ def event_out(event: AnalysisEvent) -> dict:
             "vessel_analysis": evaluation.get("vessel_analysis", {}),
             "model_scores": evaluation.get("model_scores", {}),
             "structured_result": evaluation.get("structured_result"),
+            "screening": screening_from_result(evaluation.get("structured_result"), evaluation.get("vessel_analysis"), event.artery_pixels),
             "created_at": event.created_at.replace(tzinfo=timezone.utc) if event.created_at.tzinfo is None else event.created_at, "research_only": True,
             "interpretation": "Pixel masks are uncalibrated research outputs; no clinical stenosis grade is inferred."}
 
@@ -1950,37 +2077,56 @@ def registered_models(user: User = Depends(require_roles(*ROLE_MODEL_MANAGERS)))
                 "models": [{"architecture": "preserved_mask_models", "display_name": "Verified preserved training models",
                             "version": model_version(), "input_size": 512, "available": release['ready'], "active": True,
                             "mean_validation_dice": None, "checkpoint_sha256": {x['task']: x['sha256'] for x in release['models']},
-                            "tasks": release['models']}], "history": [], "research_only": True}
+                            "tasks": release['models']}], "history": [], "research_only": True,
+                "can_rollback": False, "rollback_target": None, "rollback_note": PRESERVED_RELEASE_ROLLBACK_NOTE}
     selection, registry, models = _model_registry_data()
     history = registry.get("history", [])
     if not history and selection.get("architecture"):
         history = [{"architecture": selection["architecture"], "version": selection.get("version"),
                     "activated_at": None, "activated_by": "initial project selection", "event": "initial_selection"}]
+    target_name = _model_rollback_target(history, selection.get("architecture"))
+    target = next((item for item in models if item["architecture"] == target_name and item["available"]), None)
     return {"models": models, "can_activate": user.role == "admin", "active_architecture": selection.get("architecture"),
             "model_version": selection.get("version", model_version()), "history": history,
-            "research_only": True}
+            "research_only": True, "can_rollback": bool(user.role == "admin" and target),
+            "rollback_target": ({"architecture": target["architecture"], "display_name": target["display_name"],
+                                 "version": target["version"]} if target else None),
+            "rollback_note": None if target else "No earlier model is recorded or its checkpoints are missing."}
 
 
-@app.post("/api/analysis/models/activate")
-def activate_model(data: ModelActivationIn, user: User = Depends(require_roles("admin")),
-                   db: Session = Depends(get_db)):
-    if trained_release.configured():
-        raise HTTPException(status_code=409, detail="Preserved release configured; choose the documented legacy provider before activating older models")
+PRESERVED_RELEASE_ROLLBACK_NOTE = ("The preserved release is pinned by checksum. Roll back by redeploying the previous "
+                                   "application version or installing a second hash-verified release; see docs/MODEL_ROLLBACK.md.")
+
+
+def _model_rollback_target(history: list[dict], active: str | None) -> str | None:
+    """The model that was active before the current one, taken from the audited switch history.
+
+    Only real activations count, so repeated rollbacks keep stepping back instead of toggling.
+    """
+    for entry in history:
+        if entry.get("event") == "model_activated" and entry.get("architecture") == active and entry.get("previous_architecture"):
+            return entry["previous_architecture"]
+    return None
+
+
+def _apply_model_activation(architecture: str, user: User, db: Session, *, event: str = "model_activated",
+                            extra: dict | None = None) -> dict:
+    """Switch the active research checkpoint pair and record it. Shared by activation and rollback."""
     selection, registry, models = _model_registry_data()
-    candidate = next((item for item in models if item["architecture"] == data.architecture), None)
+    candidate = next((item for item in models if item["architecture"] == architecture), None)
     if not candidate or not candidate["available"]:
         raise HTTPException(status_code=409, detail="Both task checkpoints must be present before activation")
     previous = selection.get("architecture")
-    if previous == data.architecture:
+    if previous == architecture:
         return {"detail": "This model is already active", "model_version": selection.get("version"),
-                "architecture": data.architecture}
+                "architecture": architecture}
     root = BASE_DIR / "models" / "segmentation"
     comparison = json.loads((root / "comparison_report.json").read_text())
     thresholds = {}
     for row in comparison.get("experiments", []):
-        if row.get("architecture") == data.architecture and row.get("task") in {"syntax", "stenosis"}:
+        if row.get("architecture") == architecture and row.get("task") in {"syntax", "stenosis"}:
             thresholds[row["task"]] = float(row.get("threshold", 0.5))
-    activated = {"architecture": data.architecture, "version": candidate["version"],
+    activated = {"architecture": architecture, "version": candidate["version"],
                  "training_run_id": candidate.get("training_run_id"),
                  "input_size": candidate.get("input_size", 128),
                  "selection_metric": comparison.get("selection_metric", "validation pixel Dice"),
@@ -1991,9 +2137,11 @@ def activate_model(data: ModelActivationIn, user: User = Depends(require_roles("
                  "test_split_used": False, "clinical_validation": False}
     history = registry.get("history", [])
     from datetime import datetime
-    history.insert(0, {"event": "model_activated", "architecture": data.architecture,
-                       "version": candidate["version"], "previous_architecture": previous,
-                       "activated_by": user.id, "activated_at": datetime.now(timezone.utc).isoformat()})
+    entry = {"event": event, "architecture": architecture, "version": candidate["version"],
+             "previous_architecture": previous, "activated_by": user.id,
+             "activated_at": datetime.now(timezone.utc).isoformat()}
+    entry.update(extra or {})
+    history.insert(0, entry)
     registry_path = root / "model_registry.json"
     selection_path = root / "promoted_model.json"
     registry_path.parent.mkdir(parents=True, exist_ok=True)
@@ -2003,10 +2151,31 @@ def activate_model(data: ModelActivationIn, user: User = Depends(require_roles("
     temp_registry.write_text(json.dumps({"history": history[:100]}, indent=2) + "\n")
     temp_selection.replace(selection_path)
     temp_registry.replace(registry_path)
-    audit(db, user.id, f"model_activated:{data.architecture}")
+    audit(db, user.id, f"{event}:{architecture}")
     db.commit()
-    return {"detail": "Model activated", "model_version": activated["version"],
-            "architecture": data.architecture}
+    return {"detail": "Model rolled back" if event == "model_rollback" else "Model activated",
+            "model_version": activated["version"], "architecture": architecture}
+
+
+@app.post("/api/analysis/models/activate")
+def activate_model(data: ModelActivationIn, user: User = Depends(require_roles("admin")),
+                   db: Session = Depends(get_db)):
+    if trained_release.configured():
+        raise HTTPException(status_code=409, detail="Preserved release configured; choose the documented legacy provider before activating older models")
+    return _apply_model_activation(data.architecture, user, db)
+
+
+@app.post("/api/analysis/models/rollback")
+def rollback_model(user: User = Depends(require_roles("admin")), db: Session = Depends(get_db)):
+    """One-step rollback to the model that was active before the current one (audited)."""
+    if trained_release.configured():
+        raise HTTPException(status_code=409, detail=PRESERVED_RELEASE_ROLLBACK_NOTE)
+    selection, registry, _ = _model_registry_data()
+    target = _model_rollback_target(registry.get("history", []), selection.get("architecture"))
+    if not target:
+        raise HTTPException(status_code=409, detail="No earlier model to roll back to")
+    return _apply_model_activation(target, user, db, event="model_rollback",
+                                   extra={"rolled_back_from": selection.get("architecture")})
 
 
 def analysis_input(image_id, user, db):
@@ -2061,6 +2230,7 @@ def perform_analysis(image_id, user, db, job=None):
         audit(db, user.id, "analysis_failed", case.id)
         notify_case(db, case, user.id, "analysis_failed",
                     f"AI analysis failed for {case.case_code}; check model availability and retry")
+        monitoring.record_event('warning', 'analysis_failed', 'A 2D analysis failed', {'kind': '2d'})
         db.commit()
         raise HTTPException(status_code=503, detail="Analysis unavailable; check model files") from exc
     event_id = str(uuid4())
@@ -2790,7 +2960,7 @@ def save_automatic_measurements(case_id: str, event_id: str,
         if mask is not None and not reasons:
             measured = measure_candidate(mask, gray, candidate, event.id,
                 authorization=authorization if applicable else None)
-            if applicable and measured['status'] == 'abstained' and authorization.get('status') == 'researcher_authorized':
+            if applicable and measured['status'] == 'abstained':
                 from .saved_measurement import percentile_ring_mask_estimate
                 estimate = percentile_ring_mask_estimate(mask, candidate)
                 if estimate:
@@ -2826,6 +2996,7 @@ def save_automatic_measurements(case_id: str, event_id: str,
         with target.open('x') as stream:
             json.dump(snapshot, stream, allow_nan=False)
         audit(db, user.id, f'automatic_measurement_saved:{identity}', case.id)
+        notify_automatic_severe(db, case, user.id, severe_automatic_candidates(records))
         db.commit()
     return json.loads(target.read_text())
 
@@ -3023,6 +3194,54 @@ def operations_metrics(user: User = Depends(require_roles('admin'))):
     return Response(prometheus(telemetry_snapshot()), media_type='text/plain; version=0.0.4')
 
 
+def service_ready() -> bool:
+    """Same checks as /api/health/ready, used by the background monitor."""
+    from sqlalchemy import text
+    try:
+        with SessionLocal() as db:
+            db.execute(text('SELECT 1'))
+    except Exception:
+        return False
+    return bool(STORAGE.is_dir() and os.access(STORAGE, os.W_OK) and models_ready())
+
+
+@app.get('/api/admin/operations/events')
+def operations_events(limit: int = 100, level: str | None = None, kind: str | None = None,
+                      user: User = Depends(require_roles('admin')), db: Session = Depends(get_db)):
+    return {'events': monitoring.list_events(db, limit=limit, level=level, kind=kind),
+            'retention': {'days': monitoring.RETENTION_DAYS, 'max_events': monitoring.MAX_EVENTS}}
+
+
+@app.get('/api/admin/operations/history')
+def operations_history(hours: int = 24, user: User = Depends(require_roles('admin')), db: Session = Depends(get_db)):
+    from datetime import timedelta
+    cutoff = now() - timedelta(hours=max(1, min(hours, 168)))
+    rows = db.scalars(select(OperationalEvent).where(OperationalEvent.kind == 'metrics_snapshot', OperationalEvent.created_at >= cutoff)
+                      .order_by(OperationalEvent.created_at)).all()
+    return {'snapshots': [{'at': row.created_at, **json.loads(row.details_json or '{}')} for row in rows]}
+
+
+@app.get('/api/admin/operations/alerts')
+def operations_alerts(user: User = Depends(require_roles('admin')), db: Session = Depends(get_db)):
+    signals = monitoring.collect_signals(db, STORAGE, service_ready())
+    monitor = monitoring.MONITOR
+    return {'monitor': {'enabled': monitoring.enabled(), 'running': bool(monitor), 'last_run': monitor.last_run if monitor else None},
+            'settings': monitoring.settings(), 'signals': signals, 'conditions_now': monitoring.evaluate_conditions(signals),
+            'channels': {'in_app_admin_notifications': True, 'webhook': monitoring.settings()['webhook_configured']},
+            'recent_alerts': [event for event in monitoring.list_events(db, limit=200) if event['kind'].startswith('alert_')][:20]}
+
+
+@app.post('/api/admin/operations/test-alert')
+def operations_test_alert(user: User = Depends(require_roles('admin')), db: Session = Depends(get_db)):
+    """Send a harmless test alert through every configured channel so delivery can be verified."""
+    result = monitoring.deliver_alert('test', 'info', f'Test alert requested by an administrator at {now().strftime("%H:%M:%S")} UTC')
+    audit(db, user.id, 'ops_test_alert_sent')
+    db.commit()
+    return result
+
+
+from .registration import install as install_registration  # noqa: E402
+install_registration(app, get_db=get_db, current_user=require_case_role, accessible_case=accessible_case, Image=Image)
 from .model_registry import install as install_model_registry  # noqa: E402
 install_model_registry(app, require_roles, ROLE_MODEL_MANAGERS)
 from .reference_measurements import install as install_reference_measurements  # noqa: E402
@@ -3035,6 +3254,9 @@ install_xai(app, get_db=get_db, current_user=require_case_role, accessible_case=
 from .volume_geometry_review import install as install_geometry_review  # noqa: E402
 install_geometry_review(app, get_db=get_db, current_user=require_case_role, accessible_case=accessible_case,
                         storage=STORAGE, audit=audit, VolumeAnalysis=VolumeAnalysis, reviewer_roles=ROLE_CLINICAL_REVIEWERS)
+from .volume_mask_review import install as install_mask_review  # noqa: E402
+install_mask_review(app, get_db=get_db, current_user=require_case_role, accessible_case=accessible_case,
+                    storage=STORAGE, audit=audit, VolumeAnalysis=VolumeAnalysis, reviewer_roles=ROLE_CLINICAL_REVIEWERS)
 from .volume_xai_api import install as install_volume_xai  # noqa: E402
 install_volume_xai(app, get_db=get_db, current_user=require_case_role, accessible_case=accessible_case, case_out=case_out,
                    storage=STORAGE, audit=audit, VolumeAnalysis=VolumeAnalysis)

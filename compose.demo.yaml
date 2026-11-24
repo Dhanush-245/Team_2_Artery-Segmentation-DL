@@ -25,6 +25,7 @@ services:
       OAUTH_REDIRECT_BASE: http://127.0.0.1:${COROVISION_DEMO_PORT:-8001}
       CV_LOCAL_DEMO_SESSIONS: "1"
       CV_LOCAL_DEMO_SHARING: "1"
+      CV_AUTHORIZE_RESEARCH_PROTOCOL: "1"
       CV_LOCAL_DEMO_DOCKER_PROXY: "1"
       DATABASE_URL: sqlite:////data/artery.db
       STORAGE_DIR: /data/storage

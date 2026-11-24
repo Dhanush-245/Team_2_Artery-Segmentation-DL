@@ -1,6 +1,7 @@
 # CoroVision AI dataset registry
 
-**Last reviewed:** 2026-10-13  
+**Last reviewed:** 2026-11-24 (table below dated 2026-10-13; see the status update at the end)
+
 **Policy:** Keep modality, anatomical region, label semantics, and evaluation protocol separate. No dataset in this registry is combined with another by copying files into a shared training folder.
 
 | Dataset | Local status | Modality and anatomy | Verified labels | Permitted project use | Blocking condition |
@@ -32,3 +33,21 @@
 3. Do not infer patient identity from ARCADE image IDs, ICA filename prefixes, or pixel similarity.
 4. Keep the ARCADE test split locked; never tune thresholds, select models, or report a final result from it more than once.
 5. Record checksum, source URL, version, date, split manifest, seed, code revision, environment, and metrics for every experiment.
+
+## Status update, 24 November 2026
+
+Checked against the workspace and the offline Kaggle copy. The table above is kept as written on 13 October; where this section differs, this section is newer.
+
+| Dataset | What exists now | Used for | Not re-verified in this update |
+|---|---|---|---|
+| ARCADE | Processed copy under `data/processed/arcade`; Kaggle-prepared stenosis and mask datasets | Artery segmentation and stenosis detection (release models, validation of 200 images, one-time protected test) | Patient independence of the official partitions remains unresolved |
+| CARDIAG | Archive index and split lists (10 Nov) | Candidate external audit | Not downloaded in full |
+| ICA_NJ_BinarySeg | Downloaded, 1,233 files under `data/external/ICA_NJ_BinarySeg` | Separate external vessel-mask audit | Patient grouping metadata |
+| DCA1 | `data/raw/dca1` is empty in this workspace; a prepared 2D set (`corovision-dca2d-prepared`) exists in the offline Kaggle copy | Public sample images in demonstrations | Original download and license text for the prepared copy |
+| CADICA | Archive present (about 179 MB) and a Kaggle-prepared input set | Separate stenosis experiments | Completeness of the archive |
+| ImageCAS | Prepared 128-voxel volumes (`corovision-imagecas128-prepared`, train 700 / validation 150 / test 150, seed-42 case split) and checkpoints | 3D coronary CTA segmentation release model and the scale fine-tune experiment | Access, version and license audit of the source release |
+| ASOCA | Not acquired (controlled access) | None | Permission still required |
+| AortaSeg-60, MSD Task08, TopCoW | Partial archives only (25 MB, 50 MB, 4.1 MB in `data/raw`) | Not used by the release | Completeness; not part of the coronary workflow |
+| Mendeley stenosis archive | Present (about 837 MB) | Exploratory | Labels and license not audited here |
+
+Rules unchanged: no dataset is pooled with another, test splits are never used for selection, and only public or de-identified data may enter the application.

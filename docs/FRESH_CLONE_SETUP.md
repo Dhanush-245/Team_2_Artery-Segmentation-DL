@@ -53,6 +53,15 @@ and remain a separate transfer if you intend to train models.
 These models return research predictions and raw scores; severity and clinical
 confidence remain unavailable without supporting validated measurements.
 
+To build the Docker image with an already downloaded model release, verify the ZIP
+against the SHA-256 above, then place it in a directory by itself as `models.zip`.
+Pass that directory as a named BuildKit context. The installer still verifies the
+individual checkpoints and the build does not copy the ZIP into the final image.
+
+```bash
+docker build --build-context model_archive=/absolute/path/to/model-archive -t corovision:local .
+```
+
 ## Accounts
 
 The Docker production profile is invitation-only. First create the local

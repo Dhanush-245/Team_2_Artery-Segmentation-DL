@@ -217,7 +217,11 @@
 @media (max-width: 700px) { .image-evidence-grid { grid-template-columns: minmax(0, 1fr); } }
 @media print { .image-evidence-grid figure { break-inside: avoid; } }
 .stenosis-summary-scroll { overflow-x: auto; margin-block: 1rem; }
-.stenosis-summary { width: 100%; border-collapse: collapse; text-align: left; }
+.stenosis-summary { width: 100%; min-width: 58rem; border-collapse: collapse; text-align: left; }
+.stenosis-summary td { vertical-align: top; }
+.stenosis-summary td:nth-child(n+4):nth-child(-n+7) { white-space: nowrap; }
+.stenosis-summary td:last-child { min-width: 15rem; max-width: 22rem; overflow-wrap: normal; word-break: normal; }
+.stenosis-summary .research-tag { display: block; margin-top: .25rem; width: fit-content; }
 .stenosis-summary caption { text-align: left; font-weight: 650; margin-bottom: .5rem; }
 .stenosis-summary :is(th, td) { padding: .75rem; border-bottom: 1px solid hsl(var(--border)); }
 .stenosis-summary thead { background: hsl(var(--muted)); }

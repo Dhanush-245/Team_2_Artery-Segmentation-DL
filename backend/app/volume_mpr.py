@@ -1,9 +1,36 @@
 """Authenticated on-demand MPR rendering from one saved source/mask pair."""
+from functools import lru_cache
 from io import BytesIO
+from pathlib import Path
 
 import nibabel as nib
 import numpy as np
 from PIL import Image
+
+
+@lru_cache(maxsize=1)
+def _source_array(path: str, mtime_ns: int, size: int):
+    """Decoded source volume, kept for the current study so scrolling does not decompress the CT on every slice."""
+    array = np.asarray(nib.load(path).dataobj)
+    array.flags.writeable = False
+    return array
+
+
+@lru_cache(maxsize=3)
+def _mask_array(path: str, mtime_ns: int, size: int):
+    array = np.asarray(nib.load(path).dataobj)
+    array.flags.writeable = False
+    return array
+
+
+def _plane(volume, axis, index):
+    """One slice as a basic-slicing view; much faster than np.take on the Fortran-ordered arrays NIfTI loads."""
+    return volume[(slice(None),) * axis + (index,)]
+
+
+def _cached(loader, path):
+    stat = Path(path).stat()
+    return loader(str(path), stat.st_mtime_ns, stat.st_size)
 
 
 def slice_from_coarse(coarse, coarse_affine, source, axis, index, cropped=False):
@@ -32,8 +59,8 @@ def render_mpr(source_path, mask_path, *, axis, index, window, level, opacity, p
         raise ValueError('Source and mask geometry differ')
     if not 0 <= index < source.shape[axis]:
         raise ValueError('MPR index is outside the source volume')
-    values = np.asarray(np.take(np.asarray(source.dataobj), index, axis=axis), dtype=np.float32)
-    selected = np.asarray(np.take(np.asarray(mask_image.dataobj), index, axis=axis)) > 0
+    values = np.asarray(_plane(_cached(_source_array, source_path), axis, index), dtype=np.float32)
+    selected = np.asarray(_plane(_cached(_mask_array, mask_path), axis, index)) > 0
     if not np.isfinite(values).all():
         raise ValueError('Source slice contains non-finite intensities')
     gray = np.uint8(np.clip((values - (level-window/2)) / window, 0, 1) * 255)

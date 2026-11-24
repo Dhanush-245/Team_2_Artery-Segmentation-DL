@@ -7,6 +7,7 @@ import VolumeWorkspace from "./VolumeWorkspace";
 import GlossaryPanel from "../components/GlossaryPanel";
 
 const AnalysisWorkbench = lazy(() => import("../AnalysisWorkbench"));
+const ImageRegistrationPanel = lazy(() => import("../ImageRegistrationPanel"));
 const ReviewAssessment = lazy(() => import("../ReviewAssessment"));
 
 export function WorkspaceAlerts() {
@@ -33,6 +34,7 @@ export default function AnalysisWorkspace({ reviewMode }: { reviewMode: boolean 
       jobStatus={run.analysisJob?.status} canRunAnalysis={selected?.permissions?.can_run_analysis ?? canCreateCases(user.role)}
       onCaseChange={selectCase} onImageChange={run.setSelectedImageId}
       onRun={run.handleAnalysis} onSelectAnalysis={run.showAnalysis} onUpload={() => setActiveView("cases")} onReports={() => setActiveView("reports")} />}
+    {!volumeOnly && !reviewMode && selected && selectedImage && (selected.images?.length ?? 0) > 1 && <ImageRegistrationPanel token={token} images={selected.images} imageId={selectedImage.id} />}
     <VolumeWorkspace />
     {selected && <GlossaryPanel terms={volumeOnly
       ? ["MPR", "Window / level", "MLD", "RVD", "Narrowing %", "Abstained", "Dice"]

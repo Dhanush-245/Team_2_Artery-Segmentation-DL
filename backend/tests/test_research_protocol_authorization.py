@@ -26,3 +26,18 @@ def test_explicit_authorization_is_audited_and_role_scoped():
         assert informed.json()['clinical_validated'] is False
         assert informed.json()['reference'].startswith('https://www.jacc.org/')
         client.post('/api/research/severity-protocol',headers=owner,json={**payload,'decision':'deactivate'})
+
+
+def test_opt_in_default_authorization_never_overrides_a_decision(tmp_path, monkeypatch):
+    monkeypatch.setattr(main, 'STORAGE', tmp_path)
+    monkeypatch.delenv('CV_AUTHORIZE_RESEARCH_PROTOCOL', raising=False)
+    main.seed_default_research_protocol()
+    assert not (tmp_path / 'research_protocol_authorization.json').exists()
+    monkeypatch.setenv('CV_AUTHORIZE_RESEARCH_PROTOCOL', '1')
+    main.seed_default_research_protocol()
+    import json
+    state = json.loads((tmp_path / 'research_protocol_authorization.json').read_text())
+    assert state['status'] == 'researcher_authorized' and state['clinical_validated'] is False
+    (tmp_path / 'research_protocol_authorization.json').write_text(json.dumps({'status': 'inactive'}))
+    main.seed_default_research_protocol()
+    assert json.loads((tmp_path / 'research_protocol_authorization.json').read_text())['status'] == 'inactive'

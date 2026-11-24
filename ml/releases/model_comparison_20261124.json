@@ -1,0 +1,275 @@
+{
+ "schema_version": "corovision.model-comparison.v1",
+ "generated": "2026-11-24",
+ "purpose": "Side-by-side evidence for the architectures that were trained or trialled, grouped by task.",
+ "rules": [
+  "Rows are comparable only inside one task. Tasks use different data, labels and metrics; never rank across tasks.",
+  "Inside a task, rows can still differ in input size, training length, threshold choice and how a metric is aggregated; see each row.",
+  "All values are development evidence (validation unless marked). None is an independent or clinical validation.",
+  "A model is marked Selected only when it is the one connected to the application. Rejected and Not integrated rows are kept visible on purpose."
+ ],
+ "status_labels": {
+  "release": "Selected (connected)",
+  "legacy": "Legacy research checkpoint",
+  "rejected": "Rejected",
+  "candidate": "Not integrated"
+ },
+ "tasks": [
+  {
+   "id": "artery_2d",
+   "title": "2D artery segmentation",
+   "dataset": "ARCADE SYNTAX binary artery mask",
+   "split": "Validation, 200 images",
+   "metric_keys": [
+    "dice",
+    "iou",
+    "precision",
+    "recall",
+    "specificity",
+    "hd95",
+    "assd"
+   ],
+   "rows": [
+    {
+     "name": "Tiny U-Net",
+     "family": "U-Net",
+     "status": "legacy",
+     "input_px": 128,
+     "epochs": 8,
+     "aggregation": "Pixel-pooled over the validation set",
+     "metrics": {
+      "dice": 0.6984,
+      "iou": 0.5365,
+      "precision": 0.6861,
+      "recall": 0.7111,
+      "specificity": 0.9879
+     },
+     "note": "Small baseline, threshold 0.35 chosen on validation.",
+     "source": "models/segmentation/syntax/tiny_unet_report.json"
+    },
+    {
+     "name": "Attention U-Net (128 px trial)",
+     "family": "Attention U-Net",
+     "status": "legacy",
+     "input_px": 128,
+     "epochs": 8,
+     "aggregation": "Pixel-pooled over the validation set",
+     "metrics": {
+      "dice": 0.7132,
+      "iou": 0.5542,
+      "precision": 0.7095,
+      "recall": 0.7169,
+      "specificity": 0.9891
+     },
+     "note": "Threshold 0.25. Held-out test (300 images) Dice 0.669, AUC-ROC 0.916 was recorded once in test_report.json.",
+     "source": "models/segmentation/syntax/attention_unet_report.json"
+    },
+    {
+     "name": "ResNet34 U-Net",
+     "family": "ResNet U-Net",
+     "status": "release",
+     "input_px": 512,
+     "epochs": null,
+     "aggregation": "Mean of per-image values",
+     "metrics": {
+      "dice": 0.8273,
+      "iou": 0.7122,
+      "precision": 0.8444,
+      "recall": 0.8219,
+      "specificity": 0.9943,
+      "hd95": 46.53,
+      "assd": 6.05
+     },
+     "note": "Retained release, SHA-256 ea692f8c9c65.... Boundary distances are in prepared-image pixels.",
+     "source": "reports/segmentation_boundary_metrics_20261120/arcade_artery_validation.json"
+    },
+    {
+     "name": "Attention candidate (512 px)",
+     "family": "Attention U-Net",
+     "status": "rejected",
+     "input_px": 512,
+     "epochs": null,
+     "aggregation": "Mean of per-image values",
+     "metrics": {
+      "dice": 0.828,
+      "iou": 0.7133,
+      "precision": 0.8492,
+      "recall": 0.8191,
+      "specificity": 0.9945,
+      "hd95": 46.84,
+      "assd": 6.09
+     },
+     "note": "Not promoted in model selection: its validation Dice is within 0.001 of the retained model, so it gave no meaningful gain.",
+     "source": "reports/segmentation_boundary_metrics_20261120/arcade_attention_candidate_validation.json; docs/MODEL_SELECTION_20261113.md"
+    }
+   ]
+  },
+  {
+   "id": "stenosis_2d",
+   "title": "2D stenosis localization",
+   "dataset": "ARCADE stenosis instances",
+   "split": "Validation, 200 images unless marked",
+   "metric_keys": [
+    "dice",
+    "iou",
+    "precision",
+    "recall",
+    "official_f1",
+    "fp_per_image"
+   ],
+   "rows": [
+    {
+     "name": "Tiny U-Net",
+     "family": "U-Net",
+     "status": "legacy",
+     "input_px": 128,
+     "epochs": 8,
+     "aggregation": "Pixel-pooled mask overlap",
+     "metrics": {
+      "dice": 0.2539,
+      "iou": 0.1454,
+      "precision": 0.2014,
+      "recall": 0.3435
+     },
+     "note": "Precision and recall here are pixel-level.",
+     "source": "models/segmentation/stenosis/tiny_unet_report.json"
+    },
+    {
+     "name": "Attention U-Net (128 px trial)",
+     "family": "Attention U-Net",
+     "status": "legacy",
+     "input_px": 128,
+     "epochs": 8,
+     "aggregation": "Pixel-pooled mask overlap",
+     "metrics": {
+      "dice": 0.2772,
+      "iou": 0.1609,
+      "precision": 0.2386,
+      "recall": 0.3308
+     },
+     "note": "Pixel-level precision and recall. Held-out test Dice 0.2844, AUC-ROC 0.793 recorded once.",
+     "source": "models/segmentation/stenosis/attention_unet_report.json"
+    },
+    {
+     "name": "Mask R-CNN ResNet-50-FPN",
+     "family": "Mask R-CNN",
+     "status": "release",
+     "input_px": 512,
+     "epochs": null,
+     "aggregation": "Pooled union mask; instance metrics at IoU 0.5",
+     "metrics": {
+      "dice": 0.5644,
+      "iou": 0.3931,
+      "precision": 0.3457,
+      "recall": 0.4803,
+      "official_f1": 0.4394,
+      "fp_per_image": 1.845
+     },
+     "note": "Retained release at score threshold 0.25 (SHA-256 f0bc898c95b6...). One-time protected test: official F1 0.396, precision 0.245, recall 0.547.",
+     "source": "ml/releases/corovision_20261023.json; reports/stenosis_threshold_sweep_20261120/README.md; reports/stenosis_protected_test_20261122/README.md"
+    },
+    {
+     "name": "Mask R-CNN + multiscale and geometric augmentation, score 0.25",
+     "family": "Mask R-CNN",
+     "status": "rejected",
+     "input_px": 512,
+     "epochs": 11,
+     "aggregation": "Pooled union mask; instance metrics at IoU 0.5",
+     "metrics": {
+      "dice": 0.5831,
+      "iou": 0.4115,
+      "precision": 0.2595,
+      "recall": 0.6749,
+      "official_f1": 0.4913,
+      "fp_per_image": 3.91
+     },
+     "note": "Failed the predeclared gates: precision fell by 0.086 and false positives per image doubled.",
+     "source": "Kaggle run corovision-stenosis-augment-20261122 (best checkpoint 4a54be01...)"
+    },
+    {
+     "name": "Same candidate, score 0.60 (validation-tuned)",
+     "family": "Mask R-CNN",
+     "status": "candidate",
+     "input_px": 512,
+     "epochs": 11,
+     "aggregation": "Pooled union mask; instance metrics at IoU 0.5",
+     "metrics": {
+      "dice": 0.609,
+      "precision": 0.4442,
+      "recall": 0.4901,
+      "official_f1": 0.5013,
+      "fp_per_image": 1.245
+     },
+     "note": "Passes all predeclared gates, but the threshold was chosen on these same validation images. Needs independent confirmation; not connected to the application.",
+     "source": "model-follow-up/sweep-result.json (audit AUD-20261123-0022)"
+    }
+   ]
+  },
+  {
+   "id": "volume_3d",
+   "title": "3D coronary CTA segmentation",
+   "dataset": "ImageCAS prepared 128-voxel volumes",
+   "split": "Validation, 150 volumes",
+   "metric_keys": [
+    "dice",
+    "recall",
+    "multiscale_mean_dice"
+   ],
+   "rows": [
+    {
+     "name": "3D U-Net (retained)",
+     "family": "3D U-Net",
+     "status": "release",
+     "input_px": 128,
+     "epochs": 75,
+     "aggregation": "Mean over volumes; Dice at native scale 1.0",
+     "metrics": {
+      "dice": 0.7937,
+      "recall": 0.7879,
+      "multiscale_mean_dice": 0.5991
+     },
+     "note": "Retained checkpoint b77271b1.... Multiscale mean averages scales 0.75, 1.0 and 1.33 (0.480, 0.794, 0.524).",
+     "source": "docs/MODEL_SELECTION_20261113.md; Kaggle run corovision-imagecas128-scale-ft-20261122"
+    },
+    {
+     "name": "3D attention trial (39 epochs)",
+     "family": "3D Attention U-Net",
+     "status": "rejected",
+     "input_px": 128,
+     "epochs": 39,
+     "aggregation": "Mean over volumes",
+     "metrics": {
+      "dice": 0.7945
+     },
+     "note": "Failed the minimum Dice-gain and no-recall-loss gates.",
+     "source": "docs/MODEL_SELECTION_20261113.md"
+    },
+    {
+     "name": "3D U-Net scale fine-tune (epoch 39)",
+     "family": "3D U-Net",
+     "status": "rejected",
+     "input_px": 128,
+     "epochs": 39,
+     "aggregation": "Mean over volumes; Dice at native scale 1.0",
+     "metrics": {
+      "dice": 0.7819,
+      "multiscale_mean_dice": 0.7251
+     },
+     "note": "Large gain at other scales (0.667, 0.782, 0.726) but the native-scale loss of 0.0118 exceeded the 0.01 limit.",
+     "source": "Kaggle run corovision-imagecas128-scale-ft-20261122 receipt (best sha 59d5c09b...)"
+    }
+   ]
+  }
+ ],
+ "not_implemented": [
+  "U-Net++",
+  "DeepLabV3+",
+  "nnU-Net",
+  "TransUNet",
+  "Swin-UNet",
+  "EfficientNet",
+  "DenseNet",
+  "Vision Transformer",
+  "Ensemble models"
+ ]
+}

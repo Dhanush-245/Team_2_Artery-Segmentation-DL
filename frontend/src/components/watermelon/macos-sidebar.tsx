@@ -17,13 +17,14 @@ import {
   Stethoscope,
   Microscope,
   ClipboardList,
+  Activity,
   Eye,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { canCreateCases, canOpenSection, canViewModels } from "../../permissions";
 import { demoAccountChoices, type SavedAccount } from "../../demoSessions";
 
-export type SidebarView = "overview" | "cases" | "uploads" | "reviews" | "analysis" | "models" | "xai" | "reports" | "account" | "admin" | "permissions" | "access" | "audit";
+export type SidebarView = "overview" | "cases" | "uploads" | "reviews" | "analysis" | "models" | "xai" | "reports" | "account" | "admin" | "permissions" | "access" | "audit" | "operations";
 
 export interface SidebarUser {
   id?: string;
@@ -59,6 +60,7 @@ const views = [
   { id: "permissions", label: "Roles & Permissions", icon: ShieldCheck },
   { id: "access", label: "Case Access", icon: FolderOpen },
   { id: "audit", label: "Audit Logs", icon: ClipboardList },
+  { id: "operations", label: "Operations", icon: Activity },
   { id: "account", label: "Profile & Settings", icon: User },
 ] as const;
 

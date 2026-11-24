@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
+import { screeningTone } from "./lib/screening";
 import { ZoomIn, ZoomOut, RotateCcw, Maximize2, Play, FileText } from "lucide-react";
 import type { AnalysisResult, CaseRecord, ImageRecord } from "./caseTypes";
 import AnalysisHistory from "./AnalysisHistory";
@@ -212,6 +213,11 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
           <div><dt>Artery outline</dt><dd>{stages?.artery_segmentation?.status === 'skipped' ? 'Not assessed' : analysis.artery_pixels > 0 ? 'Available' : 'No vessel pixels found'}</dd></div>
           <div><dt>Vessel measurements</dt><dd>{stages?.vessel_analysis?.status === 'skipped' || !analysis.vessel_analysis ? 'Unavailable' : 'Available for review'}</dd></div>
           <div><dt>Possible narrowing</dt><dd>{stages?.stenosis_detection?.status === 'skipped' || candidateCount == null ? 'Not assessed' : candidateCount ? `${candidateCount} saved candidate${candidateCount === 1 ? '' : 's'}` : 'No candidate locations saved'}</dd></div>
+          {analysis.screening && <div className="screening-row"><dt>Screening result</dt><dd>
+            <span className={`screening-badge tone-${screeningTone(analysis.screening.label)}`}>{analysis.screening.display}</span>
+            <small>{analysis.screening.reasons[0]}</small>
+            <details className="screening-why"><summary>How this label is set</summary><p>{analysis.screening.basis.rule}. Highest raw score {analysis.screening.basis.max_score.toFixed(2)} across {analysis.screening.basis.candidates} candidate{analysis.screening.basis.candidates === 1 ? '' : 's'}.</p><p>{analysis.screening.limitations}</p></details>
+          </dd></div>}
           <div><dt>Severity grading</dt><dd>{candidateCount == null ? 'Not assessed' : candidateCount ? 'See saved measurement assessment below' : 'No candidate to grade'}</dd></div>
         </dl>}
       </Card>
