@@ -37,7 +37,9 @@ CoroVision brings these steps into one role-based application: create a case, pr
 | **Record expert review** | Enter a doctor's decision, assessed severity, notes, and follow-up findings separately from predictions. |
 | **Track and report** | Inspect saved analysis history, report revisions, notifications, and authorized exports. |
 | **Demonstrate and verify** | Run clearly labelled synthetic severity-boundary and 3D quality fixtures and download their expected-versus-actual evidence manifest. See the [evidence policy](docs/DEMONSTRATION_EVIDENCE.md). |
-| **Control access** | Use role-specific workspaces. Case ownership and assignment still apply. |
+| **Control access** | Use role-specific actions with assigned cases by default, or an explicitly configured shared team workspace. Model engineers retain model-only access. |
+| **Review saved masks** | Save immutable 2D pixel or 3D voxel/component corrections separately from the original model mask. |
+| **Evaluate a case reference** | Attach an eligible source-aligned mask to calculate Dice, IoU and HD95 with recorded provenance. A reference upload alone does not establish independent validation. |
 
 ## The workflow
 
@@ -59,7 +61,8 @@ flowchart LR
 | Input | Current scope |
 | :--- | :--- |
 | **Coronary X-ray angiography** | 2D preparation and compatible artery/stenosis-mask inference. |
-| **CT, CTA, and MRA** | Separate research volume preparation and exports; no connected volume-inference model is implied. |
+| **Coronary CTA** | Optional compatible 3D segmentation, source-grid masks, linked MPR/surface views, CPR and quality-gated experimental measurements. Requires the separately installed checkpoint. |
+| **Other CT and MRA** | Supported volume preparation follows the case route; model inference requires a compatible installed anatomy/modality contract. |
 | **DICOM and scanned PDFs** | Supported decoding, frame/page selection, validation, and preparation within documented limits. |
 
 X-ray images and CT/MR volumes use separate processing routes. This project does **not** provide complete whole-body artery segmentation or validated automated clinical grading.
@@ -74,6 +77,8 @@ X-ray images and CT/MR volumes use separate processing routes. This project does
 | **ML Engineer** | Inspect model records and evaluation artifacts; training controls are not connected. |
 | **Viewer** | Read shared case details, recorded results, and assigned doctor information. |
 | **Administrator** | Manage users, access, audit records, and available doctor workflows within case scope. |
+
+For shared team visibility, configure `CV_CASE_VISIBILITY=shared` as described in [Shared case workspace](docs/SHARED_CASE_WORKSPACE.md). Visibility does not grant review, edit or export actions beyond the role and case permissions.
 
 Legacy `clinician` identifiers remain supported internally; the interface presents the role as **Doctor**. Institutional SSO requires a real identity-provider configuration—not a demo account name.
 
@@ -114,7 +119,7 @@ python scripts/run_local.py
 
 Then open **http://127.0.0.1:8000**. This serves the built application and API together. The scripts create private configuration and storage locally; use `python3` instead of `python` if required. Optional models, PDF conversion, and account setup are covered in the guide. The separate-server development setup is shown below.
 
-**Requirements:** Python 3.11–3.13, Node.js 20+, and npm. Scanned PDF conversion also requires Poppler's `pdftoppm`. Optional inference dependencies are in `backend/requirements-ai.txt`.
+**Requirements:** Python 3.11–3.13, Node.js 20+, and npm. PDF rendering uses the packaged PDFium dependency (`pypdfium2`). Optional inference dependencies are in `backend/requirements-ai.txt`.
 
 ### 1 · Clone the working branch
 
@@ -166,7 +171,7 @@ Weights are not included in this repository. Install compatible inference depend
 
 The preserved training-workspace models can be installed separately using the [trained release integration guide](docs/TRAINED_RELEASE_INTEGRATION.md). This connects the binary artery and ARCADE stenosis-mask baselines without committing weights, changing historical test bindings, or activating rejected candidates.
 
-For the audited end-to-end workflow, read the [master integration prompt](docs/MASTER_INTEGRATION_PROMPT.md), [audit](docs/INTEGRATION_AUDIT.md), [single-worker job deployment guide](docs/INFERENCE_JOB_DEPLOYMENT.md) and [verification report](reports/end_to_end_integration.md). Analysis jobs preserve saved masks, raw scores and evidence-based explanations; automatic severity and 3D inference remain explicitly unavailable.
+For the audited end-to-end workflow, read the [master integration prompt](docs/MASTER_INTEGRATION_PROMPT.md), [audit](docs/INTEGRATION_AUDIT.md), [single-worker job deployment guide](docs/INFERENCE_JOB_DEPLOYMENT.md) and [verification report](reports/end_to_end_integration.md). Analysis jobs preserve saved masks, raw scores and evidence-based explanations. Optional 3D functionality is described in the [CTA workspace guide](docs/3D_CASE_WORKSPACE.md); experimental severity is withheld when measurement quality or reference evidence is inadequate.
 
 </details>
 
@@ -208,6 +213,33 @@ node --test tests/*.test.mjs
 ```
 
 These checks verify implementation behavior—not clinical safety or model validity.
+
+### Reference-mask acceptance coverage
+
+The 25 November 2026 focused run passed **25 backend tests**, including 10 dedicated 2D mask-review tests, plus **55 frontend tests** and the TypeScript/Vite build. The opt-in browser test passed actual reference-file selection, invalid-file rejection and retry, saved metrics, reload, process-restart persistence and authenticated PDF/CSV/JSON downloads. Downloaded records agreed with the Evidence ZIP, and ZIP manifest hashes were checked. These checks used disposable **synthetic known-truth artifacts**, not patient images or independent expert references.
+
+Run the focused backend checks from the repository root with the backend environment active:
+
+```bash
+PYTHONPATH=backend python -m pytest backend/tests/test_image_mask_review.py backend/tests/test_volume_reference_metrics.py backend/tests/test_segmentation_metrics.py backend/tests/test_volume_mask_review.py backend/tests/test_shared_case_workspace.py -q
+```
+
+For browser acceptance, first build the frontend with `npm run build` in `frontend/`. Then start the disposable harness from the repository root:
+
+```bash
+PYTHONPATH=backend python backend/tests/serve_reference_fixture.py --directory /tmp/coro-reference-acceptance --port 8010
+```
+
+In another terminal, from `frontend/`:
+
+```bash
+E2E_REFERENCE_FIXTURE=/tmp/coro-reference-acceptance/fixture.json E2E_BASE_URL=http://127.0.0.1:8010 npx playwright test e2e/reference-upload.spec.ts --project=desktop --workers=1
+```
+
+Install the Playwright Chromium browser if needed (`npx playwright install chromium`). The fixture requires the backend test and imaging dependencies. It never executes a model and refuses a storage directory inside the checkout. Keep its private credentials, database and downloads out of Git. Stop and restart the harness with the same directory, then repeat the browser test to check retained history. The normal application remains on port **8000**; 8010 is only a temporary isolated test server. Without `E2E_REFERENCE_FIXTURE`, this test is deliberately skipped.
+
+**Remaining acceptance:** independent validation still needs a cleared unseen cohort, expert mask semantics and native-grid pairing. A real CTA case passing the strict candidate rules is still required for positive candidate navigation/measurement acceptance. Hosted authenticated workflows, recovery, monitoring and representative load need separate target evidence. Synthetic equality scores and local engineering passes do not satisfy these requirements.
+
 
 ## Documentation
 
