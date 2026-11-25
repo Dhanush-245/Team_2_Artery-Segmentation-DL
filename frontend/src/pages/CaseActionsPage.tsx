@@ -9,15 +9,13 @@ import type { CaseSort } from "../workspace/useCaseList";
 import { useWorkspace } from "../workspace/WorkspaceContext";
 import { caseStatusLabel } from "../caseTypes";
 
-function emptyFindMessage(hasCases: boolean, role: string) {
+function emptyFindMessage(hasCases: boolean) {
   if (hasCases) return "No cases match your filters.";
-  return role === "admin"
-    ? "No cases assigned to you. Administrators see only cases they own or are assigned; use Case Access to assign one."
-    : "No accessible cases yet. Create a new study or ask the case owner to share access.";
+  return "No accessible cases yet. Create a de-identified study or ask your administrator to check the workspace access policy.";
 }
 
 function FindCase() {
-  const { user, caseList, openCaseFromList } = useWorkspace();
+  const { caseList, openCaseFromList } = useWorkspace();
   const { cases, matchingCases, visibleCases, caseSearch, setCaseSearch, caseStatus, setCaseStatus, caseSort, setCaseSort,
     caseModality, setCaseModality, caseTaskFilter, setCaseTaskFilter, casePage, setCasePage, pageCount, currentPage, casesPerPage } = caseList;
   return <>
@@ -29,7 +27,7 @@ function FindCase() {
     </div>
     <div className="case-list-controls"><label>Modality<ScreenShareSelect label="Modality" value={caseModality} onChange={e => { setCaseModality(e.target.value); setCasePage(1); }}><option value="all">All modalities</option>{[...new Set(cases.map(c => c.modality))].map(v => <option key={v}>{v}</option>)}</ScreenShareSelect></label><label>Research task<ScreenShareSelect label="Research task" value={caseTaskFilter} onChange={e => { setCaseTaskFilter(e.target.value); setCasePage(1); }}><option value="all">All tasks</option>{caseTasks.map(([id, title]) => <option key={id} value={id}>{title}</option>)}</ScreenShareSelect></label></div>
     <section className="case-find-results" aria-label="Case search results"><h2>Search results <span>({matchingCases.length})</span></h2>
-      {visibleCases.length ? visibleCases.map(item => <button type="button" key={item.id} onClick={() => openCaseFromList(item.id)}><strong>{item.case_code}</strong><span>{item.modality} · {item.anatomy} · {caseStatusLabel(item)}</span><small>{(item.intended_tasks || [item.intended_task]).map(taskLabel).join(", ")}</small><span>Open case →</span></button>) : <p className="muted">{emptyFindMessage(cases.length > 0, user.role)}</p>}
+      {visibleCases.length ? visibleCases.map(item => <button type="button" key={item.id} onClick={() => openCaseFromList(item.id)}><strong>{item.case_code}</strong><span>{item.modality} · {item.anatomy} · {caseStatusLabel(item)}</span><small>{(item.intended_tasks || [item.intended_task]).map(taskLabel).join(", ")}</small><span>Open case →</span></button>) : <p className="muted">{emptyFindMessage(cases.length > 0)}</p>}
       {matchingCases.length > casesPerPage && <div className="case-pagination"><Button type="button" variant="outline" disabled={casePage <= 1} onClick={() => setCasePage(page => page - 1)}>Previous</Button><span>{currentPage} / {pageCount}</span><Button type="button" variant="outline" disabled={casePage >= pageCount} onClick={() => setCasePage(page => page + 1)}>Next</Button></div>}
     </section>
   </>;

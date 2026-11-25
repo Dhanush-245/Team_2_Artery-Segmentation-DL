@@ -912,3 +912,12 @@ a.brand:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; bo
 .v3d-block table input[type="checkbox"] { width: 18px; height: 18px; }
 
 .v3d-review-form .cv-actions button { max-width: 100%; white-space: normal; height: auto; min-height: 2rem; }
+
+.xca-section-nav { flex-wrap: wrap; }
+.analysis-console [id^="xca-"], .analysis-console #case-xai, .analysis-console #severity-assessment { scroll-margin-top: 6rem; }
+.analysis-console #xca-preprocessing dd { margin: 0; overflow-wrap: anywhere; }
+
+.v3d-subsection, .volume-subsection-heading[id], .volume-measurement-report, .v3d-block { scroll-margin-top: 10rem; }
+.v3d-subsection { margin-block: 1.25rem; }
+.v3d-nav a { min-height: 44px; display: inline-flex; align-items: center; }
+.v3d-block input[type="file"], .v3d-block textarea { max-width: 100%; min-width: 0; }

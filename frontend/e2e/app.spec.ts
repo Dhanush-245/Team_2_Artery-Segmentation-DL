@@ -40,6 +40,12 @@ test("a case with an uploaded image opens in the analysis workspace by link", as
   await expect(page.getByRole("heading", { name: /coronary analysis/i })).toBeVisible();
   await expect(page.locator(".workbench-selectors select").first()).toHaveValue(caseRecord.id);
   await expect(page.locator(".workbench-selectors select").nth(1)).toHaveValue(image.id);
+  const sections = page.getByRole("navigation", { name: "2D case sections" });
+  await expect(sections.getByRole("button")).toHaveCount(12);
+  await sections.getByRole("button", { name: "Image & Preprocessing" }).click();
+  await expect(page.locator("#xca-preprocessing")).toHaveAttribute("open", "");
+  await expect(page.locator("#xca-preprocessing")).toContainText(image.id);
+
 });
 
 test("a viewer cannot open administration", async ({ page }) => {
@@ -57,7 +63,7 @@ test("a doctor records a caliper reference measurement", async ({ page, request 
 
   await signIn(page, "doctor");
   await page.goto(`/analysis?case_id=${caseRecord.id}&image_id=${image.id}`);
-  await page.getByRole("button", { name: "Measure" }).click();
+  await page.getByRole("button", { name: "Measure", exact: true }).click();
   const layer = page.locator(".caliper-layer");
   await expect(layer).toBeVisible();
   await layer.scrollIntoViewIfNeeded();

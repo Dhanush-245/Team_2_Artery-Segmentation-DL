@@ -311,6 +311,22 @@ def share_case_with_demo_team(case: Case, owner: User, db: Session) -> int:
     return shared
 
 
+def shared_case_workspace() -> bool:
+    """Explicit deployment policy: all active case roles collaborate in one workspace."""
+    return os.getenv("CV_CASE_VISIBILITY", "assigned").strip().lower() == "shared"
+
+
+def workspace_case_action(user: User, action: str, db: Session) -> bool:
+    if not shared_case_workspace() or user.status != "active" or user.role not in CASE_ROLES:
+        return False
+    if action == "read":
+        return True
+    if action == "edit":
+        return user.role in ROLE_CASE_CREATORS
+    permission = {"upload": "case:upload", "analyze": "analysis:run", "review": "clinical_review:create"}.get(action)
+    return bool(permission and allowed_action(user, permission, db))
+
+
 def require_roles(*allowed_roles: str):
     def checker(user: User = Depends(current_user)) -> User:
         if user.role not in allowed_roles:
@@ -356,6 +372,10 @@ REQUESTER_ALERT_KINDS = {"model_stenosis_flag", "model_multiple_regions", "model
 def notify_case(db: Session, case: Case, actor_id: str, kind: str, message: str,
                 roles: set[str] | None = None) -> None:
     recipient_ids = {case.owner_id} | {entry.user_id for entry in case.access_list}
+    if shared_case_workspace():
+        recipient_ids.update(db.scalars(select(User.id).where(
+            User.status == "active", User.role.in_(CASE_ROLES)
+        )).all())
     if kind in REQUESTER_ALERT_KINDS:
         recipient_ids.add(actor_id)
     for recipient_id in recipient_ids:
@@ -439,24 +459,28 @@ def case_out(case: Case, db: Session | None = None, viewer: User | None = None) 
             latest_analyses.setdefault(event.image_id, event.id)
     assignment = next((item for item in case.access_list if viewer and item.user_id == viewer.id), None) if viewer else None
     owner = bool(viewer and case.owner_id == viewer.id)
+    workspace_editor = bool(viewer and db and workspace_case_action(viewer, "edit", db))
+    workspace_reviewer = bool(viewer and db and workspace_case_action(viewer, "review", db))
+    workspace_analyst = bool(viewer and db and workspace_case_action(viewer, "analyze", db))
     assigned_editor = bool(assignment and assignment.access_level in {"edit", "admin"})
     assigned_reviewer = bool(assignment and assignment.access_level in {"review", "edit", "admin"})
     permissions = {
-        "can_edit": bool(viewer and viewer.role in ROLE_CASE_CREATORS and (owner or assigned_editor)),
-        "can_upload": bool(viewer and db and allowed_action(viewer, "case:upload", db) and (owner or assigned_editor)),
-        "can_run_analysis": bool(viewer and db and supports_current_inference(case) and allowed_action(viewer, "analysis:run", db) and (owner or assigned_reviewer)),
-        "can_review": bool(viewer and viewer.role in ROLE_CLINICAL_REVIEWERS and (case.owner_id == viewer.id or assigned_reviewer)),
+        "can_edit": bool(viewer and viewer.role in ROLE_CASE_CREATORS and (owner or assigned_editor or workspace_editor)),
+        "can_upload": bool(viewer and db and allowed_action(viewer, "case:upload", db) and (owner or assigned_editor or workspace_editor)),
+        "can_run_analysis": bool(viewer and db and supports_current_inference(case) and allowed_action(viewer, "analysis:run", db) and (owner or assigned_reviewer or workspace_analyst)),
+        "can_review": bool(viewer and viewer.role in ROLE_CLINICAL_REVIEWERS and (case.owner_id == viewer.id or assigned_reviewer or workspace_reviewer)),
         "can_export": bool(viewer and db and allowed_action(viewer, "analysis:export", db)),
-        "can_assign": owner,
-        "can_delete": owner,
+        "can_assign": bool(viewer and (owner or viewer.role == "admin")),
+        "can_delete": bool(viewer and (owner or viewer.role == "admin")),
         "can_submit_report": bool(viewer and viewer.role in ROLE_CLINICAL_REVIEWERS and
-                                  (case.owner_id == viewer.id or assigned_reviewer)),
+                                  (case.owner_id == viewer.id or assigned_reviewer or workspace_reviewer)),
         "can_approve_report": bool(viewer and viewer.role in ROLE_CLINICAL_REVIEWERS and
-                                   viewer.can_approve_reports and (case.owner_id == viewer.id or assigned_reviewer)),
+                                   viewer.can_approve_reports and (case.owner_id == viewer.id or assigned_reviewer or workspace_reviewer)),
     }
     return {
         "id": case.id,
         "owner_id": case.owner_id,
+        "visibility": "shared" if shared_case_workspace() else "assigned",
         "assigned_doctors": [
             {"id": doctor.id, "name": ((db.get(UserProfile, doctor.id).display_name if db and db.get(UserProfile, doctor.id) else "") or "Assigned clinician"), "role": doctor.role}
             for doctor in {person.id: person for person in
@@ -517,6 +541,8 @@ def accessible_case(case_id: str, user: User, db: Session, required_action: str 
     case = db.get(Case, case_id)
     if not case or case.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Case not found")
+    if workspace_case_action(user, required_action, db):
+        return case
     if case.owner_id == user.id:
         return case
     assignment = db.scalar(
@@ -820,6 +846,8 @@ def create_case(data: CaseIn, user: User = Depends(require_roles(*ROLE_CASE_CREA
                 clinical_metadata_enabled=data.clinical_metadata_enabled)
     db.add(case)
     db.flush()
+    if shared_case_workspace():
+        audit(db, user.id, "shared_workspace_case_created", case.id)
     if share_case_with_demo_team(case, user, db):
         audit(db, user.id, "demo_case_shared", case.id)
     db.flush()
@@ -833,10 +861,10 @@ def create_case(data: CaseIn, user: User = Depends(require_roles(*ROLE_CASE_CREA
 @app.get("/api/cases")
 def list_cases(user: User = Depends(require_case_role), db: Session = Depends(get_db)):
     assigned_case_ids = select(CaseAccess.case_id).where(CaseAccess.user_id == user.id)
-    statement = select(Case).where(
-        ((Case.owner_id == user.id) | (Case.id.in_(assigned_case_ids))),
-        Case.deleted_at.is_(None),
-    ).order_by(Case.created_at.desc())
+    statement = select(Case).where(Case.deleted_at.is_(None))
+    if not workspace_case_action(user, "read", db):
+        statement = statement.where((Case.owner_id == user.id) | (Case.id.in_(assigned_case_ids)))
+    statement = statement.order_by(Case.created_at.desc())
     cases = db.scalars(statement).all()
     return [case_out(case, db, user) for case in cases]
 
@@ -1813,6 +1841,8 @@ def volume_evidence(case_id: str, run_id: str, user: User = Depends(require_case
     volume['xai'] = volume_xai_for_report(row.id)
     from .volume_geometry_review import for_report as geometry_review_for_report, records as geometry_review_records
     volume['geometry_review'] = geometry_review_for_report(STORAGE, row.id)
+    from .volume_reference_metrics import matching_records as reference_records
+    volume['reference_evaluations'] = reference_records(STORAGE, row)
     document = snapshot(volume)
     members = {'analysis.json': json.dumps(document, allow_nan=False).encode(),
         'geometry.json': json.dumps(document['experimental_geometry'], allow_nan=False).encode(),
@@ -1821,6 +1851,7 @@ def volume_evidence(case_id: str, run_id: str, user: User = Depends(require_case
         if (folder/name).is_file():
             members[name] = (folder/name).read_bytes()
     members['xai_explanations.json'] = json.dumps(document.get('explainable_ai') or [], indent=2).encode()
+    members['reference_evaluations.json'] = json.dumps(document.get('reference_evaluations', []), allow_nan=False).encode()
     review_history = geometry_review_records(STORAGE, row.id)
     if review_history:
         members['geometry_review.json'] = json.dumps(review_history, indent=2).encode()
@@ -1866,6 +1897,8 @@ def volume_research_report(case_id: str, run_id: str, format: Literal['json', 'c
         volume['xai'] = volume_xai_for_report(row.id)
         from .volume_geometry_review import for_report as geometry_review_for_report
         volume['geometry_review'] = geometry_review_for_report(STORAGE, row.id)
+        from .volume_reference_metrics import matching_records as reference_records
+        volume['reference_evaluations'] = reference_records(STORAGE, row)
         document = snapshot(volume)
     except ValueError as exc:
         raise HTTPException(409, str(exc)) from exc
@@ -3257,6 +3290,9 @@ install_geometry_review(app, get_db=get_db, current_user=require_case_role, acce
 from .volume_mask_review import install as install_mask_review  # noqa: E402
 install_mask_review(app, get_db=get_db, current_user=require_case_role, accessible_case=accessible_case,
                     storage=STORAGE, audit=audit, VolumeAnalysis=VolumeAnalysis, reviewer_roles=ROLE_CLINICAL_REVIEWERS)
+from .volume_reference_metrics import install as install_volume_reference_metrics
+install_volume_reference_metrics(app, get_db=get_db, current_user=require_case_role, accessible_case=accessible_case,
+                                storage=STORAGE, audit=audit, VolumeAnalysis=VolumeAnalysis, reviewer_roles=ROLE_CLINICAL_REVIEWERS)
 from .volume_xai_api import install as install_volume_xai  # noqa: E402
 install_volume_xai(app, get_db=get_db, current_user=require_case_role, accessible_case=accessible_case, case_out=case_out,
                    storage=STORAGE, audit=audit, VolumeAnalysis=VolumeAnalysis)
@@ -3308,3 +3344,7 @@ if frontend_dist.is_dir():
         return await http_exception_handler(request, exc)
 
 
+
+from .image_mask_review import install as install_image_mask_review
+install_image_mask_review(app, get_db=get_db, current_user=require_case_role,
+                          accessible_case=accessible_case, Image=Image, AnalysisEvent=AnalysisEvent, audit=audit)

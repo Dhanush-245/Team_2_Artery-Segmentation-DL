@@ -13,6 +13,7 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://127.0.0.1:8000}
       CV_LOCAL_DEMO_SESSIONS: "0"
       CV_LOCAL_DEMO_SHARING: "0"
+      CV_CASE_VISIBILITY: ${CV_CASE_VISIBILITY:-assigned}
       STORAGE_DIR: /data/storage
       DATABASE_URL: sqlite:////data/artery.db
       COROVISION_TRAINED_RELEASE: /models/trained_release

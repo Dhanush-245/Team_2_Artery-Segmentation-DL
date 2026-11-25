@@ -114,7 +114,7 @@ export default function CaseWorkflow({ caseRecord, token, role, onUpdated, onDel
     </Card>
     <Card className="panel">
       <h3>Case notes</h3>
-      <p className="muted">Share a quality, model, or review note with users assigned to this case.</p>
+      <p className="muted">Share a quality, model, or review note with the authorized case team.</p>
       {role !== "viewer" && <form className="workflow-comment-form" onSubmit={addComment}><select aria-label="Note category" value={category} onChange={(event) => setCategory(event.target.value as typeof category)}><option value="general">General</option><option value="quality">Image quality</option><option value="model">Model finding</option><option value="review">Clinical review</option></select><textarea aria-label="Case note" value={comment} onChange={(event) => setComment(event.target.value)} maxLength={1000} rows={2} placeholder="Add a de-identified note" required /><Button type="submit" disabled={busy || !comment.trim()}>Post note</Button></form>}
       <div className="workflow-comments">{caseRecord.comments?.length ? caseRecord.comments.map((item) => <div key={item.id}><strong>{label(item.category)} · {utcDate(item.created_at).toLocaleString()}</strong><p>{item.body}</p></div>) : <p className="muted">No notes yet.</p>}</div>
     </Card>

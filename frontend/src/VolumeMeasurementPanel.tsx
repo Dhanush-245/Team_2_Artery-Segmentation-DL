@@ -46,16 +46,18 @@ function SectionImage({ section, title }: { section: Section; title: string }) {
 export default function VolumeMeasurementPanel({ candidates }: { candidates: Candidate[] }) {
   const [chosen, setChosen] = useState('');
   const selected = candidates.find(candidate => candidate.id === chosen) ?? candidates[0];
-  if (!selected?.cross_sections?.length) return null;
+  if (!selected) return null;
   return <section aria-label="Candidate cross-section comparison">
     <h4>Perpendicular lumen sections</h4>
     <label>Geometry candidate <select value={selected.id} onChange={event => setChosen(event.target.value)}>
       {candidates.map(candidate => <option key={candidate.id} value={candidate.id}>{candidate.id} · {candidate.path_id}</option>)}
     </select></label>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 20 }}>
-      {selected.cross_sections.map((section, index) => <SectionImage key={`${selected.id}-${index}`} section={section}
+      {selected.cross_sections?.map((section, index) => <SectionImage key={`${selected.id}-${index}`} section={section}
         title={index === 0 ? 'Candidate minimum' : 'Selected reference'} />)}
     </div>
+    {!selected.cross_sections?.length && <p>Cross-section images were not saved for this run. The saved candidate diameters are shown below.</p>}
+    <p>Minimum lumen {selected.minimum_diameter_mm.toFixed(2)} mm · reference lumen {selected.reference_diameter_mm.toFixed(2)} mm</p>
     <p className="volume-measurement-result"><strong>{selected.narrowing_percent.toFixed(2)}% narrowing</strong><span>{selected.severity} · experimental</span></p>
   </section>;
 }

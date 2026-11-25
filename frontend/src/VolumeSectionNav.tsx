@@ -3,7 +3,7 @@ import { VOLUME_SECTIONS, activeSection, sourceChecklist, type SourceCheck } fro
 
 export function VolumeSectionNav() {
   const [active, setActive] = useState(VOLUME_SECTIONS[0].id);
-  const pinned = useRef<string | null>(null); // a clicked section near the page end cannot scroll to the top
+  const pinned = useRef<string | null>(null); // Keep explicit selection until the user scrolls manually.
   useEffect(() => {
     const update = () => {
       const tops: Record<string, number> = {};
@@ -11,19 +11,26 @@ export function VolumeSectionNav() {
         const element = document.getElementById(id);
         if (element) tops[id] = element.getBoundingClientRect().top;
       }
-      const atEnd = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
-      setActive(atEnd && pinned.current ? pinned.current : activeSection(tops));
+      setActive(pinned.current ?? activeSection(tops));
     };
     update();
     const release = () => { pinned.current = null; };
-    window.addEventListener("scroll", update, { passive: true });
+    document.addEventListener("scroll", update, { passive: true, capture: true });
     window.addEventListener("wheel", release, { passive: true });
     window.addEventListener("touchmove", release, { passive: true });
-    return () => { window.removeEventListener("scroll", update); window.removeEventListener("wheel", release); window.removeEventListener("touchmove", release); };
+    const keyRelease = (event: KeyboardEvent) => { if (["PageDown", "PageUp", "ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) release(); };
+    window.addEventListener("keydown", keyRelease);
+    return () => { document.removeEventListener("scroll", update, true); window.removeEventListener("wheel", release); window.removeEventListener("touchmove", release); window.removeEventListener("keydown", keyRelease); };
   }, []);
   return <nav className="v3d-nav" aria-label="3D case sections">
     {VOLUME_SECTIONS.map(({ id, label }) => <a key={id} href={`#${id}`} aria-current={active === id ? "true" : undefined}
-      onClick={event => { event.preventDefault(); pinned.current = id; document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }); }}>{label}</a>)}
+      onClick={event => { event.preventDefault();
+        const target = document.getElementById(id);
+        if (!target) return;
+        for (let parent = target.parentElement; parent; parent = parent.parentElement) if (parent instanceof HTMLDetailsElement) parent.open = true;
+        pinned.current = id; setActive(id);
+        target.setAttribute("tabindex", "-1"); target.focus({ preventScroll: true });
+        target.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }); }}>{label}</a>)}
   </nav>;
 }
 
@@ -33,18 +40,6 @@ export function VolumeSourcePanel(props: Parameters<typeof sourceChecklist>[0]) 
     <p className="eyebrow">SOURCE &amp; PREPROCESSING</p><h4>Source validation checklist</h4>
     <ul className="v3d-checks">{checks.map(check => <li key={check.label}><span className={`cv-chip ${check.status === "ok" ? "ok" : check.status === "warn" ? "warn" : "info"}`}>{check.status === "ok" ? "Checked" : check.status === "warn" ? "Review" : "Rule"}</span>
       <div><strong>{check.label}</strong><small>{check.detail}</small></div></li>)}</ul>
-  </section>;
-}
-
-export function VolumeEvaluationPanel({ modelId }: { modelId: string }) {
-  return <section id="v3d-evaluation" className="v3d-block" aria-label="Model evaluation">
-    <p className="eyebrow">MODEL EVALUATION</p><h4>What this run can and cannot report</h4>
-    <dl className="volume-summary-grid">
-      <div><dt>Model</dt><dd>{modelId}</dd></div>
-      <div><dt>Case-level Dice, IoU, HD95</dt><dd>Unavailable: no reference mask is attached to this run</dd></div>
-      <div><dt>Aggregate benchmark</dt><dd>Retained 3D U-Net validation Dice 0.7937 on 150 prepared ImageCAS volumes (development evidence, not this case&apos;s accuracy)</dd></div>
-    </dl>
-    <p className="caption">Open Model Evaluation for the architecture comparison. Benchmarks describe the model on a validation cohort; they are never shown as a score for an individual new scan.</p>
   </section>;
 }
 

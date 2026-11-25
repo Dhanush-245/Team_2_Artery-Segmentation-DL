@@ -33,7 +33,8 @@ def snapshot(run):
                     'Foreground voxel count is not accuracy, lumen diameter, disease probability or stenosis severity. '
                     'Downstream unavailable stages were not executed. Review the original volume and model limitations.'},
         'artifacts': run.get('artifacts', {}), 'limitations': result.get('limitations', []),
-        'explainable_ai': run.get('xai') or []}
+        'explainable_ai': run.get('xai') or [],
+        'reference_evaluations': run.get('reference_evaluations') or []}
     document['snapshot_sha256'] = hashlib.sha256(json.dumps(document, sort_keys=True, allow_nan=False).encode()).hexdigest()
     geometry = run.get('experimental_geometry')
     if geometry:
@@ -93,6 +94,10 @@ def csv_text(document):
                 measured.get('reference_diameter_mm'), measured.get('narrowing_percent'), measured.get('diameter_method'),
                 (measured.get('minimum') or {}).get('position_mm'), (measured.get('reference') or {}).get('position_mm'),
                 row.get('reviewer_role'), row.get('reviewed_at'), row.get('notes')]])
+    for record in document.get('reference_evaluations', []):
+        writer.writerow([])
+        writer.writerow(['reference_evaluation_id','dice','iou','hd95_mm','assd_mm','source_sha256','prediction_sha256','reference_sha256','provenance'])
+        writer.writerow([safe(x) for x in [record['id'], *[record['metrics'].get(k) for k in ('dice','iou','hd95','assd')], record['source_sha256'], record['prediction_sha256'],record['reference_sha256'],record['provenance']]])
     return stream.getvalue()
 
 
@@ -114,6 +119,14 @@ def pdf_bytes(document):
         [cell('Source volume', report.table_label), cell(' × '.join(map(str, document.get('source_shape') or [])) + ' voxels'), cell('Candidates', report.table_label), cell(len(candidates))],
     ], colWidths=[70, 174, 78, 172], style=TableStyle([('GRID',(0,0),(-1,-1),.5,colors.HexColor('#ccd8e4')),('VALIGN',(0,0),(-1,-1),'TOP'),('PADDING',(0,0),(-1,-1),7)]))
     report.story.append(summary)
+    if document.get('reference_evaluations'):
+        reference = document['reference_evaluations'][-1]
+        report.section('Case reference mask evaluation')
+        report.paragraph('Reviewer-supplied reference on the original source grid; independent clinical validation is not established.')
+        report.field('Reference evaluation', reference['id'])
+        for key, label in [('dice','Dice'),('iou','IoU'),('hd95','HD95 mm'),('assd','ASSD mm')]:
+            report.field(label, reference['metrics'].get(key))
+        report.paragraph(reference['provenance'])
     report.section('Analysis summary')
     if candidates:
         first = candidates[0]

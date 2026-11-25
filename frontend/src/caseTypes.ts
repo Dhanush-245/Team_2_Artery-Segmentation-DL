@@ -44,6 +44,7 @@ export type CaseRecord = {
   assigned_doctors?: { id: string; name: string; role: string }[];
   id: string;
   owner_id?: string;
+  visibility?: "shared" | "assigned";
   case_code: string;
   patient_code: string | null;
   age_band: string | null;

@@ -3,7 +3,7 @@ import { apiUrl } from './api';
 import { utcDate } from "./lib/time";
 
 type Record = {id:string; analysis_event_id:string; created_at:string; result:{narrowing_percent:number; minimum_diameter:number; reference_diameter:number; diameter_unit:string; candidate_id:string; reference_segment_id:string; measurement_frame:string; quality_gate?:{status:string}; severity:{status:string;category:string|null;protocol_id?:string;protocol_version?:string;reference?:string;measurement_method?:string}; explanation:{text:string}}};
-type Props = {token:string;caseId:string;imageId:string;runId:string;candidates:string[];canReview:boolean;canAssess:boolean};
+type Props = {token:string;caseId:string;imageId:string;runId:string;candidates:string[];focusedCandidate?:string;canReview:boolean;canAssess:boolean};
 const reasonLabel=(reason?:string)=>({
   mask_width_percentile_estimate:'Experimental mask-width estimate · source pixels',
   low_local_boundary_contrast:'Not assessable · insufficient vessel-boundary contrast',
@@ -60,7 +60,7 @@ const automaticEligible=(candidate?:AutomaticCandidate)=>!!candidate
   && candidate.narrowing_percent!=null && !!candidate.severity?.category;
 const automaticReason=(candidate?:AutomaticCandidate)=>candidate?.cross_section_assessment?.reasons?.[0]??candidate?.reasons?.[0];
 
-export default function StenosisMeasurements({token,caseId,imageId,runId,candidates,canReview,canAssess}:Props) {
+export default function StenosisMeasurements({token,caseId,imageId,runId,candidates,focusedCandidate,canReview,canAssess}:Props) {
   const [rows,setRows]=useState<Record[]>([]);
   const [error,setError]=useState('');
   const [loading,setLoading]=useState(true);
@@ -145,7 +145,7 @@ export default function StenosisMeasurements({token,caseId,imageId,runId,candida
     <p className="caption">The experimental measurement method uses centerline diameter and nearby-reference comparison with source-coordinate mapping, unique-vessel association, branch and contrast checks, stable-reference selection and boundary-sensitivity gating. Every compatible saved run is assessed automatically. Detection identifies a candidate; diameter measurements quantify narrowing; an eligible versioned protocol interprets the percentage. Model confidence is never used as percentage narrowing. New entries preserve previous records.</p>
     <div className="metadata"><div><span>Detected lesions</span><strong>{candidates.length || 'No candidate above threshold'}</strong></div><div><span>Saved run</span><strong>{runId}</strong></div><div><span>Automatic normal grade</span><strong>Never inferred from no detection</strong></div></div>
     {candidates.length === 0 && <p className="caption">This saved run has no retained candidate to measure. Minimum lumen diameter, reference diameter, and lesion severity are unavailable for this run.</p>}
-    {['127.0.0.1', 'localhost'].includes(window.location.hostname) && window.location.port === '8001' && <MeasurementDemo />}
+    <MeasurementDemo />
     {error&&<p role="alert">{error}</p>}
     {candidates.length > 0 && <div className="stenosis-summary-scroll" tabIndex={0} role="region" aria-label="Candidate measurement summary">
       <table className="stenosis-summary">
@@ -158,13 +158,13 @@ export default function StenosisMeasurements({token,caseId,imageId,runId,candida
           const assessedEligible=automaticEligible(assessed);
           const eligible=reviewedEligible||assessedEligible;
           const measurement = reviewedEligible ? reviewed : assessed;
-          const unit = reviewed?.diameter_unit ?? 'source px';
+          const unit = reviewedEligible ? reviewed.diameter_unit : 'source px';
           const exploratory = !eligible && assessed?.narrowing_percent != null;
           const shown = eligible ? measurement : exploratory ? assessed : undefined;
           const tag = exploratory ? <span className="research-tag">research estimate</span> : null;
           const diameter = (value?: number | null) => value == null ? 'Unavailable' : <>{value.toFixed(2)} {unit}{tag}</>;
           return <tr key={id}>
-            <th scope="row">{id}</th>
+            <th scope="row">{id}{focusedCandidate === id && <small> · Selected in viewer</small>}</th>
             <td>{segmentCell(segments,id)}</td>
             <td>{reviewed?.reference_segment_id ?? assessed?.association?.path_id ?? 'Unavailable'}</td>
             <td>{diameter(shown?.minimum_diameter)}</td>

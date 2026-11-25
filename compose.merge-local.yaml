@@ -4,6 +4,8 @@ services:
     environment:
       DEMO_CREDENTIALS_PATH: /data/demo-credentials.json
       CV_DEMO_SIGNIN_SWITCHER: "1"
+      # This application is one shared, de-identified team workspace.
+      CV_CASE_VISIBILITY: shared
 volumes:
   application-data:
     external: true

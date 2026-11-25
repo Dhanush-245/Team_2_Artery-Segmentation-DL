@@ -11,6 +11,7 @@ import { candidateViewport } from './reviewEvidence';
 import CaseXaiPanel from "./CaseXaiPanel";
 import ImagePanelGallery from './ImagePanelGallery';
 import StenosisMeasurements from './StenosisMeasurements';
+import ImageMaskReview from "./ImageMaskReview";
 import WidthProfileReview from './WidthProfileReview';
 
 const LAYER_LABELS: Record<string, string> = { source: "Original", processed: "Processed", overlay: "AI overlay", mask: "Artery mask", centerline: "Centerline graph", contours: "Vessel contours", artery_probability: "Artery probability", probability: "Stenosis probability", attention: "Feature activation", gradcam: "Grad-CAM (mask-constrained)", gradcampp: "Grad-CAM++ (mask-constrained)", localization: "Localization" };
@@ -176,7 +177,12 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
   ] as const;
   const stages = analysis?.structured_result?.stages;
   const candidateCount = analysis?.structured_result?.candidates.length;
-  const openXai = () => document.getElementById('case-xai')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  function jump(id: string) {
+    const target = document.getElementById(id);
+    if (target instanceof HTMLDetailsElement) target.open = true;
+    target?.scrollIntoView({ block: "start" });
+  }
+  const openXai = () => jump("case-xai");
   const openSeverity = () => {
     if (onReview) { onReview(); return; }
     document.getElementById('severity-assessment')?.scrollIntoView({behavior:'smooth',block:'start'});
@@ -184,8 +190,21 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
 
   return <div className="workbench-page analysis-console">
     <div className="page-heading"><div><p className="eyebrow">{reviewMode ? 'SAVED EVIDENCE' : 'IMAGING WORKSPACE'}</p><h2>{reviewMode ? 'Severity review' : 'Coronary analysis'}</h2></div><span className="stage-badge">Research only</span></div>
-    <nav className="case-section-nav" aria-label="Analysis review report workflow"><Button variant={reviewMode ? 'outline' : 'default'} onClick={onImageReview}>1 · Image Review</Button><Button variant="outline" disabled={!analysis || reviewMode} onClick={openXai}>2 · Explainable AI</Button><Button variant={reviewMode ? 'default' : 'outline'} disabled={!analysis} onClick={openSeverity}>3 · Severity Review</Button><Button variant="outline" disabled={!analysis} onClick={onReports}>4 · Reports</Button></nav>
-    <div className="workbench-selectors">
+    {!reviewMode ? <nav className="case-section-nav xca-section-nav" aria-label="2D case sections">
+      <Button variant="outline" onClick={() => jump("xca-overview")}>Overview</Button>
+      <Button variant="outline" disabled={!selectedImage} onClick={() => jump("xca-preprocessing")}>Image &amp; Preprocessing</Button>
+      <Button variant="outline" disabled={!selectedImage} onClick={() => jump("xca-viewer")}>2D Viewer</Button>
+      <Button variant="outline" disabled={!analysis} onClick={() => jump("xca-segmentation")}>Artery Segmentation</Button>
+      <Button variant="outline" disabled={!analysis} onClick={() => jump(analysis?.vessel_analysis && stages?.vessel_analysis?.status !== "skipped" ? "xca-vessel-result" : "xca-vessel")}>Vessel Analysis</Button>
+      <Button variant="outline" disabled={!analysis} onClick={() => jump("xca-candidates")}>Stenosis Candidates</Button>
+      <Button variant="outline" disabled={!analysis} onClick={() => jump("severity-assessment")}>MLD/RVD Measurements</Button>
+      <Button variant="outline" disabled={!analysis} onClick={openSeverity}>Research Severity</Button>
+      <Button variant="outline" disabled={!analysis} onClick={openXai}>Explainable AI</Button>
+      <Button variant="outline" disabled={!analysis} onClick={() => jump("xca-models")}>Model Evaluation</Button>
+      <Button variant="outline" disabled={!selectedImage} onClick={() => jump("xca-history")}>Review &amp; History</Button>
+      <Button variant="outline" disabled={!analysis} onClick={onReports}>Reports &amp; Exports</Button>
+    </nav> : <nav className="case-section-nav" aria-label="Analysis review report workflow"><Button variant={reviewMode ? 'outline' : 'default'} onClick={onImageReview}>1 · Image Review</Button><Button variant="outline" disabled={!analysis || reviewMode} onClick={openXai}>2 · Explainable AI</Button><Button variant={reviewMode ? 'default' : 'outline'} disabled={!analysis} onClick={openSeverity}>3 · Severity Review</Button><Button variant="outline" disabled={!analysis} onClick={onReports}>4 · Reports</Button></nav>}
+    <div className="workbench-selectors" id="xca-overview">
       <label>Case<select value={selectedCase?.id || ""} onChange={(event) => onCaseChange(event.target.value)}><option value="">Select a case</option>{cases.map((item) => <option value={item.id} key={item.id}>{item.case_code} · {item.status}</option>)}</select></label>
       <label>Study image<select value={selectedImage?.id || ""} onChange={(event) => onImageChange(event.target.value)} disabled={!selectedCase?.images.length}><option value="">Select an image</option>{selectedCase?.images.map((item) => <option value={item.id} key={item.id}>{item.original_name}</option>)}</select></label>
       <label>Saved analysis run<select value={analysis?.id || ''} disabled={!history.length} onChange={e => { const run = history.find(r => r.id === e.target.value); if (run) onSelectAnalysis(run); }}><option value="">Select a saved run</option>{history.map(r => <option key={r.id} value={r.id}>{utcDate(r.created_at).toLocaleString()} · {r.id.slice(0, 8)}</option>)}</select></label>
@@ -226,8 +245,19 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
         <div><span>SAVED RUN</span><strong>{analysis?.id || 'No saved analysis'}</strong><small>{analysis?.model_version || 'Select a recorded result'}</small></div>
         <div><span>CALIBRATION</span><strong>{selectedImage.spacing_mm || 'Not available'}</strong><small>{selectedImage.spacing_mm ? 'Source spacing; measurement review required' : 'Widths shown in source pixels only'}</small></div>
       </div>
+      <details className="panel evidence-details" id="xca-preprocessing">
+        <summary>Image and preprocessing provenance</summary>
+        <dl className="metadata">
+          <div><dt>Case ID</dt><dd>{selectedCase?.id ?? "Unavailable"}</dd></div>
+          <div><dt>Image ID</dt><dd>{selectedImage.id}</dd></div>
+          <div><dt>Source frame</dt><dd>{selectedImage.frame_index ?? "Single image or unavailable"}</dd></div>
+          <div><dt>Pipeline version</dt><dd>{selectedImage.processing_record?.pipeline_version ?? "Unavailable"}</dd></div>
+        </dl>
+        {!!selectedImage.preprocessing?.length && <ul>{selectedImage.preprocessing.map((step, index) => <li key={index}>{step}</li>)}</ul>}
+        {!!selectedImage.processing_record?.warnings?.length && <ul>{selectedImage.processing_record.warnings.map((warning, index) => <li key={index}>{warning}</li>)}</ul>}
+      </details>
       <div className="workbench-grid">
-        <Card className="panel workbench-viewer-panel">
+        <Card className="panel workbench-viewer-panel" id="xca-viewer">
           <div className="viewer-heading"><h3>Stenosis analysis</h3><span>{selectedImage.width} × {selectedImage.height} source pixels</span></div>
           <div className="workbench-layer-tabs" role="group" aria-label="Image layer">
             {(["localization", "source", "processed", "mask", "overlay", "centerline", "contours", "artery_probability", "probability", "attention", "gradcam", "gradcampp"] as const).map((item) => { const available = item === 'source' ? !!source : item === 'processed' || item === 'localization' ? !!(processedPreview || overlay) : item === 'overlay' ? !!overlay : !!xaiLayers[item]; return <button key={item} type="button" disabled={!available} title={available ? undefined : 'No valid saved artifact is available for this layer'} aria-pressed={mode === item} className={mode === item ? "active" : ""} onClick={() => setMode(item)}>{item === "localization" ? "Localization" : item === "source" ? "Original" : item === "processed" ? "Processed" : item === 'mask' ? 'Artery mask' : item === "overlay" ? "AI overlay" : item === "contours" ? "Vessel contours" : item === "centerline" ? "Centerline graph" : item === "artery_probability" ? "Artery probability" : item === "attention" ? "Feature activation" : item === "probability" ? "Stenosis probability" : item === "gradcampp" ? "Grad-CAM++" : "Grad-CAM"}</button>; })}
@@ -324,11 +354,12 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
           {analysis && !selectedLesion && <WidthProfileReview expanded key={analysis.id} value={analysis.vessel_analysis?.width_profiles} runId={analysis.id} />}
           {assessment}
           {analysis && <p className="caption">Selected run: {analysis.id} · Job: {analysis.structured_result?.job_id || 'Legacy run; job unavailable'}</p>}
+          <div id="xca-candidates" />
           {analysis?.structured_result?.candidates?.length ? <details open className="evidence-details"><summary>Candidate evidence · {analysis.structured_result.candidates.length}</summary>{analysis.structured_result.candidates.map(candidate => <button type="button" className="candidate-focus" key={candidate.candidate_id} aria-pressed={focusedCandidate === candidate.candidate_id} disabled={!candidate.bbox_prepared_xyxy && !candidate.polygon_prepared_xy?.length} onClick={() => focusCandidate(candidate)}><strong>{candidate.candidate_id} · raw score {candidate.model_score?.toFixed(4) ?? 'Unavailable'}</strong><small>Prepared bounds: {candidate.bbox_prepared_xyxy?.join(', ') || 'Unavailable'} · {candidate.association_status?.replaceAll('_', ' ') || 'No vessel association'}</small></button>)}<p className="caption">Click to focus. Model candidates are not confirmed lesions.</p></details> : null}
           <p className="eyebrow">MODEL OUTPUT</p><h3>{analysis ? "Analysis complete" : "Ready for analysis"}</h3>
           <p className="muted">{selectedCase?.case_code} · {selectedImage.original_name}</p>
           <div className="metadata"><div><span>Study modality</span><strong>{selectedImage.modality || selectedCase?.modality}</strong></div><div><span>Pixel spacing</span><strong>{selectedImage.spacing_mm || "Unavailable"}</strong></div></div>
-          {analysis && <details className="evidence-details"><summary>Segmentation outputs & run timing</summary><div className="metadata">
+          {analysis && <details className="evidence-details" id="xca-segmentation"><summary>Segmentation outputs & run timing</summary><div className="metadata">
             <div><span>Artery mask</span><strong>{analysis.structured_result?.stages.artery_segmentation?.status === 'skipped' ? 'Not assessed' : `${analysis.artery_pixels.toLocaleString()} px`}</strong></div>
             <div><span>Suspected stenosis mask</span><strong>{analysis.structured_result?.stages.stenosis_detection?.status === 'skipped' ? 'Not assessed' : analysis.model_scores?.pixel_counts_unavailable ? 'Not saved' : `${analysis.stenosis_pixels.toLocaleString()} px`}</strong></div>
             <div><span>Run timestamp</span><strong>{utcDate(analysis.created_at).toLocaleString()}</strong></div>
@@ -336,7 +367,8 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
             <div><span>Mean artery pixel score</span><strong>{analysis.model_scores?.artery_foreground_mean_probability == null ? "Unavailable" : `${(analysis.model_scores.artery_foreground_mean_probability * 100).toFixed(1)}%`}</strong></div>
             <div><span>Mean stenosis pixel score</span><strong>{analysis.model_scores?.stenosis_foreground_mean_probability == null ? "Unavailable" : `${(analysis.model_scores.stenosis_foreground_mean_probability * 100).toFixed(1)}%`}</strong></div>
           </div><p className="caption">{analysis.interpretation} Mean foreground scores are uncalibrated pixel probabilities, not diagnostic confidence.</p></details>}
-          {analysis?.vessel_analysis && analysis.structured_result?.stages.vessel_analysis?.status !== 'skipped' && <details className="evidence-details"><summary>Vessel measurements & quality checks</summary>
+          <div id="xca-vessel" hidden={!!analysis?.vessel_analysis && stages?.vessel_analysis?.status !== "skipped"} />
+          {analysis?.vessel_analysis && analysis.structured_result?.stages.vessel_analysis?.status !== 'skipped' && <details className="evidence-details" id="xca-vessel-result"><summary>Vessel measurements & quality checks</summary>
             <div className="metadata"><div><span>Centerline length</span><strong>{analysis.vessel_analysis.centerline_length.toLocaleString()} {analysis.vessel_analysis.diameter_unit}</strong></div><div><span>Mean sampled mask width</span><strong>{analysis.vessel_analysis.mean_diameter == null ? "Unavailable" : `${analysis.vessel_analysis.mean_diameter} ${analysis.vessel_analysis.diameter_unit}`}</strong></div><div><span>Sampled mask-width range (minimum to maximum)</span><strong>{analysis.vessel_analysis.minimum_diameter == null || analysis.vessel_analysis.maximum_diameter == null ? "Unavailable" : `${analysis.vessel_analysis.minimum_diameter}–${analysis.vessel_analysis.maximum_diameter} ${analysis.vessel_analysis.diameter_unit}`}</strong></div><div><span>Projected mask area</span><strong>{analysis.vessel_analysis.projected_mask_area?.toLocaleString() ?? "Unavailable"} {analysis.vessel_analysis.area_unit}</strong></div><div><span>Cross-sectional area</span><strong>{analysis.vessel_analysis.cross_section_area == null ? "Needs 3D scan" : `${analysis.vessel_analysis.cross_section_area} ${analysis.vessel_analysis.area_unit}`}</strong></div><div><span>Branch points / endpoints</span><strong>{analysis.vessel_analysis.branching_points ?? "—"} / {analysis.vessel_analysis.endpoints ?? "—"}</strong></div><div><span>Continuity / tortuosity</span><strong>{analysis.vessel_analysis.continuity_ratio?.toFixed(2) ?? "Unavailable"} / {analysis.vessel_analysis.tortuosity?.toFixed(2) ?? "Unavailable"}</strong></div><div><span>Connected candidates</span><strong>{analysis.vessel_analysis.connected_components}</strong></div><div><span>Boundary length</span><strong>{analysis.vessel_analysis.boundary_length?.toLocaleString() ?? "Unavailable"} {analysis.vessel_analysis.diameter_unit}</strong></div><div><span>Diameter variation (CV)</span><strong>{analysis.vessel_analysis.diameter_cv?.toFixed(3) ?? "Unavailable"}</strong></div></div>
             <div className="metadata"><div><span>Centerline paths</span><strong>{analysis.vessel_analysis.centerline_paths?.length ?? "Unavailable"}</strong></div><div><span>Topology review</span><strong>{analysis.vessel_analysis.quality_status?.replaceAll("_", " ") ?? "Unavailable"}</strong></div><div><span>Near-threshold pixels</span><strong>{analysis.vessel_analysis.uncertain_pixel_fraction == null ? "Unavailable" : `${(analysis.vessel_analysis.uncertain_pixel_fraction * 100).toFixed(1)}%`}</strong></div></div>
             {analysis.vessel_analysis.threshold_sensitivity?.evaluations?.length ? <div className="vessel-candidates"><strong>Centerline threshold sensitivity · reference {analysis.vessel_analysis.threshold_sensitivity.reference_threshold.toFixed(2)}</strong><ul>{analysis.vessel_analysis.threshold_sensitivity.evaluations.map((row) => <li key={row.threshold}>Threshold {row.threshold.toFixed(2)} · mask Dice {row.mask_dice_vs_selected.toFixed(2)} · {row.path_count} paths · {row.branch_points} junctions</li>)}</ul><p className="caption">Status: {analysis.vessel_analysis.threshold_sensitivity.status.replaceAll("_", " ")}. The Dice comparison is against the selected-threshold mask, not a ground-truth score.</p></div> : null}
@@ -358,11 +390,12 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
         </article>)}</div>
         {!!xaiFailures.length && <p role="alert" className="xai-error">Some saved explanation artifacts could not be loaded. The analysis result is unchanged.</p>}
       </Card>}
-      {analysis && <Card className="panel"><details className="evidence-details"><summary>Model provenance, structured explanation & limitations</summary><pre className="provenance-json">{JSON.stringify({ model: analysis.model_version, models: analysis.structured_result?.models, preprocessing: analysis.structured_result?.input || selectedImage.processing_record }, null, 2)}</pre><ResultEvidence result={analysis.structured_result} /></details></Card>}
+      {analysis && <Card className="panel"><details className="evidence-details" id="xca-models"><summary>Model provenance, structured explanation & limitations</summary><p className="caption">Case-level Dice, IoU and boundary distances require an eligible expert mask matched to this exact source frame.</p><pre className="provenance-json">{JSON.stringify({ model: analysis.model_version, models: analysis.structured_result?.models, preprocessing: analysis.structured_result?.input || selectedImage.processing_record }, null, 2)}</pre><ResultEvidence result={analysis.structured_result} /></details></Card>}
       {analysis && selectedCase && !reviewMode && <Card className="panel"><CaseXaiPanel key={analysis.id} token={token} caseId={selectedCase.id} runId={analysis.id} preparedUrl={processedPreview} /></Card>}
       {analysis && <Card className="panel"><ImagePanelGallery token={token} imageId={selectedImage.id} runId={analysis.id} modelVersion={analysis.model_version} candidateCount={analysis.structured_result?.candidates.length} /></Card>}
-      {analysis && selectedCase && <div id="severity-assessment"><Card className="panel"><StenosisMeasurements key={analysis.id} token={token} caseId={selectedCase.id} imageId={selectedImage.id} runId={analysis.id} candidates={analysis.structured_result?.candidates.map(c=>c.candidate_id)||[]} canReview={!!selectedCase.permissions?.can_review} canAssess={!!(selectedCase.permissions?.can_run_analysis||selectedCase.permissions?.can_review)} /></Card></div>}
-      <AnalysisHistory imageId={selectedImage.id} token={token} history={history} onSelect={onSelectAnalysis} />
+      {analysis && selectedCase && <div id="severity-assessment"><Card className="panel"><StenosisMeasurements key={analysis.id} token={token} caseId={selectedCase.id} imageId={selectedImage.id} runId={analysis.id} focusedCandidate={focusedCandidate} candidates={analysis.structured_result?.candidates.map(c=>c.candidate_id)||[]} canReview={!!selectedCase.permissions?.can_review} canAssess={!!(selectedCase.permissions?.can_run_analysis||selectedCase.permissions?.can_review)} /></Card></div>}
+      {analysis && <ImageMaskReview key={analysis.id} imageId={selectedImage.id} runId={analysis.id} token={token} sourceHash={selectedImage.processing_record?.source_sha256} canReview={!!selectedCase?.permissions?.can_review} />}
+      <div id="xca-history"><AnalysisHistory imageId={selectedImage.id} token={token} history={history} onSelect={onSelectAnalysis} /></div>
     </>}
   </div>;
 }

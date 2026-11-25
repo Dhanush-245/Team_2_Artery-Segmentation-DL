@@ -28,7 +28,7 @@ test("source checklist states only what the run recorded", () => {
 });
 
 test("every section anchor exists on the 3D case page", () => {
-  const page = ["VolumeInference", "VolumeSectionNav", "VolumeLinkedViewer", "VolumeMaskReviewPanel"]
+  const page = ["VolumeInference", "VolumeSectionNav", "VolumeLinkedViewer", "VolumeMaskReviewPanel", "VolumeReferenceMetrics"]
     .map(name => fs.readFileSync(new URL(`../src/${name}.tsx`, import.meta.url), "utf8")).join("\n");
   for (const { id } of VOLUME_SECTIONS) assert.ok(page.includes(`id="${id}"`), id);
 });

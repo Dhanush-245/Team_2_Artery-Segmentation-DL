@@ -44,9 +44,10 @@ export default function CasesPage() {
       <span className="stage-badge">{copy.badge}</span>
     </div>
     <WorkspaceAlerts />
+    {selected?.visibility === "shared" && <p className="muted">Shared team case · visible to all active case-workspace users. Available actions follow your role.</p>}
     {selected && <><p className="muted">{selected.modality} · {selected.anatomy} · {(selected.intended_tasks || [selected.intended_task]).map(taskLabel).join(", ")} · {selected.source_dataset || "Source not recorded"}</p><nav className="case-section-nav" aria-label="Case sections">{CASE_SECTIONS.map(([id, title]) => <Button key={id} type="button" variant={caseSection === id ? "default" : "outline"} aria-pressed={caseSection === id} onClick={() => setCaseSection(id)}>{title}</Button>)}<Button type="button" variant="outline" onClick={() => setActiveView("analysis")}>Open analysis</Button><Button type="button" variant="outline" onClick={() => setActiveView("reports")}>Reports</Button></nav></>}
     {!selected ? (
-      <div className="placeholder">{user.role === "viewer" ? "Select an assigned case from the sidebar to view." : "Create a de-identified case to upload an angiography image."}</div>
+      <div className="placeholder">{user.role === "viewer" ? "Select an accessible case from the sidebar to view." : "Create a de-identified case to upload an angiography image."}</div>
     ) : (
       <div className={`analysis-grid ${caseSection === "assets" ? "case-assets-layout" : ""}`}>
         {caseSection === "overview" && <CaseWorkflow caseRecord={selected} token={token} role={user.role}
