@@ -50,6 +50,8 @@ export default function VolumeCprReview({ caseId, runId, token, paths, estimates
   useEffect(() => { if (focusPathId && ordered.some(item => item.id === focusPathId)) setPathId(focusPathId); }, [focusNonce]); // eslint-disable-line react-hooks/exhaustive-deps
   const path = ordered.find(item => item.id === pathId) ?? ordered[0];
   const [rotation, setRotation] = useState(0);
+  const [expanded, setExpanded] = useState(true);
+  const [opacity, setOpacity] = useState(.3);
   const [win, setWin] = useState(800);
   const [level, setLevel] = useState(300);
   const [image, setImage] = useState("");
@@ -71,7 +73,7 @@ export default function VolumeCprReview({ caseId, runId, token, paths, estimates
   useEffect(() => {
     if (!path) return;
     const controller = new AbortController();
-    const query = new URLSearchParams({ path_id: path.id, rotation: String(rotation), window: String(win), level: String(level) });
+    const query = new URLSearchParams({ path_id: path.id, rotation: String(rotation), window: String(win), level: String(level), opacity: String(opacity) });
     const timer = setTimeout(async () => {
       setLoading(true); setError("");
       try {
@@ -85,7 +87,7 @@ export default function VolumeCprReview({ caseId, runId, token, paths, estimates
       } finally { if (!controller.signal.aborted) setLoading(false); }
     }, 150);
     return () => { clearTimeout(timer); controller.abort(); };
-  }, [base, auth, path, rotation, win, level]);
+  }, [base, auth, path, rotation, win, level, opacity]);
   useEffect(() => () => { if (current.current) URL.revokeObjectURL(current.current); }, []);
 
   const loadReviews = useMemo(() => async () => {
@@ -116,7 +118,7 @@ export default function VolumeCprReview({ caseId, runId, token, paths, estimates
   };
   const marker = (mm: number | null, kind: string) => mm == null ? null : <i className={`volume-cpr-marker ${kind}`} style={{ left: `${(mm / path.length_mm) * 100}%` }} aria-hidden="true" />;
   const preset = WINDOW_PRESETS.find(p => p.window === win && p.level === level)?.id ?? "custom";
-  const frameWidth = `min(100%, ${Math.round(CPR_DISPLAY_HEIGHT_PX * path.length_mm / (2 * CPR_HALF_WIDTH_MM))}px)`;
+  const frameWidth = expanded ? "100%" : `min(100%, ${Math.round(CPR_DISPLAY_HEIGHT_PX * path.length_mm / (2 * CPR_HALF_WIDTH_MM))}px)`;
 
   return <section className="volume-mpr volume-cpr" aria-labelledby="volume-cpr-title">
     <div className="volume-mpr-heading">
@@ -125,7 +127,7 @@ export default function VolumeCprReview({ caseId, runId, token, paths, estimates
         {ordered.map(item => <option key={item.id} value={item.id}>{item.id} · {item.length_mm.toFixed(1)} mm{narrowing.has(item.id) ? ` · est. ${narrowing.get(item.id)?.toFixed(0)}% narrowing` : ""}</option>)}
       </select></label>
     </div>
-    <div className="volume-cpr-stage">
+    <div className={`volume-cpr-stage${expanded ? " volume-cpr-expanded" : ""}`}>
       <div className="volume-cpr-frame" style={{ width: frameWidth }}>
         {image && <img src={image} onClick={pickOnImage} alt={`Straightened reformation of ${path.id}, ${path.length_mm.toFixed(1)} mm long, rotated ${rotation} degrees; predicted mask in cyan`} />}
         {marker(minimum, "minimum")}{marker(reference, "reference")}
@@ -134,9 +136,12 @@ export default function VolumeCprReview({ caseId, runId, token, paths, estimates
       {error && <p role="alert" className="volume-mpr-error">{error}</p>}
     </div>
     <div className="volume-cpr-profile-frame" style={{ width: frameWidth }}><WidthProfile path={path} minimum={minimum} reference={reference} onPick={place} /></div>
+    <label>Display proportions <select value={expanded ? 'expanded' : 'physical'} onChange={event => setExpanded(event.target.value === 'expanded')}><option value="expanded">Expand path to panel width</option><option value="physical">Preserve physical proportions</option></select></label>
+    <p className="caption">{expanded ? 'Horizontal display is expanded for inspection; image proportions are not a physical scale. ' : 'Physical proportions preserved. ' }All measurements use saved 3D coordinates. This path is only {path.length_mm.toFixed(1)} mm long.</p>
     <p className="caption">Left = path start, right = end ({path.length_mm.toFixed(1)} mm); the curve shows the predicted-mask width along the path. Click the image or the curve to place the <strong>{placing}</strong> marker.</p>
     <div className="volume-mpr-controls">
       <label className="volume-mpr-opacity"><span>Rotation · {rotation}°</span><input type="range" min={0} max={165} step={15} value={rotation} onChange={event => setRotation(Number(event.target.value))} aria-label="Rotation about the vessel axis" /></label>
+      <label>Mask overlay {Math.round(opacity * 100)}%<input aria-label="CPR mask overlay opacity" type="range" min="0" max=".8" step=".05" value={opacity} onChange={event => setOpacity(Number(event.target.value))} /></label>
       <label>Preset <select value={preset} onChange={event => { const p = WINDOW_PRESETS.find(item => item.id === event.target.value); if (p) { setWin(p.window); setLevel(p.level); } }}>
         {WINDOW_PRESETS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}{preset === "custom" && <option value="custom">Custom</option>}
       </select></label>

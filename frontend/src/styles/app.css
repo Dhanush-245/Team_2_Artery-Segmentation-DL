@@ -921,3 +921,7 @@ a.brand:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; bo
 .v3d-subsection { margin-block: 1.25rem; }
 .v3d-nav a { min-height: 44px; display: inline-flex; align-items: center; }
 .v3d-block input[type="file"], .v3d-block textarea { max-width: 100%; min-width: 0; }
+
+.volume-cpr-expanded .volume-cpr-frame img { width: 100%; height: 280px; object-fit: fill; }
+.volume-cpr-stage { min-width: 0; }
+.volume-summary-grid > div { min-width: 0; overflow-wrap: anywhere; }

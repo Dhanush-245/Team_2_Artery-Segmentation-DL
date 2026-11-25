@@ -1795,6 +1795,24 @@ def volume_locate(case_id: str, run_id: str, x: float | None = None, y: float | 
     return dict(ijk=clamped, ras_mm=ras, inside_volume=inside, shape=list(shape))
 
 
+@app.get('/api/cases/{case_id}/volumes/analyses/{run_id}/source-validation')
+def volume_source_validation(case_id: str, run_id: str, user: User = Depends(require_case_role), db: Session = Depends(get_db)):
+    accessible_case(case_id, user, db)
+    row = db.get(VolumeAnalysis, run_id)
+    if row is None or row.case_id != case_id or row.status != 'completed':
+        raise HTTPException(404, 'Completed volume analysis unavailable')
+    folder = STORAGE/'volumes'/row.id
+    source = next(folder.glob('source.nii*'), None)
+    mask = folder/'outputs'/'mask_source.nii.gz'
+    if source is None or not mask.is_file():
+        raise HTTPException(404, 'Saved source and prediction unavailable')
+    from .volume_source_validation import validate_saved_source
+    try:
+        return validate_saved_source(source, mask, row.source_sha256)
+    except (ValueError, OSError) as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
 @app.get('/api/cases/{case_id}/volumes/analyses/{run_id}/cpr.png')
 def volume_cpr(case_id: str, run_id: str, path_id: str = Query(pattern=r'^P\d{1,5}$'), rotation: float = 0,
                window: float = 800, level: float = 300, opacity: float = .45,

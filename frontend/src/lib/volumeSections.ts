@@ -34,7 +34,7 @@ export type SourceCheck = { label: string; status: "ok" | "info" | "warn"; detai
 /** Checklist built only from what the saved run records; nothing is asserted that was not stored. */
 export function sourceChecklist(run: {
   input_kind: string; source_shape: number[]; preprocessing?: { version?: string; roi?: { fov_mm: number } | null };
-  hasSourceGridMask: boolean;
+  hasSourceGridMask: boolean; validation?: { status: string; detail: string };
 }): SourceCheck[] {
   return [
     { label: "Source type", status: run.input_kind === "medical_study" ? "ok" : "warn",
@@ -42,8 +42,8 @@ export function sourceChecklist(run: {
         : run.input_kind === "synthetic_fixture" ? "Synthetic geometry test, not a medical image" : "Source provenance unspecified (legacy run)" },
     { label: "Volume geometry", status: run.source_shape.length === 3 ? "ok" : "warn",
       detail: run.source_shape.length === 3 ? `${run.source_shape.join(" × ")} voxels read from the saved source` : "Shape not recorded" },
-    { label: "Series validation", status: "info",
-      detail: "DICOM series identity, slice order, orientation and spacing are checked before inference; NIfTI headers must give millimetres. Invalid input is rejected, not reconstructed." },
+    { label: "Saved source validation", status: run.validation?.status === "checked" ? "ok" : run.validation?.status === "failed" ? "warn" : "info",
+      detail: run.validation?.detail ?? "Checking saved source geometry. Original DICOM-series identity is a separate acquisition check." },
     { label: "Model input preparation", status: run.preprocessing?.version ? "ok" : "info",
       detail: [run.preprocessing?.version ? `Preprocessing ${run.preprocessing.version}` : "Preprocessing version not recorded",
         run.preprocessing?.roi ? `heart-centred ${run.preprocessing.roi.fov_mm} mm field of view` : "full volume"].join(" · ") },

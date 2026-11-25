@@ -32,3 +32,10 @@ test("every section anchor exists on the 3D case page", () => {
     .map(name => fs.readFileSync(new URL(`../src/${name}.tsx`, import.meta.url), "utf8")).join("\n");
   for (const { id } of VOLUME_SECTIONS) assert.ok(page.includes(`id="${id}"`), id);
 });
+
+test("saved source validation never treats generic guidance as a passed check", () => {
+  const run = { input_kind: "medical_study", source_shape: [32, 32, 32], hasSourceGridMask: true };
+  assert.equal(sourceChecklist(run).find(c => c.label === "Saved source validation").status, "info");
+  assert.equal(sourceChecklist({ ...run, validation: { status: "checked", detail: "Matching saved source" } }).find(c => c.label === "Saved source validation").status, "ok");
+  assert.equal(sourceChecklist({ ...run, validation: { status: "failed", detail: "Hash mismatch" } }).find(c => c.label === "Saved source validation").status, "warn");
+});

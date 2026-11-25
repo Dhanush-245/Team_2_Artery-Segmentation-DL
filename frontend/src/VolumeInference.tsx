@@ -210,13 +210,13 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
               <div><dt>Source volume</dt><dd>{selected.result.source_shape.join(' × ')} voxels</dd></div>
               <div><dt>Segmentation</dt><dd>Saved prediction · review required</dd></div>
               <div><dt>Vessel geometry</dt><dd>{geometryReason ? `Not assessable · ${geometryReason}` : geometry ? `${geometry.paths?.length ?? 0} extracted paths` : 'Loading assessment…'}</dd></div>
-              <div><dt>Stenosis candidates</dt><dd>{candidates.length ? `${candidates.length} experimental candidate${candidates.length === 1 ? '' : 's'}` : 'None eligible'}</dd></div>
+              <div><dt>Stenosis candidates</dt><dd>{candidates.length ? `${candidates.length} experimental candidate${candidates.length === 1 ? '' : 's'}` : 'Withheld · insufficient eligible reference'}</dd></div>
               <div><dt>Estimated narrowing</dt><dd>{primaryCandidate ? `${primaryCandidate.narrowing_percent.toFixed(2)}%` : topEstimate ? <>{topEstimate.narrowing_percent.toFixed(1)}% <span className="research-tag">research estimate · {topEstimate.path_id}</span></> : 'Not assessable'}</dd></div>
               <div className="volume-severity-result"><dt>Severity grading</dt><dd>{primaryCandidate ? primaryCandidate.severity : topEstimate ? <>{BAND_LABEL[topEstimate.research_band] ?? topEstimate.research_band} <span className="research-tag">research estimate</span></> : 'Not assessable'}</dd></div>
               <div><dt>Reason</dt><dd>{primaryCandidate ? 'Experimental mask-geometry result; expert review required.' : geometryReason ? `Measurement withheld because the saved prediction is ${geometryReason}.` : topEstimate ? `No path passed the strict candidate rules; the values shown are the narrowest per-path mask-width estimate (MLD ${topEstimate.minimum_diameter_mm.toFixed(2)} mm vs RVD ${topEstimate.reference_diameter_mm.toFixed(2)} mm).` : 'No eligible 3D narrowing measurement is available.'}</dd></div>
             </dl>
           </section>
-          <VolumeSourcePanel input_kind={selected.input_kind} source_shape={selected.result.source_shape} preprocessing={selected.result.preprocessing} hasSourceGridMask={selected.status === 'completed'} />
+          <VolumeSourcePanel caseId={caseId} runId={selected.id} token={token} input_kind={selected.input_kind} source_shape={selected.result.source_shape} preprocessing={selected.result.preprocessing} hasSourceGridMask={selected.status === 'completed'} />
           {selected.status === 'completed' && <div id="v3d-xai" className="v3d-anchor" />}
           {selected.status === 'completed' && <VolumeXaiPanel key={`xai-${selected.id}`} token={token} caseId={caseId} runId={selected.id} onShow={showHeat} />}
           {selected.status === 'completed' && <VolumeLinkedViewer key={`lv-${selected.id}`} caseId={caseId} runId={selected.id} token={token} shape={selected.result.source_shape} heatId={heat.id} heatLabel={heat.label}

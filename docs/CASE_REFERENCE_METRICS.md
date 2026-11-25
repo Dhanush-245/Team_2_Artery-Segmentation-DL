@@ -9,3 +9,8 @@ A reviewer-supplied reference does not establish independent clinical validation
 The 3D section controls focus and scroll to distinct visible targets. Candidates and Measurements explain when strict geometric eligibility is absent; exploratory path widths remain separately labelled. No quality threshold has been lowered to create a positive candidate.
 
 Engineering regression coverage: physical-distance known-truth fixture, identity and geometry rejection, role authorization, retry, persistence, immutable prediction, stale-record exclusion and export consistency. Synthetic self-reference fixtures test software only.
+
+
+Saved-source validation is checked when opening a completed run: source hash, bounded scalar NIfTI header, millimetre units, invertible finite affine, and source/prediction grid agreement. This does not reconstruct the acquisition history or establish original DICOM series identity. It does not validate anatomy or segmentation accuracy.
+
+CPR defaults to a horizontally expanded display so short paths remain inspectable. The display caption explicitly states that these proportions are not a physical scale; select Preserve physical proportions to see the native ratio. Both modes use the same sampled image and 3D marker coordinates. Mask opacity can be reduced to inspect underlying CT. Display expansion does not recover detail missing from the model or source.

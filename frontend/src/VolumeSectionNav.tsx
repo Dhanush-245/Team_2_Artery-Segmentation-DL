@@ -1,3 +1,4 @@
+import { apiUrl } from "./api";
 import { useEffect, useRef, useState } from "react";
 import { VOLUME_SECTIONS, activeSection, sourceChecklist, type SourceCheck } from "./lib/volumeSections";
 
@@ -34,8 +35,18 @@ export function VolumeSectionNav() {
   </nav>;
 }
 
-export function VolumeSourcePanel(props: Parameters<typeof sourceChecklist>[0]) {
-  const checks: SourceCheck[] = sourceChecklist(props);
+export function VolumeSourcePanel(props: Parameters<typeof sourceChecklist>[0] & { caseId: string; runId: string; token: string }) {
+  const [validation, setValidation] = useState<{ status: string; detail: string }>();
+  useEffect(() => {
+    const controller = new AbortController();
+    setValidation(undefined);
+    void fetch(apiUrl(`/api/cases/${props.caseId}/volumes/analyses/${props.runId}/source-validation`),
+      { headers: { Authorization: `Bearer ${props.token}` }, signal: controller.signal })
+      .then(async response => { const body = await response.json(); if (!response.ok) throw new Error(typeof body.detail === 'string' ? body.detail : 'Saved-source validation failed'); return body; })
+      .then(setValidation).catch(error => { if (!controller.signal.aborted) setValidation({ status: 'failed', detail: error.message }); });
+    return () => controller.abort();
+  }, [props.caseId, props.runId, props.token]);
+  const checks: SourceCheck[] = sourceChecklist({ ...props, validation });
   return <section id="v3d-source" className="v3d-block" aria-label="Source and preprocessing">
     <p className="eyebrow">SOURCE &amp; PREPROCESSING</p><h4>Source validation checklist</h4>
     <ul className="v3d-checks">{checks.map(check => <li key={check.label}><span className={`cv-chip ${check.status === "ok" ? "ok" : check.status === "warn" ? "warn" : "info"}`}>{check.status === "ok" ? "Checked" : check.status === "warn" ? "Review" : "Rule"}</span>
