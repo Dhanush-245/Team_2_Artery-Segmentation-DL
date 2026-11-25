@@ -95,7 +95,14 @@ export default function VolumeCprReview({ caseId, runId, token, paths, estimates
     if (response.ok) setListing(await response.json());
   }, [base, auth]);
   useEffect(() => { void loadReviews(); }, [loadReviews]);
-  useEffect(() => { setMinimum(null); setReference(null); setMessage(""); }, [pathId]);
+  useEffect(() => {
+    const saved = listing?.current.find(row => row.path_id === path?.id);
+    setMinimum(saved?.measurement?.minimum.position_mm ?? null);
+    setReference(saved?.measurement?.reference.position_mm ?? null);
+    setDecision(saved?.decision ?? 'uncertain'); setArtery(saved?.artery ?? '');
+    setNotes(saved?.notes ?? ''); setPlacing('minimum');
+  }, [path?.id, listing]);
+  useEffect(() => { setMessage(''); }, [pathId]);
 
   if (!path) return null;
   const place = (mm: number) => {
@@ -148,7 +155,10 @@ export default function VolumeCprReview({ caseId, runId, token, paths, estimates
       {image && <a className="volume-mpr-download" href={image} download={`cpr-${path.id}-${rotation}deg.png`}><Download size={14} /> CPR PNG</a>}
     </div>
     {listing?.can_review ? <form className="volume-cpr-review" onSubmit={event => { event.preventDefault(); void save(); }}>
+      <p className="caption">Name the artery only after review. To calculate reviewer diameters and narrowing, select both positions on the image/profile or enter their distances below, then save a new review. Positions must be at least 1 mm apart. Saving a decision alone does not create measurements.</p>
       <fieldset><legend>Reviewer edit for {path.id}</legend>
+        <label>Minimum position (mm)<input aria-label="Minimum position (mm)" type="number" min="0" max={path.length_mm} step=".1" value={minimum ?? ''} onChange={event => setMinimum(event.target.value === '' ? null : Number(event.target.value))} /></label>
+        <label>Reference position (mm)<input aria-label="Reference position (mm)" type="number" min="0" max={path.length_mm} step=".1" value={reference ?? ''} onChange={event => setReference(event.target.value === '' ? null : Number(event.target.value))} /></label>
         <label>Decision <select value={decision} onChange={event => setDecision(event.target.value)}>
           <option value="accept">Accept as vessel</option><option value="uncertain">Uncertain</option><option value="reject">Reject (not a vessel path)</option></select></label>
         <label>Artery <select value={artery} onChange={event => setArtery(event.target.value)}><option value="">Not named</option>
@@ -156,15 +166,15 @@ export default function VolumeCprReview({ caseId, runId, token, paths, estimates
         <span className="volume-cpr-markers">Minimum {minimum == null ? "—" : `${minimum} mm`} · Reference {reference == null ? "—" : `${reference} mm`}
           {(minimum != null || reference != null) && <button type="button" onClick={() => { setMinimum(null); setReference(null); setPlacing("minimum"); }}>Clear markers</button>}</span>
         <label className="volume-cpr-notes">Notes <input value={notes} maxLength={500} onChange={event => setNotes(event.target.value)} /></label>
-        <button type="submit" className="volume-cpr-save" disabled={saving || !maskSha256 || (minimum == null) !== (reference == null)}>{saving ? "Saving…" : "Save review"}</button>
+        <button type="submit" className="volume-cpr-save" disabled={saving || !maskSha256 || (minimum == null) !== (reference == null) || (minimum != null && reference != null && (Math.abs(minimum-reference) < 1 || decision === "reject"))}>{saving ? "Saving…" : "Save review"}</button>
       </fieldset>
       {message && <p role="status" className="caption">{message}</p>}
     </form> : listing && <p className="caption">Reviewer edits can be saved by doctors, clinicians and administrators with review access to this case.</p>}
     {listing && listing.current.length > 0 && <div className="table-scroll"><table className="stenosis-summary"><caption>Reviewer geometry edits · {listing.history.length} recorded, latest per path shown</caption>
       <thead><tr><th>Path</th><th>Decision</th><th>Artery</th><th>Reviewer min / ref</th><th>Narrowing</th><th>Reviewer</th></tr></thead>
-      <tbody>{listing.current.map(row => <tr key={row.id}><td>{row.path_id}</td><td>{label(row.decision)}</td><td>{row.artery ? label(row.artery) : "—"}</td>
-        <td>{row.measurement ? `${row.measurement.minimum_diameter_mm.toFixed(2)} / ${row.measurement.reference_diameter_mm.toFixed(2)} mm` : "—"}</td>
-        <td>{row.measurement ? `${row.measurement.narrowing_percent.toFixed(1)}%` : "—"}</td><td>{row.reviewer_role} · {row.reviewed_at.slice(0, 10)}</td></tr>)}</tbody>
+      <tbody>{listing.current.map(row => <tr key={row.id}><td>{row.path_id}</td><td>{label(row.decision)}</td><td>{row.artery ? label(row.artery) : "Not named by reviewer"}</td>
+        <td>{row.measurement ? `${row.measurement.minimum_diameter_mm.toFixed(2)} / ${row.measurement.reference_diameter_mm.toFixed(2)} mm` : "Not measured · no saved marker pair"}</td>
+        <td>{row.measurement ? `${row.measurement.narrowing_percent.toFixed(1)}%` : "Not calculated · no saved measurements"}</td><td>{row.reviewer_role} · {row.reviewed_at.slice(0, 10)}</td></tr>)}</tbody>
     </table></div>}
     <p className="caption">Research view of the predicted mask. Reviewer diameters are computed by the server at the placed markers on the predicted mask, so they are not independent of the model; the model output is unchanged.</p>
   </section>;
