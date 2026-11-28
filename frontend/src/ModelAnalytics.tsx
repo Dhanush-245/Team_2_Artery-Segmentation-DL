@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { ModelRegistry, ModelStatus } from "./ModelWorkspace";
+import ModelMonitoring from "./ModelMonitoring";
 
 type Metric = "dice" | "iou" | "precision" | "recall" | "f1";
 const metrics: Metric[] = ["dice", "iou", "precision", "recall", "f1"];
@@ -17,8 +18,8 @@ function Bars({ rows, label }: { rows: { label: string; value?: number }[]; labe
   </div>;
 }
 
-export default function ModelAnalytics({ status, registry, refreshing, updatedAt, onRefresh }: {
-  status: ModelStatus; registry: ModelRegistry | null; refreshing: boolean; updatedAt: string; onRefresh: () => void;
+export default function ModelAnalytics({ token, role, status, registry, refreshing, updatedAt, onRefresh }: {
+  token: string; role: string; status: ModelStatus; registry: ModelRegistry | null; refreshing: boolean; updatedAt: string; onRefresh: () => void;
 }) {
   const [view, setView] = useState("Evaluation");
   const [metric, setMetric] = useState<Metric>("dice");
@@ -54,8 +55,6 @@ export default function ModelAnalytics({ status, registry, refreshing, updatedAt
       {filtered.length ? <div className="table-scroll"><table><caption>Recorded binary-mask validation experiments</caption><thead><tr><th scope="col">Task / architecture</th>{metrics.map(name => <th scope="col" key={name}>{name.toUpperCase()}</th>)}<th scope="col">Validation images</th></tr></thead><tbody>{filtered.map((item, index) => <tr key={index}><th scope="row">{taskName(item.task)} · {item.architecture}</th>{metrics.map(name => <td key={name}>{score(item.best_validation[name])}</td>)}<td>{item.validation_images}</td></tr>)}</tbody></table></div> : <p className="muted">Import comparable experiment reports to populate this graph and table. Connected models perform different tasks and cannot substitute for a controlled architecture comparison.</p>}
       <p className="caption">Binary-mask experiments only. Instance-aware ARCADE results remain in their separate section below. Missing metrics are not treated as zero.</p>
     </article>}
-    {view === "Monitoring" && <><div className="cv-model-grid"><article className="cv-model-card"><h4>Inference snapshot</h4><dl className="cv-model-status"><dt>Service model readiness</dt><dd>{status.models_ready ? "Ready" : "Unavailable"}</dd><dt>Active version</dt><dd>{status.model_version}</dd><dt>Release verification</dt><dd>{status.trained_release?.configured ? status.trained_release.ready ? "Verified and ready" : "Not ready" : "No release configured"}</dd><dt>Registered architectures</dt><dd>{registry ? registry.models.length : "Not available"}</dd></dl></article><article className="cv-model-card"><h4>Live telemetry</h4><p>Latency, error rates, drift, GPU usage and epoch-by-epoch loss are not connected.</p><p className="caption">This is a manually refreshed readiness snapshot, not continuous monitoring. No historical trend is inferred from validation scores.</p></article></div>
-      <article className="cv-model-card"><h4>Deployment event log</h4>{registry?.history.length ? <div className="table-scroll"><table><caption>Recorded model deployment events, in source order</caption><thead><tr><th scope="col">Event</th><th scope="col">Model / version</th><th scope="col">Recorded time</th></tr></thead><tbody>{registry.history.map((item, index) => <tr key={index}><td>{item.event.replaceAll("_", " ")}</td><td>{item.version || item.architecture}</td><td>{item.activated_at ? new Date(item.activated_at).toLocaleString() : "Initial configuration (no timestamp)"}</td></tr>)}</tbody></table></div> : <p>No deployment events are available.</p>}</article>
-    </>}
+    {view === "Monitoring" && <ModelMonitoring token={token} role={role} status={status} registry={registry} />}
   </section>;
 }

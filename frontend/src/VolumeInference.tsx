@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { readViewerSession, saveViewerSession } from "./lib/viewerSession";
 import VolumeCandidateList, { type VolumeCandidate } from './VolumeCandidateList';
 import { candidateLabel } from './lib/candidateNavigation';
@@ -36,6 +36,7 @@ export default function VolumeInference(props: Props) {
 }
 
 function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', historyOnly = false, intakeOnly = false, onOpenAnalysis}: Props) {
+  const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const [dicomFiles, setDicomFiles] = useState<File[]>([]);
   const [hu, setHu] = useState(false);
@@ -235,7 +236,7 @@ function VolumeCase({caseId, token, readOnly = false, anatomy = 'coronary', hist
           {selected.result.coarse_foreground_voxels === 0 && <p className="message warning">No vessel overlay was produced by this model. This is not a healthy/normal finding; check source eligibility and image quality and obtain expert review.</p>}
           {selected.result.preprocessing?.roi && <p className="message info">Whole-chest scan: the model read a {selected.result.preprocessing.roi.fov_mm} mm cube centred on the heart (its training field of view).{selected.result.postprocessing ? ` ${selected.result.postprocessing.components.filter(c => !c.kept).length} predicted component(s), ${selected.result.postprocessing.removed_voxels.toLocaleString()} voxels, lay more than ${selected.result.postprocessing.max_median_distance_mm} mm from the cardiac chambers and were removed as off-heart; the unfiltered model mask is kept in the downloads.` : ''}</p>}
           <section id="v3d-overview" className="volume-findings-summary" aria-labelledby="volume-findings-title">
-            <div className="volume-findings-heading"><div><p className="eyebrow">SAVED 3D CASE</p><h4 id="volume-findings-title">Analysis findings</h4></div><span className="cv-chip ok">{selected.status}</span></div>
+            <div className="volume-findings-heading"><div><p className="eyebrow">SAVED 3D CASE</p><h4 id="volume-findings-title">Analysis findings</h4></div><span className="volume-findings-actions"><span className="cv-chip ok">{selected.status}</span><Button size="sm" onClick={() => navigate(`/reports?case_id=${caseId}&run_id=${selected.id}`)}>Create report →</Button></span></div>
             <dl className="volume-summary-grid">
               <div><dt>Model</dt><dd>{selected.result.model_id}</dd></div>
               <div><dt>Source volume</dt><dd>{selected.result.source_shape.join(' × ')} voxels</dd></div>

@@ -2392,7 +2392,7 @@ def registered_models(user: User = Depends(require_roles(*ROLE_MODEL_MANAGERS)))
                 "models": [{"architecture": "preserved_mask_models", "display_name": "Verified preserved training models",
                             "version": model_version(), "input_size": 512, "available": release['ready'], "active": True,
                             "mean_validation_dice": None, "checkpoint_sha256": {x['task']: x['sha256'] for x in release['models']},
-                            "tasks": release['models']}], "history": [], "research_only": True,
+                            "tasks": _release_tasks_with_training_facts(release['models'])}], "history": [], "research_only": True,
                 "can_rollback": False, "rollback_target": None, "rollback_note": PRESERVED_RELEASE_ROLLBACK_NOTE}
     selection, registry, models = _model_registry_data()
     history = registry.get("history", [])
@@ -2407,6 +2407,21 @@ def registered_models(user: User = Depends(require_roles(*ROLE_MODEL_MANAGERS)))
             "rollback_target": ({"architecture": target["architecture"], "display_name": target["display_name"],
                                  "version": target["version"]} if target else None),
             "rollback_note": None if target else "No earlier model is recorded or its checkpoints are missing."}
+
+
+def _release_tasks_with_training_facts(models):
+    """Attach the recorded dataset and training-image counts to the connected release rows."""
+    try:
+        history = json.loads((trained_release.ROOT / "ml/releases/training_history_20261023.json").read_text())["models"]
+    except (OSError, ValueError, KeyError):
+        return models
+    facts = {row.get("task"): row.get("dataset") or {} for row in history}
+    rows = []
+    for item in models:
+        fact = facts.get(item.get("task"), {})
+        dataset = " ".join(part for part in (fact.get("name"), fact.get("subset")) if part)
+        rows.append({**item, "dataset": dataset or None, "train_images": fact.get("train_images")})
+    return rows
 
 
 PRESERVED_RELEASE_ROLLBACK_NOTE = ("The preserved release is pinned by checksum. Roll back by redeploying the previous "

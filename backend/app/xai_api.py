@@ -394,6 +394,8 @@ def install(app, *, get_db, current_user, accessible_case, case_out, storage: Pa
                                          deletion=v.get('deletion', 'NOT_TESTED'), insertion=v.get('insertion', 'NOT_TESTED'),
                                          randomization=v.get('randomization', 'NOT_TESTED'),
                                          energy_inside_target_mask=(r.get('summary') or {}).get('energy_inside_target_mask'),
+                                         deletion_auc_advantage=(v.get('metrics') or {}).get('deletion_auc_advantage'),
+                                         insertion_auc_advantage=(v.get('metrics') or {}).get('insertion_auc_advantage'),
                                          created_at=r.get('created_at')))
         by_method = {}
         for row in rows:

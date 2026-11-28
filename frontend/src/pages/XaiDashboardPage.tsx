@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Eye, Loader2, ScanSearch, ShieldCheck, Sparkles } from "lucide-react";
 import { apiUrl } from "../api";
 import { Card } from "../components/prismui/card";
 import { useWorkspace } from "../workspace/WorkspaceContext";
 import { utcDate } from "../lib/time";
+import XaiGallery from "./XaiGallery";
 
 type Row = { case_id: string; case_code: string; image_id: string; run_id: string; record_id: string; task: string; target_id: string;
   method: string; method_label: string; constrained: boolean; status: string; deletion: string; insertion: string; randomization: string;
-  energy_inside_target_mask?: number | null; created_at: string };
+  energy_inside_target_mask?: number | null; deletion_auc_advantage?: number | null; insertion_auc_advantage?: number | null; created_at: string };
 type Summary = { engine_version: string; method_versions: Record<string, string>; target_definitions: Record<string, string>;
   coverage: { runs: number; eligible_runs: number; zero_candidate_runs: number; runs_with_explanations: number };
   by_method: Record<string, { records: number; ready: number; verified: number; deletion_pass: number; insertion_pass: number }>;
@@ -19,6 +20,20 @@ type Summary = { engine_version: string; method_versions: Record<string, string>
 
 const TONE: Record<string, string> = { ready: "ok", PASS: "ok", FAIL: "bad", PARTIAL: "warn", NOT_TESTED: "muted", NOT_EVALUABLE: "warn", failed: "bad", generating: "info", not_evaluable: "warn", NOT_IMPLEMENTED: "muted" };
 const Chip = ({ value }: { value: string }) => <span className={`cv-chip ${TONE[value] ?? "muted"}`}>{value.replaceAll("_", " ")}</span>;
+
+const SECTIONS = [["xai-overview", "Overview"], ["xai-gallery", "Gallery"], ["xai-checks", "Checks"], ["xai-methods", "Methods"], ["xai-inventory", "Inventory"], ["xai-studies", "Studies"], ["xai-guide", "Guide"]] as const;
+const STEPS = [[ScanSearch, "Predict", "The frozen model segments the vessels and proposes stenosis candidates."],
+  [Sparkles, "Explain", "Grad-CAM, Grad-CAM++ or occlusion shows which pixels moved a chosen output."],
+  [ShieldCheck, "Verify", "Deletion, insertion and randomization tests check the map is faithful."],
+  [Eye, "Review", "A researcher inspects the overlay and the checks before any use."]] as const;
+
+function StackedBar({ pass, fail, untested, label }: { pass: number; fail: number; untested: number; label: string }) {
+  const total = Math.max(1, pass + fail + untested);
+  return <div className="xai-stack" role="img" aria-label={`${label}: ${pass} pass, ${fail} fail, ${untested} not tested`}>
+    <i className="pass" style={{ width: `${(pass / total) * 100}%` }} /><i className="fail" style={{ width: `${(fail / total) * 100}%` }} /><i className="none" style={{ width: `${(untested / total) * 100}%` }} />
+  </div>;
+}
+const jump = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
 /** Research-wide XAI coverage and verification across the cases this user can open. */
 export default function XaiDashboardPage() {
@@ -63,11 +78,25 @@ export default function XaiDashboardPage() {
   if (error) return <div className="settings-page"><p role="alert" className="message error">{error}</p></div>;
   if (!data) return <div className="settings-page"><p role="status"><Loader2 size={16} className="spin" /> Loading explanation records…</p></div>;
   const c = data.coverage;
+  const decided = checks.reduce((sum, item) => sum + item.pass + item.fail, 0);
+  const passed = checks.reduce((sum, item) => sum + item.pass, 0);
+  const verifiedRecords = data.records.filter(r => r.deletion !== "NOT_TESTED").length;
+  const kpis = [["Saved explanations", data.records.length], ["Ready to view", data.records.filter(r => r.status === "ready").length],
+    ["Verification run", `${verifiedRecords} of ${data.records.length}`], ["Checks passed", decided ? `${passed} of ${decided}` : "—"],
+    ["Need attention", needsAttention.length]] as const;
   return <div className="settings-page xai-dashboard">
     <div className="page-heading"><div><p className="eyebrow">RESEARCH EVIDENCE</p><h2>Explainable AI</h2></div><span className="stage-badge">Research only</span></div>
     <p className="muted">Open a row to see its explanation in its case. {data.scope}</p>
 
-    <Card className="panel">
+    <section className="xai-hero" id="xai-overview" aria-label="Explanation overview">
+      <div><span className="eyebrow">SEE WHAT THE MODEL LOOKED AT</span><h3>Every explanation, with its proof</h3>
+        <p>Heatmaps show where the model was sensitive. Each one is stress-tested so you can tell a faithful map from a pretty picture.</p></div>
+      <dl className="xai-kpis">{kpis.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+    </section>
+    <nav className="xai-nav" aria-label="Page sections">{SECTIONS.map(([id, label]) => <button key={id} type="button" onClick={() => jump(id)}>{label}</button>)}</nav>
+
+    <div className="xai-two">
+    <Card className="panel xai-fill">
       <div className="cv-panel-head"><span className="eyebrow">COVERAGE</span><h3>Saved 2D analysis runs</h3></div>
       <dl className="xai-identity">
         <div><dt>Runs you can open</dt><dd>{c.runs}</dd></div>
@@ -80,16 +109,30 @@ export default function XaiDashboardPage() {
       <p className="caption">Ineligible runs used an earlier model release or a non-XCA image; their saved maps stay as they were. Zero-candidate runs offer segmentation explanations only.</p>
     </Card>
 
-    <Card className="panel">
-      <div className="cv-panel-head"><span className="eyebrow">FAITHFULNESS CHECKS</span><h3>Sanity-check outcomes across saved records</h3>
-        <p className="muted">Counts of recorded outcomes, one check per row of records. They describe these saved examples only and are not a pooled accuracy figure.</p></div>
-      <div className="xai-check-grid">{checks.map(c => <div key={c.key} className="xai-check-tile">
-        <strong>{c.key === "randomization" ? "Model randomization" : c.key === "deletion" ? "Deletion test" : "Insertion test"}</strong>
-        <span><Chip value="PASS" /> {c.pass}</span><span><Chip value="FAIL" /> {c.fail}</span><span><Chip value="NOT_TESTED" /> {c.untested}</span>
-        <small>{c.total} saved record{c.total === 1 ? "" : "s"}</small></div>)}</div>
+    <Card className="panel xai-fill">
+      <div className="cv-panel-head"><span className="eyebrow">HOW IT WORKS</span><h3>From prediction to proof</h3></div>
+      <ol className="xai-steps">{STEPS.map(([Icon, title, text], index) => <li key={title}><span className="xai-step-icon"><Icon size={18} aria-hidden="true" /></span><div><strong>{index + 1}. {title}</strong><small>{text}</small></div></li>)}</ol>
+    </Card>
+    </div>
+
+    <Card className="panel" id="xai-gallery">
+      <div className="cv-panel-head"><span className="eyebrow">GALLERY</span><h3>Saved explanation images</h3>
+        <p className="muted">The actual saved maps. Select an image to open it in its case, with the full explanation and tests.</p></div>
+      <XaiGallery rows={data.records} token={token} onOpen={r => navigate(`/analysis?case_id=${r.case_id}&image_id=${data.records.find(x => x.record_id === r.record_id)?.image_id ?? ""}&run_id=${r.run_id}`)} />
     </Card>
 
-    <Card className="panel">
+    <div className="xai-two">
+    <Card className="panel xai-fill" id="xai-checks">
+      <div className="cv-panel-head"><span className="eyebrow">FAITHFULNESS CHECKS</span><h3>Sanity-check outcomes across saved records</h3>
+        <p className="muted">Counts of recorded outcomes, one check per row of records. They describe these saved examples only and are not a pooled accuracy figure.</p></div>
+      <div className="xai-check-list">{checks.map(c => <div key={c.key} className="xai-check-row">
+        <div className="xai-check-head"><strong>{c.key === "randomization" ? "Model randomization" : c.key === "deletion" ? "Deletion test" : "Insertion test"}</strong><small>{c.total} saved record{c.total === 1 ? "" : "s"}</small></div>
+        <StackedBar pass={c.pass} fail={c.fail} untested={c.untested} label={c.key} />
+        <div className="xai-legend"><span><i className="pass" />PASS {c.pass}</span><span><i className="fail" />FAIL {c.fail}</span><span><i className="none" />NOT TESTED {c.untested}</span></div>
+      </div>)}</div>
+    </Card>
+
+    <Card className="panel xai-fill">
       <div className="cv-panel-head"><span className="eyebrow">NEEDS ATTENTION</span><h3>Records with a failed check</h3></div>
       {needsAttention.length === 0 ? <p className="muted">No saved record has a failed check. Records that were never tested are not counted here.</p> : <ul className="xai-attention">
         {needsAttention.map(r => <li key={r.record_id}><button type="button" className="cv-link-button" onClick={() => navigate(`/analysis?case_id=${r.case_id}&image_id=${r.image_id}&run_id=${r.run_id}`)}>{r.case_code} · {r.method_label}</button>
@@ -97,8 +140,12 @@ export default function XaiDashboardPage() {
       </ul>}
     </Card>
 
-    <Card className="panel">
+    </div>
+
+    <Card className="panel" id="xai-methods">
       <div className="cv-panel-head"><span className="eyebrow">METHODS</span><h3>Saved explanations by method</h3><p className="muted">Counts of saved records only. Deletion/insertion is run per target on request; pass counts are not pooled across different cohorts.</p></div>
+      {Object.keys(data.by_method).length > 0 && <div className="xai-scorecards">{Object.entries(data.by_method).map(([label, m]) => <div key={label} className="xai-scorecard"><strong>{label}</strong>
+        {m.verified ? <>{([["Deletion pass rate", m.deletion_pass], ["Insertion pass rate", m.insertion_pass]] as const).map(([name, value]) => <div key={name} className="xai-meter"><span>{name}</span><div><i style={{ width: `${(value / m.verified) * 100}%` }} /></div><b>{value}/{m.verified}</b></div>)}</> : <small>No verified records yet.</small>}</div>)}</div>}
       {Object.keys(data.by_method).length === 0 ? <p className="muted">No explanations saved yet. Generate one from a case's Explainable AI step.</p> : <div className="table-scroll"><table>
         <thead><tr><th>Method</th><th>Version</th><th>Saved</th><th>Ready</th><th>Verified</th><th>Deletion PASS</th><th>Insertion PASS</th></tr></thead>
         <tbody>{Object.entries(data.by_method).map(([label, m]) => {
@@ -108,7 +155,7 @@ export default function XaiDashboardPage() {
       </table></div>}
     </Card>
 
-    <Card className="panel">
+    <Card className="panel" id="xai-inventory">
       <div className="cv-panel-head"><span className="eyebrow">EVIDENCE INVENTORY</span><h3>Saved explanations</h3></div>
       <div className="workbench-selectors">
         <label>Method<select value={method} onChange={e => setMethod(e.target.value)}><option value="all">All methods</option>{[...new Set(data.records.map(r => r.method_label))].map(m => <option key={m}>{m}</option>)}</select></label>
@@ -139,7 +186,7 @@ export default function XaiDashboardPage() {
       </table></div>}
     </Card>
 
-    <Card className="panel">
+    <Card className="panel" id="xai-studies">
       <div className="cv-panel-head"><span className="eyebrow">VERIFICATION STUDIES</span><h3>Study-level faithfulness results</h3><p className="muted">Recorded experiments on the frozen detector. Historical results are shown as recorded, including failures.</p></div>
       {data.study_evidence.map(item => <div key={item.id} className="xai-study">
         <p><strong>{item.date} · {item.method}</strong> · {item.cohort} · overall <Chip value={item.overall} /></p>
@@ -150,7 +197,7 @@ export default function XaiDashboardPage() {
       </div>)}
     </Card>
 
-    <Card className="panel">
+    <Card className="panel" id="xai-guide">
       <div className="cv-panel-head"><span className="eyebrow">READING GUIDE</span><h3>What each method and check means</h3></div>
       <dl className="xai-guide">
         <div><dt>Grad-CAM / Grad-CAM++</dt><dd>Heatmaps of which image regions most changed a chosen model output. Here they are limited to the model's own predicted mask, so they show sensitivity inside the prediction, not an independent finding.</dd></div>
