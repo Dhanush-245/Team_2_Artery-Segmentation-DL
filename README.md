@@ -6,81 +6,77 @@
 
 ### From angiography to evidence. From evidence to expert review.
 
-A research workspace for coronary artery segmentation, vessel exploration, and suspected stenosis localization.
+A role-based research workspace for coronary artery segmentation, suspected stenosis localization, explainability and reporting.
 
 **Infosys Springboard · Team 2**
 
-`React + TypeScript` · `FastAPI` · `Medical imaging` · `Deep learning`
+`React + TypeScript` · `FastAPI` · `PyTorch` · `Docker`
 
-[Get started](#get-started) · [Workflow](#the-workflow) · [Architecture](#architecture) · [Documentation](#documentation) · [Research results](reports/latest_measured_training_results.md)
+[Quick start](#quick-start) · [Features](#features) · [Supported analyses](#supported-analyses) · [Architecture](#architecture) · [Results](#measured-results) · [Documentation](#documentation)
 
 </div>
 
 ---
 
-> **Research prototype—not a medical device.** AI masks and measurements support research and expert review. They are not a diagnosis, a validated stenosis grade, or a substitute for medical advice. Use only public or appropriately de-identified data.
+> **Research prototype, not a medical device.** AI masks and measurements support research and expert review. They are not a diagnosis, a validated stenosis grade, or medical advice. Use only public or appropriately de-identified data.
 
-## Why CoroVision?
+## Overview
 
-Medical-image research needs more than a prediction: reproducible preparation, preserved source images, traceable results, and a clear separation between AI output and human assessment.
-
-CoroVision brings these steps into one role-based application: create a case, prepare images, inspect available model outputs, record a doctor's review, and export permitted reports.
-
-## What you can do
-
-| Capability | In the application |
-| :--- | :--- |
-| **Manage studies** | Create de-identified cases, record metadata, select intended tasks, and assign case access. |
-| **Prepare images** | Validate supported images, select DICOM frames or PDF pages, apply optional ROI cropping, and generate previews. |
-| **Choose preprocessing** | Standard only, noise reduction, contrast enhancement, or both enhancements together. Originals and processing records are retained. |
-| **Explore AI findings** | Inspect artery and suspected stenosis overlays when compatible checkpoints are installed. Review vessel measurements with calibration limitations. |
-| **Record expert review** | Enter a doctor's decision, assessed severity, notes, and follow-up findings separately from predictions. |
-| **Track and report** | Inspect saved analysis history, report revisions, notifications, and authorized exports. |
-| **Demonstrate and verify** | Run clearly labelled synthetic severity-boundary and 3D quality fixtures and download their expected-versus-actual evidence manifest. See the [evidence policy](docs/DEMONSTRATION_EVIDENCE.md). |
-| **Control access** | Use role-specific actions with assigned cases by default, or an explicitly configured shared team workspace. Model engineers retain model-only access. |
-| **Review saved masks** | Save immutable 2D pixel or 3D voxel/component corrections separately from the original model mask. |
-| **Evaluate a case reference** | Attach an eligible source-aligned mask to calculate Dice, IoU and HD95 with recorded provenance. A reference upload alone does not establish independent validation. |
-
-## The workflow
+CoroVision turns a de-identified imaging study into a traceable research record: create a case, prepare the image, run a compatible model, inspect the result with its explanation, record a doctor's separate assessment, and export a versioned report.
 
 ```mermaid
 flowchart LR
-    A[Create a case] --> B[Upload de-identified images]
-    B --> C[Validate and preprocess]
-    C --> D[Inspect quality preview]
-    D --> E[Run a compatible model]
-    E --> F[Review masks and findings]
+    A[Create case] --> B[Upload and validate]
+    B --> C[Preprocess]
+    C --> D[Run compatible model]
+    D --> E[Review masks and findings]
+    E --> F[Explain and verify]
     F --> G[Doctor assessment]
-    G --> H[Reports and exports]
+    G --> H[Versioned reports]
 ```
 
-**The original is retained.** Preparation creates a derived image; it does not overwrite the source or start training. Final report approval remains a separately authorized action.
+The original image is always kept. Preparation creates a derived copy and never starts training.
 
-### Imaging scope
+## Features
 
-| Input | Current scope |
+| Area | What it does |
 | :--- | :--- |
-| **Coronary X-ray angiography** | 2D preparation and compatible artery/stenosis-mask inference. |
-| **Coronary CTA** | Optional compatible 3D segmentation, source-grid masks, linked MPR/surface views, CPR and quality-gated experimental measurements. Requires the separately installed checkpoint. |
-| **Other CT and MRA** | Supported volume preparation follows the case route; model inference requires a compatible installed anatomy/modality contract. |
-| **DICOM and scanned PDFs** | Supported decoding, frame/page selection, validation, and preparation within documented limits. |
+| **Cases and uploads** | De-identified cases, metadata, DICOM frame or PDF page selection, ROI cropping, previews, case-level sharing. |
+| **Preprocessing** | Standard, noise reduction, contrast enhancement, or both. Originals and processing records are retained. |
+| **AI analysis** | 2D artery segmentation with suspected-stenosis candidates; 3D coronary and aorta segmentation with linked MPR, surface and CPR views. |
+| **Explainable AI** | Grad-CAM, Grad-CAM++ and occlusion maps with deletion, insertion and randomization sanity checks. A gallery shows the saved heatmaps. |
+| **Reports and exports** | A case chooser covers 2D and 3D cases. Each report is an immutable version, exported as PDF, CSV, JSON or an Evidence ZIP. Reports repeat a saved run and never re-run the model. |
+| **Expert review** | Doctor decisions and severity are stored separately from model output. Saved mask corrections never overwrite the original model mask. |
+| **Model registry** | Active model, release provenance, training scope, evaluation results and live monitoring for administrators. |
+| **Operations** | Administrator console: readiness, request and error rates, memory and storage gauges, live API traffic by route, trends over 1, 6 or 24 hours, searchable event log with CSV export, alert channels and test alerts. |
+| **Access control** | Role-specific actions, assigned cases by default, optional shared team workspace, audit log, time-based authenticator enrollment. |
+| **Demonstrations** | Clearly labelled synthetic known-truth fixtures with an expected-versus-actual evidence manifest ([policy](docs/DEMONSTRATION_EVIDENCE.md)). |
 
-X-ray images and CT/MR volumes use separate processing routes. This project does **not** provide complete whole-body artery segmentation or validated automated clinical grading.
+## Supported analyses
 
-## Workspaces built around responsibilities
+New cases accept only combinations that have a connected model. Anything else is rejected when the case is created.
+
+| Modality | Anatomy | Dimension | Model |
+| :--- | :--- | :--- | :--- |
+| **XCA** (X-ray coronary angiography) | Coronary | 2D | ResNet34 U-Net (artery) and Mask R-CNN (stenosis candidates) |
+| **CTA** | Coronary | 3D | ImageCAS 3D U-Net |
+| **CTA** | Aorta | 3D | Aorta baseline trained on pseudo-labels |
+| **CT** | Aorta | 3D | Aorta baseline trained on pseudo-labels |
+
+Cerebral and hepatic anatomy, MRA, and whole-body artery segmentation are **not** supported. Stenosis output is a research candidate list, not a validated grade.
+
+## Roles
 
 | Role | Main responsibility |
 | :--- | :--- |
-| **Doctor** | Review authorized cases, images, findings, severity assessments, and reports. |
-| **Medical Researcher** | Prepare research cases, explore outputs, and inspect recorded evaluations. |
-| **Technician / Data Operator** | Handle intake, uploads, metadata, and preparation quality. |
-| **ML Engineer** | Inspect model records and evaluation artifacts; training controls are not connected. |
-| **Viewer** | Read shared case details, recorded results, and assigned doctor information. |
-| **Administrator** | Manage users, access, audit records, and available doctor workflows within case scope. |
+| **Doctor** | Review authorized cases, findings, severity assessments and reports. |
+| **Medical Researcher** | Prepare research cases, explore outputs, inspect evaluations. |
+| **Technician / Data Operator** | Intake, uploads, metadata and preparation quality. |
+| **ML Engineer** | Model records and evaluation artifacts. Training controls are not connected. |
+| **Viewer** | Read shared case details and recorded results. |
+| **Administrator** | Users, access, audit, operations and monitoring. |
 
-For shared team visibility, configure `CV_CASE_VISIBILITY=shared` as described in [Shared case workspace](docs/SHARED_CASE_WORKSPACE.md). Visibility does not grant review, edit or export actions beyond the role and case permissions.
-
-Legacy `clinician` identifiers remain supported internally; the interface presents the role as **Doctor**. Institutional SSO requires a real identity-provider configuration—not a demo account name.
+For shared team visibility set `CV_CASE_VISIBILITY=shared` ([guide](docs/SHARED_CASE_WORKSPACE.md)). Visibility never grants review, edit or export rights beyond role and case permissions.
 
 ## Architecture
 
@@ -88,64 +84,60 @@ Legacy `clinician` identifiers remain supported internally; the interface presen
 flowchart TB
     UI[React and TypeScript workspace] --> API[FastAPI application]
     API --> AUTH[Authentication and access policy]
-    API --> CASES[Cases, assignments, and reviews]
+    API --> CASES[Cases, assignments and reviews]
     API --> PREP[Image and volume preparation]
-    API --> INFER[Compatible model inference]
-    API --> REPORTS[Reports, notifications, and audit]
+    API --> INFER[Model inference and explanations]
+    API --> REPORTS[Reports, notifications and audit]
+    API --> OPS[Telemetry, alerts and event log]
     CASES --> DB[(SQLAlchemy / SQLite)]
     REPORTS --> DB
-    PREP --> FILES[Local originals and derived artifacts]
+    OPS --> DB
+    PREP --> FILES[Originals and derived artifacts]
     INFER --> WEIGHTS[Separately supplied checkpoints]
 ```
 
-SQLite is the local default. PostgreSQL can be configured through `DATABASE_URL`; production use requires additional security, operations, and privacy review.
+SQLite is the local default. PostgreSQL can be configured through `DATABASE_URL`, but production use needs its own security, operations and privacy review.
 
-## Get started
+## Quick start
 
-For the Docker-first clone workflow, follow the [clean-clone quick start](docs/QUICKSTART.md). It includes a read-only preflight, persistent local storage, verified model installation and the secure first-administrator command.
+### Docker (recommended)
 
-**Trained models:** download the [276 MB artery and stenosis model ZIP](https://github.com/springboardmentor01092s-tech/Team_2_Artery-Segmentation-DL/releases/download/corovision-mask-models-v1/CoroVision_application_mask_models_v1.zip)
-from the [model release](https://github.com/springboardmentor01092s-tech/Team_2_Artery-Segmentation-DL/releases/tag/corovision-mask-models-v1).
-Use the `lingareddy-dhanush` source branch and follow the
-[model installation steps](docs/FRESH_CLONE_SETUP.md#install-trained-models). Weights are a separate
-release download; cloning alone does not install them.
-
-**Recommended for a new laptop:** follow the [fresh-clone guide](docs/FRESH_CLONE_SETUP.md), or run these commands from the cloned repository root:
-
-```bash
-python scripts/setup_local.py
-python scripts/run_local.py
-```
-
-Then open **http://127.0.0.1:8000**. This serves the built application and API together. The scripts create private configuration and storage locally; use `python3` instead of `python` if required. Optional models, PDF conversion, and account setup are covered in the guide. The separate-server development setup is shown below.
-
-**Requirements:** Python 3.11–3.13, Node.js 20+, and npm. PDF rendering uses the packaged PDFium dependency (`pypdfium2`). Optional inference dependencies are in `backend/requirements-ai.txt`.
-
-### 1 · Clone the working branch
+Requires Docker with Compose, 4 GiB free disk and 8 GiB RAM recommended.
 
 ```bash
 git clone --branch lingareddy-dhanush https://github.com/springboardmentor01092s-tech/Team_2_Artery-Segmentation-DL.git
 cd Team_2_Artery-Segmentation-DL
+python scripts/configure.py
+python scripts/preflight.py
+docker compose up --build -d
+docker compose exec app python -m app.cli create-admin
 ```
 
-### 2 · Start the backend
+Open <http://127.0.0.1:8000> and check readiness:
 
 ```bash
+curl -fsS http://127.0.0.1:8000/api/health/ready
+```
+
+The first build installs the 2D research checkpoints after verifying their release hashes. The 3D checkpoint is supplied separately; without it the 3D interface shows an unavailable state. Each clone has its own database, administrator and storage. Full steps: [clean-clone quick start](docs/QUICKSTART.md) and [fresh-clone guide](docs/FRESH_CLONE_SETUP.md).
+
+**Trained models:** the [276 MB model ZIP](https://github.com/springboardmentor01092s-tech/Team_2_Artery-Segmentation-DL/releases/download/corovision-mask-models-v1/CoroVision_application_mask_models_v1.zip) is published on the [model release](https://github.com/springboardmentor01092s-tech/Team_2_Artery-Segmentation-DL/releases/tag/corovision-mask-models-v1). Cloning alone does not install weights; see [model installation](docs/FRESH_CLONE_SETUP.md#install-trained-models).
+
+### Local development
+
+Requires Python 3.11 to 3.13, Node.js 20+ and npm.
+
+```bash
+# Backend
 cd backend
-python3 -m venv .venv
-source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 export JWT_SECRET="$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')"
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-On Windows, activate with `.venv\Scripts\activate`. Keep your JWT secret stable in private environment configuration for persistent sessions; generating a new value invalidates previous tokens.
-
-### 3 · Start the frontend
-
-Open another terminal at the repository root:
-
 ```bash
+# Frontend, in a second terminal
 cd frontend
 npm ci
 npm run dev -- --host 127.0.0.1
@@ -154,114 +146,84 @@ npm run dev -- --host 127.0.0.1
 | Open | Address |
 | :--- | :--- |
 | Application | <http://127.0.0.1:5173> |
-| Interactive API documentation | <http://127.0.0.1:8000/docs> |
+| API documentation | <http://127.0.0.1:8000/docs> |
 
-Keep both servers running. Opening `frontend/index.html` directly does not launch the application.
-
-### 4 · Set up an account
-
-Use registration for the default viewer-account workflow. To bootstrap the first administrator, run `python -m app.cli create-admin` from `backend/` and answer the secure interactive prompts. The command refuses to create a second initial administrator and never accepts the password as a command-line argument or environment variable. See [administrator access](docs/ADMIN_ACCESS.md) and [Railway deployment](docs/RAILWAY_DEPLOYMENT.md).
-
-Never commit credentials. See [authentication setup](docs/AUTH_SETUP.md) and [backend/.env.example](backend/.env.example). Provider sign-in and email recovery require their corresponding service configuration.
+Keep the JWT secret stable in private configuration, because a new value invalidates existing sessions. Never commit credentials. See [authentication setup](docs/AUTH_SETUP.md), [administrator access](docs/ADMIN_ACCESS.md) and [backend/.env.example](backend/.env.example). Provider sign-in and email recovery need their own service configuration.
 
 <details>
 <summary><strong>Optional: connect inference artifacts</strong></summary>
 
-Weights are not included in this repository. Install compatible inference dependencies, supply the expected checkpoints, and follow [AI analysis setup](docs/AI_ANALYSIS.md). Model-dependent actions remain unavailable without these artifacts. A source checkout is not evidence that a model is installed or clinically validated.
-
-The preserved training-workspace models can be installed separately using the [trained release integration guide](docs/TRAINED_RELEASE_INTEGRATION.md). This connects the binary artery and ARCADE stenosis-mask baselines without committing weights, changing historical test bindings, or activating rejected candidates.
-
-For the audited end-to-end workflow, read the [master integration prompt](docs/MASTER_INTEGRATION_PROMPT.md), [audit](docs/INTEGRATION_AUDIT.md), [single-worker job deployment guide](docs/INFERENCE_JOB_DEPLOYMENT.md) and [verification report](reports/end_to_end_integration.md). Analysis jobs preserve saved masks, raw scores and evidence-based explanations. Optional 3D functionality is described in the [CTA workspace guide](docs/3D_CASE_WORKSPACE.md); experimental severity is withheld when measurement quality or reference evidence is inadequate.
+Weights are not in this repository. Install `backend/requirements-ai.txt`, supply the expected checkpoints and follow [AI analysis setup](docs/AI_ANALYSIS.md) and the [trained release guide](docs/TRAINED_RELEASE_INTEGRATION.md). Related guides: [3D inference](docs/3D_INFERENCE.md), [CTA workspace](docs/3D_CASE_WORKSPACE.md), [single-worker job deployment](docs/INFERENCE_JOB_DEPLOYMENT.md), [explainability](docs/EXPLAINABLE_AI.md), [monitoring](docs/MONITORING_AND_LOGGING.md) and [operations and readiness](docs/OPERATIONS_AND_READINESS.md). Model-dependent actions stay unavailable without the artifacts, and a source checkout is not evidence that a model is installed or validated.
 
 </details>
 
-## Research and evaluation
+## Measured results
 
-This branch contains the application and its inference/preprocessing code, not the training workspace. Training notebooks, training runners, training queues, checkpoint-evaluation scripts, and training execution notes have been removed. Train models separately and supply compatible artifacts for inference. Datasets and checkpoints remain subject to their original access and licensing terms.
+Figures are research measurements on the stated cohort and are not clinical performance.
 
-- Preserve original annotations and source splits.
-- Check patient/group leakage separately from image-level evaluation.
-- Keep X-ray and CT/MR experiments separate.
-- Select models using training/validation data—not repeated final-test tuning.
-- Report measured results and limitations; do not promise a “highest accuracy.”
+| Task | Result | Notes |
+| :--- | :--- | :--- |
+| 3D coronary (ImageCAS, development validation) | Dice 0.7937, recall 0.7879 | 150 volumes on the prepared 128-voxel grid. |
+| 3D coronary (ASOCA, external reference) | Dice 0.3573, IoU 0.2201, HD95 21.48 mm | 40 expert-reference pairs on the native grid. Limited external generalization. One empty prediction counted as Dice 0. |
+| 2D artery and stenosis | Trained on ARCADE only | Not validated on other angiography sources. |
 
-Read the [measured-results report](reports/latest_measured_training_results.md) for dataset-specific outcomes and incomplete work. **Not every dataset has completed training.** Local training remains paused unless explicitly resumed.
+The two 3D scores come from different cohorts and grids and must not be compared directly. These values are shown on the application's **Model Evaluation** page. Dataset-level results and incomplete work: [measured-results report](reports/latest_measured_training_results.md). Not every dataset has completed training, and training remains paused.
+
+## Development and testing
+
+```bash
+# backend/, with its environment active
+pytest -q
+
+# frontend/, after npm ci
+npx tsc --noEmit
+npm run build
+node --test tests/*.test.mjs
+
+# browser tests need a running server and seeded demo accounts
+DEMO_CREDENTIALS_PATH=/path/to/demo-credentials.json npx playwright test
+```
+
+Latest full run (28 November 2026): backend 482 passed (11 skipped), frontend 64 unit tests passed, browser suite 19 passed (2 skipped). These verify engineering behavior, not clinical safety or model validity. The reference-mask browser acceptance harness is in [REFERENCE_MASK_ACCEPTANCE.md](docs/REFERENCE_MASK_ACCEPTANCE.md).
+
+**Not yet established:** independent validation on a cleared unseen cohort, expert mask semantics and native-grid pairing; a real CTA case passing the strict candidate rules; hosted authenticated workflows, recovery, monitoring and load evidence.
 
 ## Repository guide
 
 ```text
-backend/      FastAPI services, access policy, preprocessing, and tests
-frontend/     React application, role workspaces, themes, and UI tests
-ml/           Shared preprocessing code and configuration
-scripts/      Dataset audits, preparation, and documentation tools
-docs/         Architecture, workflows, datasets, and implementation scope
+backend/      FastAPI services, access policy, preprocessing and tests
+frontend/     React application, role workspaces, themes, UI and browser tests
+ml/           Shared preprocessing code, release metadata and configuration
+scripts/      Setup, preflight, dataset audits and documentation tools
+docs/         Architecture, workflows, datasets and implementation scope
 reports/      Selected aggregate measured-result reports
-pdfs/         Project documentation and document-generation scripts
+deploy/       Deployment configuration
 ```
 
-Local databases, uploaded images, datasets, model weights, environment secrets, and generated builds are intentionally excluded from Git.
-
-## Development checks
-
-```bash
-# From backend/, with its environment active
-pytest -q
-
-# From frontend/, after npm ci
-npm run build
-node --test tests/*.test.mjs
-```
-
-These checks verify implementation behavior—not clinical safety or model validity.
-
-### Reference-mask acceptance coverage
-
-The 25 November 2026 focused run passed **25 backend tests**, including 10 dedicated 2D mask-review tests, plus **55 frontend tests** and the TypeScript/Vite build. The opt-in browser test passed actual reference-file selection, invalid-file rejection and retry, saved metrics, reload, process-restart persistence and authenticated PDF/CSV/JSON downloads. Downloaded records agreed with the Evidence ZIP, and ZIP manifest hashes were checked. These checks used disposable **synthetic known-truth artifacts**, not patient images or independent expert references.
-
-Run the focused backend checks from the repository root with the backend environment active:
-
-```bash
-PYTHONPATH=backend python -m pytest backend/tests/test_image_mask_review.py backend/tests/test_volume_reference_metrics.py backend/tests/test_segmentation_metrics.py backend/tests/test_volume_mask_review.py backend/tests/test_shared_case_workspace.py -q
-```
-
-For browser acceptance, first build the frontend with `npm run build` in `frontend/`. Then start the disposable harness from the repository root:
-
-```bash
-PYTHONPATH=backend python backend/tests/serve_reference_fixture.py --directory /tmp/coro-reference-acceptance --port 8010
-```
-
-In another terminal, from `frontend/`:
-
-```bash
-E2E_REFERENCE_FIXTURE=/tmp/coro-reference-acceptance/fixture.json E2E_BASE_URL=http://127.0.0.1:8010 npx playwright test e2e/reference-upload.spec.ts --project=desktop --workers=1
-```
-
-Install the Playwright Chromium browser if needed (`npx playwright install chromium`). The fixture requires the backend test and imaging dependencies. It never executes a model and refuses a storage directory inside the checkout. Keep its private credentials, database and downloads out of Git. Stop and restart the harness with the same directory, then repeat the browser test to check retained history. The normal application remains on port **8000**; 8010 is only a temporary isolated test server. Without `E2E_REFERENCE_FIXTURE`, this test is deliberately skipped.
-
-**Remaining acceptance:** independent validation still needs a cleared unseen cohort, expert mask semantics and native-grid pairing. A real CTA case passing the strict candidate rules is still required for positive candidate navigation/measurement acceptance. Hosted authenticated workflows, recovery, monitoring and representative load need separate target evidence. Synthetic equality scores and local engineering passes do not satisfy these requirements.
-
+This branch is application-only: training notebooks, runners, queues and checkpoint-evaluation scripts are not published. Databases, uploads, datasets, weights, secrets and build output are excluded from Git, and datasets and checkpoints keep their original licenses.
 
 ## Documentation
 
-| Start here | Read more |
+| Topic | Links |
 | :--- | :--- |
 | Product and scope | [Project scope](docs/PROJECT_SCOPE.md) · [Comprehensive PRD](docs/CoroVision_AI_Comprehensive_PRD_Infosys_Springboard_Team_2.md) |
 | Architecture and design | [Architecture](docs/ARCHITECTURE.md) · [Database schema](docs/PRD_DATABASE_SCHEMA.md) · [Wireframes](docs/WIREFRAMES.md) |
-| Application workflows | [Frontend workflow](docs/FRONTEND_WORKFLOW.md) · [Role section map](docs/ROLE_SECTIONS_ROUTE_MATRIX_2026-10-16.md) |
+| Workflows | [Frontend workflow](docs/FRONTEND_WORKFLOW.md) · [Role section map](docs/ROLE_SECTIONS_ROUTE_MATRIX_2026-10-16.md) |
 | Images and datasets | [Preprocessing requirements](docs/PREPROCESSING_ENGINE_REQUIREMENTS.md) · [Dataset registry](docs/DATASET_REGISTRY.md) |
-| Access and publishing | [Authentication](docs/AUTH_SETUP.md) · [Branch and publishing rules](docs/GIT_PUBLISHING.md) |
+| Access and publishing | [Authentication](docs/AUTH_SETUP.md) · [Administrator access](docs/ADMIN_ACCESS.md) · [Publishing rules](docs/GIT_PUBLISHING.md) |
+| Evidence | [Correctness policy](COROVISION_CORRECTNESS_POLICY.md) · [Demonstration evidence](docs/DEMONSTRATION_EVIDENCE.md) |
 
-Dated documents may describe earlier stages. Consult current code, explicit “not connected” states, and measured-result artifacts for actual availability.
+Dated documents may describe earlier stages. Rely on current code, explicit "not connected" states and measured-result artifacts for actual availability.
 
 ## Responsible use
 
-This academic prototype is not a production clinical system. Real patient use or public deployment requires an approved privacy/security process, institution-managed identity and access, secure transport, secret management, operational safeguards, retention/backup policies, and appropriate clinical validation.
+This academic prototype is not a production clinical system. Real patient use or public deployment needs an approved privacy and security process, institution-managed identity, secure transport, secret management, retention and backup policies, and clinical validation.
 
 **AI findings and a doctor's assessment are different records.** A mask is not a confirmed lesion, a pixel score is not clinical confidence, and uncalibrated image geometry is not a validated physical measurement.
 
 ## License and acknowledgements
 
-See [LICENSE](LICENSE) for the repository license. Third-party components retain their original terms: [frontend notices](frontend/THIRD_PARTY_NOTICES.md), [PrismUI](frontend/LICENSE.prismui.md), and [Watermelon](frontend/LICENSE.watermelon.md). Dataset licenses and access conditions apply independently.
+See [LICENSE](LICENSE). Third-party components keep their own terms: [frontend notices](frontend/THIRD_PARTY_NOTICES.md), [PrismUI](frontend/LICENSE.prismui.md) and [Watermelon](frontend/LICENSE.watermelon.md). Dataset licenses and access conditions apply independently.
 
 ---
 
@@ -272,8 +234,3 @@ See [LICENSE](LICENSE) for the repository license. Third-party components retain
 Research with traceability. Review with context.
 
 </div>
-
-
-### First administrator on a new installation
-
-Run `docker compose exec app python -m app.cli create-admin` in the installation directory. Then sign in, enroll a time-based authenticator and open **User Management** to create invitations. Each installation manages its own accounts. [Administrator setup and recovery](docs/ADMIN_ACCESS.md)
