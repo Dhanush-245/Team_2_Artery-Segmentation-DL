@@ -222,7 +222,7 @@ def post_webhook(level: str, name: str, message: str) -> str:
     body = json.dumps({'text': text, 'content': text, 'level': level, 'alert': name, 'service': 'corovision-ai'}).encode()
     request = urllib.request.Request(url, data=body, headers={'Content-Type': 'application/json'}, method='POST')
     try:
-        with urllib.request.urlopen(request, timeout=5) as response:  # noqa: S310 - scheme checked above
+        with urllib.request.urlopen(request, timeout=5) as response:  # noqa: S310  # nosec B310 - https (or local http) enforced above
             return 'sent' if 200 <= response.status < 300 else 'failed'
     except (urllib.error.URLError, OSError, ValueError):
         return 'failed'

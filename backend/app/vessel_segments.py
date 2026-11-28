@@ -106,7 +106,9 @@ def _network():
 @lru_cache(maxsize=1)
 def _model(path: str):
     import torch
-    blob = torch.load(path, map_location='cpu', weights_only=False)
+    from torch.torch_version import TorchVersion
+    with torch.serialization.safe_globals([TorchVersion]):  # only the version tag the release checkpoint stores
+        blob = torch.load(path, map_location='cpu', weights_only=True)
     model = _network()
     model.load_state_dict(blob['model'])
     return model.eval()

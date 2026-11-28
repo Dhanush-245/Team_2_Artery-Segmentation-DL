@@ -219,6 +219,7 @@ This branch is application-only: training notebooks, runners, queues and checkpo
 
 | Topic | Links |
 | :--- | :--- |
+| User guide | [Instruction guide (PDF)](docs/CoroVision_AI_Instruction_Guide.pdf) · [Instruction guide (Markdown)](docs/INSTRUCTION_GUIDE.md) |
 | Product and scope | [Project scope](docs/PROJECT_SCOPE.md) · [Comprehensive PRD](docs/CoroVision_AI_Comprehensive_PRD_Infosys_Springboard_Team_2.md) |
 | Architecture and design | [Architecture](docs/ARCHITECTURE.md) · [Database schema](docs/PRD_DATABASE_SCHEMA.md) · [Wireframes](docs/WIREFRAMES.md) |
 | Workflows | [Frontend workflow](docs/FRONTEND_WORKFLOW.md) · [Role section map](docs/ROLE_SECTIONS_ROUTE_MATRIX_2026-10-16.md) |

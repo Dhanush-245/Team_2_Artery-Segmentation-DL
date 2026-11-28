@@ -123,3 +123,25 @@ def test_endpoint_labels_candidates_when_model_runs(monkeypatch):
         assert body["records"][0] == {"candidate_id": "C1", "outcome": "assigned", "segment": "11",
                                       "anatomy": "LCx proximal", "vote_share": 1.0}
         assert body["records"][1]["outcome"] == "region_unavailable"
+
+
+def test_endpoint_reports_failed_status_when_labelling_raises(monkeypatch):
+    """A labelling error must come back as a 'failed' status, not an unhandled server error."""
+    from uuid import uuid4
+
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+    from test_rbac_system import make_user
+
+    def broken(*_args, **_kwargs):
+        raise RuntimeError("synthetic labelling failure")
+
+    monkeypatch.setattr(vs, "available", lambda: True)
+    monkeypatch.setattr(vs, "label_candidates", broken)
+    with TestClient(app, raise_server_exceptions=False) as client:
+        _, owner = make_user(f"seg-fail-{uuid4().hex}@example.org", "researcher")
+        case, event_id = _saved_run(client, owner, [{"candidate_id": "C1", "polygon_prepared_xy": square()}])
+        response = client.get(f"/api/cases/{case['id']}/vessel-segments/{event_id}", headers=owner)
+        assert response.status_code == 200, response.text
+        assert response.json()["status"] == "failed"

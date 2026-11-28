@@ -65,3 +65,8 @@ audit_tests/
 final_artifacts/*.pptx
 _to_delete/
 scripts/evaluate_cadica_external.py
+
+# Training sources stay local (application-only published branch)
+research_training/*
+!research_training/segmentation_metrics.py
+!research_training/.gitattributes
