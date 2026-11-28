@@ -115,7 +115,8 @@ export default function OperationsPanel({ token }: { token: string }) {
     {notice && <p role="status" className="message success">{notice}</p>}
     {!alerts && !error && <p role="status">Loading operations data…</p>}
     {alerts && signals && <>
-      <div className="ops-kpis" aria-label="Current signals">
+      <h3 className="ops-section-title">Current signals</h3>
+      <div className="ops-kpis">
         <Card className="ops-kpi"><span>Readiness</span><strong className={signals.ready ? "ops-good" : "ops-bad"}>{signals.ready ? "Ready" : "Not ready"}</strong><small>{history.length ? `${upChecks} of ${history.length} checks ready (24 h)` : "No history yet"}</small></Card>
         <Card className="ops-kpi"><span>Requests per check</span><strong>{perCheck.length ? perCheck[perCheck.length - 1] : 0}</strong><Spark values={perCheck} tone="blue" /></Card>
         <Card className="ops-kpi"><span>Server errors (recent)</span><strong className={signals.server_errors ? "ops-bad" : "ops-good"}>{signals.server_errors}</strong><small>{signals.server_errors ? "Check the event log" : "None in the recent window"}</small></Card>

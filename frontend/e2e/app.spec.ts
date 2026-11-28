@@ -126,7 +126,7 @@ test("an administrator sees the operations page, sends a test alert and finds it
   await expect(page.getByText("Current signals")).toBeVisible();
   await page.getByRole("button", { name: "Send a test alert" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Test alert sent to" })).toBeVisible();
-  await expect(page.getByRole("cell", { name: "alert_test" }).first()).toBeVisible();
+  await expect(page.getByRole("listitem").filter({ hasText: "alert_test" }).first()).toBeVisible();
 });
 
 test("non-administrators cannot open the operations page", async ({ page }) => {
