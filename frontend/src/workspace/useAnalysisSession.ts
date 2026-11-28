@@ -86,6 +86,8 @@ export function useAnalysisSession({ token, user, caseList, activeView, setActiv
     if (!target || caseListToken !== token || new URLSearchParams(location.search).has("demo_role")) return;
     const allowedCase = cases.find((item) => item.id === target.caseId);
     requestedCaseNavigation.current = null;
+    // A case link on Data & Uploads selects the case there; only other addresses jump to the analysis workspace.
+    const staysInUploads = window.location.pathname === "/uploads";
     const cleanPath = clearAnalysisLocation(window.location.href);
     if (!allowedCase || !canOpenSection("analysis", user.role, user.permissions)) {
       restoringLocation.current = null;
@@ -98,7 +100,7 @@ export function useAnalysisSession({ token, user, caseList, activeView, setActiv
     if (!allowedCase.images.length && !target.imageId) {
       requestedRun.current = null;
       setSelectedId(allowedCase.id);
-      if (activeView !== "analysis") setActiveView("analysis", { replace: true });
+      if (activeView !== "analysis" && !staysInUploads) setActiveView("analysis", { replace: true });
       return;
     }
     const image = savedImageForRequest(allowedCase.images, target.imageId, requestedRun.current);
@@ -114,7 +116,7 @@ export function useAnalysisSession({ token, user, caseList, activeView, setActiv
     requestedRun.current = null;
     restorationImage.current = image.id;
     setSelectedImageId(image.id);
-    if (activeView !== "analysis") setActiveView("analysis", { replace: true });
+    if (activeView !== "analysis" && !staysInUploads) setActiveView("analysis", { replace: true });
   }, [cases, caseListToken, token, location.search, navigationRequest]);
 
   useEffect(() => {

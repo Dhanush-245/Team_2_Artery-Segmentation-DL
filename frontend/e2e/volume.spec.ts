@@ -28,7 +28,7 @@ test.describe("3D case workspace", () => {
     const target = await targetResponse.json();
     // Engineering fixture: keep the real saved-run geometry, but inject a candidate into the browser response only.
     // This checks candidate navigation without asserting a lesion exists in the public CTA.
-    await page.route(`**${root}/report/json`, async route => {
+    await page.route(`**${root}/analysis-detail`, async route => {
       const response = await route.fetch();
       const report = await response.json();
       const geometry = report.experimental_geometry;
@@ -76,9 +76,9 @@ test.describe("3D case workspace", () => {
     await expect(readout).not.toHaveText(before);
 
     const afterClick = await readout.innerText();
-    await page.getByRole("row").filter({ hasText: "TEST-NAVIGATION" }).getByRole("button", { name: "Show in views" }).click();
+    await page.getByRole("button", { name: /Candidate TEST-NAVIGATION/ }).first().click();
     await expect(readout).not.toHaveText(afterClick);
-    await expect(readout).toContainText("Showing candidate TEST-NAVIGATION");
+    await expect(readout).toContainText("Showing Candidate TEST-NAVIGATION");
     await expect(readout).toContainText("Voxel 5, 6, 7");
 
     const full = page.getByRole("button", { name: "Full screen" });

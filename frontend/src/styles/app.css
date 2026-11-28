@@ -1059,3 +1059,20 @@ a.brand:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; bo
 @media (prefers-reduced-motion: reduce) { .cv-loading-bars { animation: none; } }
 .cv-row-link { cursor: pointer; }
 .cv-row-link:hover { background: hsl(var(--muted)); }
+.dark .message.info, .dark .app-shell .message.info { background: #27272a; color: #f4f4f5; border: 1px solid #3f3f46; }
+.dark .analysis-feed-row .flagged { color: #fdba74; }
+/* Candidate cards: the research tag wraps inside the card instead of running past its edge */
+.candidate-choice { min-width: 0; }
+.candidate-choice .research-tag { display: block; width: fit-content; max-width: 100%; margin: 0; white-space: normal; border-radius: 12px; padding: .1rem .5rem; line-height: 1.35; }
+/* Phone width: the linked panels may shrink below their content instead of widening the page.
+   The 3D canvas has a 300 px intrinsic width, so its panel ignores it when sizing (inline-size containment). */
+.lv-grid > *, .lv-panel, .lv-orbit, .lv-orbit .volume-orbit { min-width: 0; max-width: 100%; }
+.lv-orbit .volume-orbit { contain: inline-size; }
+.lv-orbit .volume-orbit-presets, .lv-orbit .volume-orbit-toolbar, .lv-orbit .volume-orbit-legend { flex-wrap: wrap; max-width: 100%; }
+@media (max-width: 700px) { .lv-grid { grid-template-columns: minmax(0, 1fr); } .lv-orbit .volume-orbit-canvas { max-width: 100%; } }
+.xai-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+.xai-controls, .xai-controls label, .xai-controls select { min-width: 0; max-width: 100%; }
+/* Every 3D surface panel (also the candidate-focused one) sizes from its container, never from the canvas */
+.volume-orbit { min-width: 0; max-width: 100%; contain: inline-size; }
+.volume-orbit-canvas { min-width: 0; max-width: 100%; }
+.volume-orbit-presets, .volume-orbit-toolbar, .volume-orbit-legend { flex-wrap: wrap; max-width: 100%; }
