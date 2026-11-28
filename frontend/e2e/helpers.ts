@@ -19,6 +19,8 @@ export async function signIn(page: Page, role: string) {
   await page.getByLabel(/^password$/i).fill(password);
   await page.getByRole("button", { name: /^sign in$/i }).click();
   await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
+  // The app finishes its post-sign-in route change after the navigation appears; let it settle so a following goto is not interrupted (seen in WebKit).
+  await page.waitForLoadState("networkidle");
 }
 
 export async function apiToken(request: APIRequestContext, role: string) {
