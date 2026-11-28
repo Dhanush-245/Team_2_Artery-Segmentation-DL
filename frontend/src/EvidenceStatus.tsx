@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { request } from './api';
 type Metric = { mean: number | null; support: number; bootstrap_mean_ci95: number[] | null };
-type Evidence = { updated_at: string; external_evaluation: { title: string; cases: number; checkpoint_epoch: number; checkpoint_sha256: string; grid: string; limitations: string[]; cohorts: Record<string, { cases: number; metrics: Record<string, Metric> }> }; acceptance: { id: string; title: string; status: string; detail: string }[] };
+type Evidence = { updated_at: string; external_evaluation: { title: string; cases: number; checkpoint_epoch: number; checkpoint_sha256: string; grid: string; limitations: string[]; cohorts: Record<string, { cases: number; metrics: Record<string, Metric> }> }; acceptance: { id: string; title: string; status: string; detail: string }[]; development_evaluation?: { title: string; dataset: string; split: string; model: string; epochs: number; input_px: number; aggregation: string; metrics: Record<string, number>; note: string; limitation: string } };
 const value = (n: number | null | undefined) => n == null ? 'Not available' : n.toFixed(4);
 export default function EvidenceStatus({ token, compact = false }: { token: string; compact?: boolean }) {
   const [data, setData] = useState<Evidence | null>(null);
@@ -10,7 +10,12 @@ export default function EvidenceStatus({ token, compact = false }: { token: stri
   if (error) return <p className="message error" role="alert">Evaluation evidence could not be loaded: {error}</p>;
   if (!data) return <p role="status">Loading recorded evaluation evidence…</p>;
   const e = data.external_evaluation;
+  const dev = data.development_evaluation;
+  const devLabels: Record<string, string> = { dice: 'DICE', recall: 'RECALL', multiscale_mean_dice: 'MULTISCALE MEAN DICE' };
   return <section className="evidence-status" aria-label="External evaluation and acceptance status">
+    {dev && <><header className="evidence-heading"><div><p className="eyebrow">3D CTA · DEVELOPMENT VALIDATION</p><h3>{dev.title}</h3><p className="caption">{dev.split} · {dev.model} · epoch {dev.epochs} · {dev.input_px}-voxel prepared grid</p></div><span className="stage-badge">Research evidence</span></header>
+    <dl className="evidence-metrics">{Object.entries(dev.metrics).map(([key, v]) => <div key={key}><dt>{devLabels[key] ?? key.replaceAll('_', ' ').toUpperCase()}</dt><dd>{value(v)}</dd><small>{dev.aggregation}</small></div>)}</dl>
+    <p className="evidence-caution">{dev.limitation}</p></>}
     <header className="evidence-heading"><div><p className="eyebrow">3D CTA · EXTERNAL COHORT</p><h3>{e.title}</h3><p className="caption">{e.cases} expert-reference pairs · epoch {e.checkpoint_epoch} · native CT grid · recorded {data.updated_at}</p></div><span className="stage-badge">Research evidence</span></header>
     <dl className="evidence-metrics">{['dice', 'iou', 'hd95', 'assd'].map(key => <div key={key}><dt>{key.toUpperCase()}{['hd95', 'assd'].includes(key) ? ' (mm)' : ''}</dt><dd>{value(e.cohorts.All.metrics[key].mean)}</dd><small>{e.cohorts.All.metrics[key].support}/40 cases</small></div>)}</dl>
     <p className="evidence-caution">Limited external generalization. One empty final prediction is retained as Dice/IoU 0; its surface distances are undefined. These cohort means are separate from an individual case’s metrics.</p>

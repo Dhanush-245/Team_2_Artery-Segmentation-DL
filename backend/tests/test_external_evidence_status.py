@@ -22,4 +22,7 @@ def test_evidence_requires_auth_and_keeps_aggregate_scientific_limits():
             assert external['empty_predictions'] == 1
             assert not external['stenosis']['expert_confirmed']
             assert len(data['acceptance']) == 8
+            development = data['development_evaluation']
+            assert development['metrics']['dice'] == 0.7937 and '150' in development['split']
+            assert 'not directly comparable' in development['limitation']
             assert all(private not in response.text for private in ('/Users/', 'reviewer_id', 'case_id', 'reference_file', 'source_sha256'))

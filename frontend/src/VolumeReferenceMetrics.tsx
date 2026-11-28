@@ -64,6 +64,6 @@ export default function VolumeReferenceMetrics({ caseId, runId, token, onSaved }
     </form> : state && <p className="caption">A doctor, clinician or administrator with review access can attach the eligible reference mask.</p>}
     {success && <p role="status" className="message success">{success}</p>}
     <EvidenceStatus token={token} compact />
-    <p className="caption">The retained ImageCAS validation Dice 0.7937 describes a development cohort of 150 prepared volumes; it is separate from this scan’s reference metrics.</p>
+    <p className="caption">Cohort figures above are separate from this scan’s own reference metrics.</p>
   </section>;
 }

@@ -14,10 +14,12 @@ const CaseWorkflow = lazy(() => import("../CaseWorkflow"));
 const CASE_SECTIONS: [CaseSection, string][] = [["overview", "Overview & access"], ["assets", "Assets & preparation"], ["reviews", "Reviews & notes"], ["history", "Analysis history"]];
 const PREVIOUS_SECTION: Record<CaseSection, CaseSection> = { overview: "overview", assets: "overview", reviews: "assets", history: "reviews" };
 
-function roleCopy(role: string) {
+/** The eyebrow repeats the sidebar name of the page, so Case Inventory is never labelled as Data & Uploads. */
+function roleCopy(role: string, view: string) {
   const clinical = role === "doctor" || role === "clinician";
+  const cases = clinical ? "RESEARCH CASES" : role === "technician" ? "CASE INTAKE" : role === "viewer" ? "ASSIGNED CASES" : role === "admin" ? "CASE INVENTORY" : "RESEARCH CASES";
   return {
-    eyebrow: clinical ? "CLINICAL REVIEW" : role === "technician" ? "CASE INTAKE" : role === "viewer" ? "OBSERVATION" : "IMAGE PREPARATION",
+    eyebrow: view === "uploads" ? "DATA & UPLOADS" : cases,
     badge: clinical ? "Clinical workspace" : role === "viewer" ? "Read-only view" : "Research workspace",
   };
 }
@@ -37,7 +39,7 @@ function CaseStepNavigation() {
 export default function CasesPage() {
   const { token, user, activeView, setActiveView, selected, caseSection, setCaseSection, newCase, caseList, analysis: run, caseDeleted } = useWorkspace();
   if (activeView === "cases" && (newCase.newCaseOpen || newCase.caseFinderOpen)) return <CaseActionsPage />;
-  const copy = roleCopy(user.role);
+  const copy = roleCopy(user.role, activeView);
   return <>
     <div className="page-heading">
       <div><p className="eyebrow">{copy.eyebrow}</p><h2>{selected ? selected.case_code : "Select a case"}</h2></div>

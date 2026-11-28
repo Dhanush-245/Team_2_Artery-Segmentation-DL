@@ -28,6 +28,8 @@ export default function XaiDashboardPage() {
   const [error, setError] = useState("");
   const [method, setMethod] = useState("all");
   const [verification, setVerification] = useState("all");
+  const [search, setSearch] = useState("");
+  const [outcome, setOutcome] = useState("all");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -38,7 +40,25 @@ export default function XaiDashboardPage() {
   }, [token]);
 
   const rows = useMemo(() => (data?.records ?? []).filter(r => (method === "all" || r.method_label === method)
-    && (verification === "all" || (verification === "verified" ? r.deletion !== "NOT_TESTED" : r.deletion === "NOT_TESTED"))), [data, method, verification]);
+    && (verification === "all" || (verification === "verified" ? r.deletion !== "NOT_TESTED" : r.deletion === "NOT_TESTED"))
+    && (!search.trim() || r.case_code.toLowerCase().includes(search.trim().toLowerCase()))
+    && (outcome === "all" || [r.status, r.deletion, r.insertion, r.randomization].includes(outcome))), [data, method, verification, search, outcome]);
+  const checks = useMemo(() => {
+    const all = data?.records ?? [];
+    const count = (key: "deletion" | "insertion" | "randomization", value: string) => all.filter(r => r[key] === value).length;
+    return (["deletion", "insertion", "randomization"] as const).map(key => ({ key, pass: count(key, "PASS"), fail: count(key, "FAIL"),
+      untested: all.filter(r => ["NOT_TESTED", "NOT_EVALUABLE"].includes(r[key])).length, total: all.length }));
+  }, [data]);
+  const needsAttention = useMemo(() => (data?.records ?? []).filter(r => r.status === "failed"
+    || [r.deletion, r.insertion, r.randomization].includes("FAIL")).slice(0, 8), [data]);
+  function exportCsv() {
+    const header = ["case", "run", "target", "method", "status", "deletion", "insertion", "randomization", "saved"];
+    const quote = (v: string) => `"${String(v).replaceAll('"', '""')}"`;
+    const lines = rows.map(r => [r.case_code, r.run_id, r.task === "segmentation" ? "vessel_mask" : r.target_id, r.method_label, r.status, r.deletion, r.insertion, r.randomization, r.created_at].map(quote).join(","));
+    const url = URL.createObjectURL(new Blob([[header.join(","), ...lines].join("\n")], { type: "text/csv" }));
+    const link = document.createElement("a"); link.href = url; link.download = "corovision-explanation-inventory.csv"; link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
 
   if (error) return <div className="settings-page"><p role="alert" className="message error">{error}</p></div>;
   if (!data) return <div className="settings-page"><p role="status"><Loader2 size={16} className="spin" /> Loading explanation records…</p></div>;
@@ -61,6 +81,23 @@ export default function XaiDashboardPage() {
     </Card>
 
     <Card className="panel">
+      <div className="cv-panel-head"><span className="eyebrow">FAITHFULNESS CHECKS</span><h3>Sanity-check outcomes across saved records</h3>
+        <p className="muted">Counts of recorded outcomes, one check per row of records. They describe these saved examples only and are not a pooled accuracy figure.</p></div>
+      <div className="xai-check-grid">{checks.map(c => <div key={c.key} className="xai-check-tile">
+        <strong>{c.key === "randomization" ? "Model randomization" : c.key === "deletion" ? "Deletion test" : "Insertion test"}</strong>
+        <span><Chip value="PASS" /> {c.pass}</span><span><Chip value="FAIL" /> {c.fail}</span><span><Chip value="NOT_TESTED" /> {c.untested}</span>
+        <small>{c.total} saved record{c.total === 1 ? "" : "s"}</small></div>)}</div>
+    </Card>
+
+    <Card className="panel">
+      <div className="cv-panel-head"><span className="eyebrow">NEEDS ATTENTION</span><h3>Records with a failed check</h3></div>
+      {needsAttention.length === 0 ? <p className="muted">No saved record has a failed check. Records that were never tested are not counted here.</p> : <ul className="xai-attention">
+        {needsAttention.map(r => <li key={r.record_id}><button type="button" className="cv-link-button" onClick={() => navigate(`/analysis?case_id=${r.case_id}&image_id=${r.image_id}&run_id=${r.run_id}`)}>{r.case_code} · {r.method_label}</button>
+          <span>{[["Deletion", r.deletion], ["Insertion", r.insertion], ["Randomization", r.randomization]].filter(([, v]) => v === "FAIL").map(([k]) => k).join(", ") || "Generation failed"} failed</span></li>)}
+      </ul>}
+    </Card>
+
+    <Card className="panel">
       <div className="cv-panel-head"><span className="eyebrow">METHODS</span><h3>Saved explanations by method</h3><p className="muted">Counts of saved records only. Deletion/insertion is run per target on request; pass counts are not pooled across different cohorts.</p></div>
       {Object.keys(data.by_method).length === 0 ? <p className="muted">No explanations saved yet. Generate one from a case's Explainable AI step.</p> : <div className="table-scroll"><table>
         <thead><tr><th>Method</th><th>Version</th><th>Saved</th><th>Ready</th><th>Verified</th><th>Deletion PASS</th><th>Insertion PASS</th></tr></thead>
@@ -75,8 +112,12 @@ export default function XaiDashboardPage() {
       <div className="cv-panel-head"><span className="eyebrow">EVIDENCE INVENTORY</span><h3>Saved explanations</h3></div>
       <div className="workbench-selectors">
         <label>Method<select value={method} onChange={e => setMethod(e.target.value)}><option value="all">All methods</option>{[...new Set(data.records.map(r => r.method_label))].map(m => <option key={m}>{m}</option>)}</select></label>
+        <label>Case<input type="search" placeholder="Filter by case code" value={search} onChange={e => setSearch(e.target.value)} /></label>
+        <label>Outcome<select value={outcome} onChange={e => setOutcome(e.target.value)}><option value="all">Any</option><option value="PASS">Has a PASS</option><option value="FAIL">Has a FAIL</option><option value="NOT_TESTED">Has NOT TESTED</option></select></label>
         <label>Verification<select value={verification} onChange={e => setVerification(e.target.value)}><option value="all">All</option><option value="verified">Deletion/insertion run</option><option value="untested">Not tested</option></select></label>
       </div>
+      <div className="xai-inventory-bar"><span className="caption">{rows.length} of {data.records.length} records shown</span>
+        <button type="button" className="cv-outline-button" disabled={!rows.length} onClick={exportCsv}>Download list (CSV)</button></div>
       {rows.length === 0 ? <p className="muted">No saved explanations match.</p> : <div className="table-scroll"><table>
         <thead><tr><th>Case</th><th>Run</th><th>Target</th><th>Method</th><th>Status</th><th>Deletion</th><th>Insertion</th><th>Randomization</th><th>Saved</th></tr></thead>
         <tbody>{rows.map(r => <tr key={r.record_id} className="cv-row-link" onClick={() => navigate(`/analysis?case_id=${r.case_id}&image_id=${r.image_id}&run_id=${r.run_id}`)}>
@@ -107,6 +148,18 @@ export default function XaiDashboardPage() {
         {item.randomization_note && <p className="caption">Randomization {item.randomization?.replaceAll("_", " ")}: {item.randomization_note}</p>}
         {item.deletion_insertion_note && <p className="caption">Deletion/insertion {item.deletion_insertion}: {item.deletion_insertion_note}</p>}
       </div>)}
+    </Card>
+
+    <Card className="panel">
+      <div className="cv-panel-head"><span className="eyebrow">READING GUIDE</span><h3>What each method and check means</h3></div>
+      <dl className="xai-guide">
+        <div><dt>Grad-CAM / Grad-CAM++</dt><dd>Heatmaps of which image regions most changed a chosen model output. Here they are limited to the model's own predicted mask, so they show sensitivity inside the prediction, not an independent finding.</dd></div>
+        <div><dt>Deletion test</dt><dd>Removes the most highlighted pixels first. A faithful map should make the model's score fall quickly.</dd></div>
+        <div><dt>Insertion test</dt><dd>Adds the most highlighted pixels first to a blank image. A faithful map should make the score rise quickly.</dd></div>
+        <div><dt>Model randomization</dt><dd>Re-scrambles model weights. If the map barely changes, it reflects the image, not what the model learned, so the method fails this check.</dd></div>
+        <div><dt>Alignment (3D)</dt><dd>Confirms the restored 3D explanation lines up with the saved vessel mask on the native grid.</dd></div>
+        <div><dt>PASS · FAIL · NOT TESTED</dt><dd>NOT TESTED means the check was never run for that record. It is not a pass.</dd></div>
+      </dl>
     </Card>
 
     <Card className="panel">

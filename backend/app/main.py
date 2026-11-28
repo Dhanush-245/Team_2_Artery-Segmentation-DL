@@ -420,6 +420,26 @@ def report_out(report: ReportRevision) -> dict:
             "approved_by": report.approved_by, "approved_at": report.approved_at}
 
 
+def analysis_summary(case: Case, db: Session | None) -> dict:
+    """One shape for every case, whatever its modality: how many saved runs, which model, and when."""
+    empty = {'runs_2d': 0, 'runs_3d': 0, 'total_runs': 0, 'latest_model': None, 'latest_run_at': None, 'reports_saved': 0}
+    if db is None:
+        return empty
+    image_ids = [im.id for im in case.images]
+    events = db.scalars(select(AnalysisEvent).where(AnalysisEvent.image_id.in_(image_ids))
+                        .order_by(AnalysisEvent.created_at.desc(), AnalysisEvent.id.desc())).all() if image_ids else []
+    volumes = db.scalars(select(VolumeAnalysis).where(VolumeAnalysis.case_id == case.id, VolumeAnalysis.status == 'completed')
+                         .order_by(VolumeAnalysis.created_at.desc(), VolumeAnalysis.id.desc())).all()
+    latest = max([(e.created_at, e.model_version) for e in events[:1]] + [(v.created_at, v.model_key) for v in volumes[:1]],
+                 key=lambda item: item[0].replace(tzinfo=timezone.utc).timestamp() if item[0].tzinfo is None else item[0].timestamp(),
+                 default=(None, None))
+    reports = db.scalar(select(func.count()).select_from(ResearchReport).where(ResearchReport.case_id == case.id)) or 0
+    from .volume_report_archive import version_numbers
+    reports += sum(len(version_numbers(STORAGE / 'volumes' / v.id)) for v in volumes)
+    return {'runs_2d': len(events), 'runs_3d': len(volumes), 'total_runs': len(events) + len(volumes),
+            'latest_model': latest[1], 'latest_run_at': latest[0], 'reports_saved': reports}
+
+
 def case_out(case: Case, db: Session | None = None, viewer: User | None = None) -> dict:
     latest_review = None
     reviews_list = []
@@ -457,6 +477,7 @@ def case_out(case: Case, db: Session | None = None, viewer: User | None = None) 
         ).all()
         for event in events:
             latest_analyses.setdefault(event.image_id, event.id)
+    summary = analysis_summary(case, db)
     assignment = next((item for item in case.access_list if viewer and item.user_id == viewer.id), None) if viewer else None
     owner = bool(viewer and case.owner_id == viewer.id)
     workspace_editor = bool(viewer and db and workspace_case_action(viewer, "edit", db))
@@ -511,6 +532,7 @@ def case_out(case: Case, db: Session | None = None, viewer: User | None = None) 
         "processing_status": case.processing_status,
         "report_status": case.report_status,
         "report_version": case.report_version,
+        "analysis_summary": summary,
         "report_approved_by": case.report_approved_by,
         "report_approved_at": case.report_approved_at,
         "permissions": permissions,

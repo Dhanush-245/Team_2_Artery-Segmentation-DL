@@ -8,7 +8,7 @@ import { CheckCircle2, AlertCircle, FileDown, ShieldAlert } from "lucide-react";
 import { taskLabel } from "./caseConfiguration";
 import { reviewLabels } from "./reviewLabels";
 import { utcDate } from "./lib/time";
-import { caseStatusLabel } from "./caseTypes";
+import { analysisSummaryLabel, caseStatusLabel } from "./caseTypes";
 
 const histories = ["hypertension", "diabetes", "prior_mi", "prior_pci", "hyperlipidemia", "none", "unknown"];
 const risks = ["smoking", "family_history", "obesity", "sedentary", "hypertension", "diabetes", "none", "unknown"];
@@ -195,7 +195,7 @@ export default function CaseDetails({
             <span className="cv-chip info">{caseStatusLabel(caseRecord)}</span>
           </div>
         </div>
-        <p className="caption">Case code: {caseRecord.case_code} · Anatomy: {caseRecord.anatomy} · Tasks: {(caseRecord.intended_tasks || [caseRecord.intended_task]).map(taskLabel).join(", ")} · Model: {modelVersion || "No analysis yet"}</p>
+        <p className="caption">Case code: {caseRecord.case_code} · Anatomy: {caseRecord.anatomy} · Tasks: {(caseRecord.intended_tasks || [caseRecord.intended_task]).map(taskLabel).join(", ")} · Analysis: {analysisSummaryLabel(caseRecord.analysis_summary)} · Model: {caseRecord.analysis_summary?.latest_model || modelVersion || "none yet"} · Reports saved: {caseRecord.analysis_summary?.reports_saved ?? 0}</p>
         <p className="privacy-note">Use only public or de-identified studies. Patient ID must be a pseudonym; do not enter names, contact details, or dates of birth.</p>
         
         {isReadOnly && (

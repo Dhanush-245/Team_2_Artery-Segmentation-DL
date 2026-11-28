@@ -1137,3 +1137,28 @@ a.brand:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; bo
 /* Viewer readout: status first, technical details after, on one line when they fit */
 .lv-readout { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem 1.25rem; }
 .lv-readout .lv-note { order: -1; }
+
+/* 2D history and reports blocks */
+.analysis-console .analysis-history .viewer-heading, .analysis-console .analysis-reports .viewer-heading { color: hsl(var(--foreground)); }
+.analysis-console .analysis-history .viewer-heading h3, .analysis-console .analysis-reports .viewer-heading h3 { color: hsl(var(--foreground)); font-size: 1.2rem; }
+.history-row.is-active { background: hsl(var(--muted) / .5); border-radius: 8px; padding-inline: .75rem; }
+.analysis-reports-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin: .75rem 0; }
+.analysis-reports-actions .cv-outline-button, .analysis-report-downloads .cv-outline-button { gap: .4rem; }
+.analysis-report-list { list-style: none; margin: .5rem 0 0; padding: 0; }
+.analysis-report-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; padding: .8rem 0; border-bottom: 1px solid hsl(var(--border)); }
+.analysis-report-list strong, .analysis-report-list small { display: block; }
+.analysis-report-list small { color: hsl(var(--muted-foreground)); margin-top: .2rem; }
+.analysis-report-downloads { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+/* Explainable AI dashboard additions */
+.xai-check-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-top: .75rem; }
+.xai-check-tile { display: grid; gap: 6px; padding: 14px 16px; border: 1px solid hsl(var(--border)); border-radius: 12px; }
+.xai-check-tile span { display: flex; align-items: center; gap: 8px; }
+.xai-check-tile small { color: hsl(var(--muted-foreground)); }
+.xai-attention { list-style: none; margin: .5rem 0 0; padding: 0; display: grid; gap: 8px; }
+.xai-attention li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 10px 0; border-bottom: 1px solid hsl(var(--border)); }
+.xai-inventory-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin: .75rem 0; }
+.xai-guide { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin: .75rem 0 0; }
+.xai-guide dt { font-weight: 650; }
+.xai-guide dd { margin: .25rem 0 0; color: hsl(var(--muted-foreground)); line-height: 1.5; }
+.xai-dashboard .workbench-selectors input[type=search] { min-height: 44px; padding: 0 12px; border: 1px solid hsl(var(--border)); border-radius: 8px; background: hsl(var(--background)); color: inherit; font: inherit; }

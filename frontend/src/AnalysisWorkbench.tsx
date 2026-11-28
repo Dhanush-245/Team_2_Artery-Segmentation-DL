@@ -4,6 +4,8 @@ import { screeningTone } from "./lib/screening";
 import { ZoomIn, ZoomOut, RotateCcw, Maximize2, Play, FileText } from "lucide-react";
 import type { AnalysisResult, CaseRecord, ImageRecord } from "./caseTypes";
 import AnalysisHistory from "./AnalysisHistory";
+import AnalysisReportsPanel from "./AnalysisReportsPanel";
+import { useWorkspace } from "./workspace/WorkspaceContext";
 import ResultEvidence from "./ResultEvidence";
 import { Button } from "./components/prismui/button";
 import { Card } from "./components/prismui/card";
@@ -46,6 +48,8 @@ type Props = {
 };
 
 export default function AnalysisWorkbench({ onImageReview, reviewMode, assessment, onReview, token, cases, selectedCase, selectedImage, processedPreview, overlay, analysis, history, modelsReady, analysisBusy, jobStatus, canRunAnalysis, onCaseChange, onImageChange, onRun, onSelectAnalysis, onUpload, onReports }: Props) {
+  const { user } = useWorkspace();
+  const role = user.role;
   const [mode, setMode] = useState<"source" | "processed" | "overlay" | "mask" | "attention" | "artery_probability" | "probability" | "gradcam" | "gradcampp" | "centerline" | "contours" | "localization">("overlay");
   const [opacity, setOpacity] = useState(80);
   const [showCandidates, setShowCandidates] = useState(true);
@@ -432,11 +436,8 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
       {analysis && <Card className="panel"><ImagePanelGallery token={token} imageId={selectedImage.id} runId={analysis.id} modelVersion={analysis.model_version} candidateCount={analysis.structured_result?.candidates.length} /></Card>}
       {analysis && selectedCase && <div id="severity-assessment"><Card className="panel"><StenosisMeasurements key={analysis.id} token={token} caseId={selectedCase.id} imageId={selectedImage.id} runId={analysis.id} focusedCandidate={focusedCandidate} candidates={analysis.structured_result?.candidates.map(c=>c.candidate_id)||[]} canReview={!!selectedCase.permissions?.can_review} canAssess={!!(selectedCase.permissions?.can_run_analysis||selectedCase.permissions?.can_review)} /></Card></div>}
       {analysis && <ImageMaskReview key={analysis.id} imageId={selectedImage.id} runId={analysis.id} token={token} sourceHash={selectedImage.processing_record?.source_sha256} canReview={!!selectedCase?.permissions?.can_review} />}
-      <div id="xca-history"><AnalysisHistory imageId={selectedImage.id} token={token} history={history} onSelect={onSelectAnalysis} /></div>
-      {analysis && <Card className="panel" id="xca-reports">
-        <h3>Reports &amp; exports</h3>
-        <Button type="button" variant="outline" onClick={onReports}><FileText size={16} aria-hidden="true" /> View report</Button>
-      </Card>}
+      <div id="xca-history"><AnalysisHistory imageId={selectedImage.id} token={token} history={history} activeId={analysis?.id} onSelect={(item) => { onSelectAnalysis(item); setMode("overlay"); window.setTimeout(() => document.getElementById("xca-viewer")?.scrollIntoView({ behavior: "smooth", block: "start" }), 120); }} /></div>
+      {analysis && <AnalysisReportsPanel token={token} role={role} selectedCase={selectedCase} imageId={selectedImage.id} analysis={analysis} onOpenFull={onReports} />}
     </>}
   </div>;
 }

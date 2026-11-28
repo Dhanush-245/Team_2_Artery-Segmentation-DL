@@ -67,7 +67,24 @@ def comparison():
 
 def evidence_status():
     """Curated aggregate evidence only; never includes private data or case records."""
-    return json.loads((RELEASES / "evidence_status_20261126.json").read_text())
+    data = json.loads((RELEASES / "evidence_status_20261126.json").read_text())
+    development = _imagecas_development()
+    if development:
+        data["development_evaluation"] = development
+    return data
+
+
+def _imagecas_development():
+    """ImageCAS validation record for the retained 3D model, read from the curated comparison file."""
+    task = next((t for t in comparison().get("tasks", []) if t.get("id") == "volume_3d"), None)
+    row = next((r for r in (task or {}).get("rows", []) if r.get("status") == "release"), None)
+    if not row:
+        return None
+    return {"title": "ImageCAS development validation", "dataset": task.get("dataset"), "split": task.get("split"),
+            "model": row.get("name"), "epochs": row.get("epochs"), "input_px": row.get("input_px"),
+            "aggregation": row.get("aggregation"), "metrics": row.get("metrics", {}), "note": row.get("note"),
+            "source": row.get("source"),
+            "limitation": "Different cohort and prepared 128-voxel grid from the ASOCA native-grid evaluation; the two scores are not directly comparable."}
 
 
 def install(app, require_roles, roles):

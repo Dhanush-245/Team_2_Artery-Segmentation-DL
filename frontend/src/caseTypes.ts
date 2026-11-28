@@ -40,7 +40,17 @@ export type ClinicalReviewRecord = {
   created_at: string;
 };
 
+export type AnalysisSummary = { runs_2d: number; runs_3d: number; total_runs: number; latest_model: string | null; latest_run_at: string | null; reports_saved: number };
+
+/** Same wording for every case, 2D or 3D, old or new. */
+export function analysisSummaryLabel(summary?: AnalysisSummary): string {
+  if (!summary || summary.total_runs === 0) return "No analysis yet";
+  const parts = [summary.runs_2d ? `${summary.runs_2d} 2D run${summary.runs_2d === 1 ? "" : "s"}` : "", summary.runs_3d ? `${summary.runs_3d} 3D run${summary.runs_3d === 1 ? "" : "s"}` : ""].filter(Boolean);
+  return parts.join(" · ");
+}
+
 export type CaseRecord = {
+  analysis_summary?: AnalysisSummary;
   assigned_doctors?: { id: string; name: string; role: string }[];
   id: string;
   owner_id?: string;
