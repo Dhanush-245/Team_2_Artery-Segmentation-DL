@@ -508,10 +508,14 @@ def case_out(case: Case, db: Session | None = None, viewer: User | None = None) 
 
     latest_analyses: dict[str, str] = {}
     if db and case.images:
-        events = db.scalars(
-            select(AnalysisEvent).where(AnalysisEvent.image_id.in_([im.id for im in case.images]))
-            .order_by(AnalysisEvent.created_at.desc(), AnalysisEvent.id.desc())
-        ).all()
+        prefetched = db.info.get("summary_prefetch")
+        if prefetched is not None:
+            events = prefetched["events"].get(case.id, [])
+        else:
+            events = db.scalars(
+                select(AnalysisEvent).where(AnalysisEvent.image_id.in_([im.id for im in case.images]))
+                .order_by(AnalysisEvent.created_at.desc(), AnalysisEvent.id.desc())
+            ).all()
         for event in events:
             latest_analyses.setdefault(event.image_id, event.id)
     summary = analysis_summary(case, db)
