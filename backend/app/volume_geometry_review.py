@@ -121,7 +121,10 @@ def current(rows):
 
 
 def for_report(storage: Path, run_id: str):
-    rows = records(storage, run_id)
+    return summarize(records(storage, run_id))
+
+
+def summarize(rows):
     if not rows:
         return None
     return dict(schema_version=SCHEMA, edits_recorded=len(rows), current=current(rows),

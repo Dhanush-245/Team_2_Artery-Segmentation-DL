@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { request } from "./api";
+import LoadingScreen from "./components/LoadingScreen";
 import type { User } from "./AccountPanel";
 import LoginPage from "./auth/LoginPage";
 import {
@@ -26,7 +27,7 @@ const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 const EMPTY_HANDOFF: LoginHandoff = { email: "", error: "", invitation: "", mfa: null, oauthMfaTicket: null };
 
-const WorkspaceLoading = () => <div className="auth-loading" role="status">Loading your workspace…</div>;
+const WorkspaceLoading = () => <LoadingScreen />;
 
 function oauthErrorMessage(code: string) {
   if (code === "invitation_required") return "Google sign-in is verified, but this workspace requires an invitation.";

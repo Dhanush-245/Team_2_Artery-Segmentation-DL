@@ -65,6 +65,11 @@ def comparison():
     return json.loads(COMPARISON.read_text())
 
 
+def evidence_status():
+    """Curated aggregate evidence only; never includes private data or case records."""
+    return json.loads((RELEASES / "evidence_status_20261126.json").read_text())
+
+
 def install(app, require_roles, roles):
     @router.get("/registry")
     def model_registry(user=Depends(require_roles(*roles))):
@@ -73,4 +78,7 @@ def install(app, require_roles, roles):
     @router.get("/comparison")
     def model_comparison(user=Depends(require_roles(*roles))):
         return comparison()
+    @router.get("/evidence-status")
+    def current_evidence(user=Depends(require_roles("admin", "doctor", "clinician", "researcher", "ml_engineer", "technician", "viewer"))):
+        return evidence_status()
     app.include_router(router)

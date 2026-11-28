@@ -1,37 +1,56 @@
 import { apiUrl } from "./api";
 import { useEffect, useRef, useState } from "react";
-import { VOLUME_SECTIONS, activeSection, sourceChecklist, type SourceCheck } from "./lib/volumeSections";
+import { VOLUME_SECTIONS, activeSection, sourceChecklist, type SourceCheck, type VolumeSection } from "./lib/volumeSections";
 
-export function VolumeSectionNav() {
-  const [active, setActive] = useState(VOLUME_SECTIONS[0].id);
+export function AnalysisSectionNav({ sections = VOLUME_SECTIONS, label = "3D case sections" }: {
+  sections?: readonly VolumeSection[];
+  label?: string;
+}) {
+  const [active, setActive] = useState(sections[0]?.id);
+  const rail = useRef<HTMLElement>(null);
+  const landingOffset = useRef(160);
   const pinned = useRef<string | null>(null); // Keep explicit selection until the user scrolls manually.
   useEffect(() => {
     const update = () => {
       const tops: Record<string, number> = {};
-      for (const { id } of VOLUME_SECTIONS) {
+      for (const { id } of sections) {
         const element = document.getElementById(id);
         if (element) tops[id] = element.getBoundingClientRect().top;
       }
-      setActive(pinned.current ?? activeSection(tops));
+      setActive(pinned.current && sections.some(({ id }) => id === pinned.current) ? pinned.current : activeSection(tops, landingOffset.current + 1, sections));
     };
-    update();
+    const header = document.querySelector<HTMLElement>(".topbar");
+    const measure = () => {
+      const top = header?.getBoundingClientRect().height ?? 76;
+      rail.current?.style.setProperty("top", `${top}px`);
+      landingOffset.current = top + (rail.current?.offsetHeight ?? 64) + 12;
+      update();
+    };
+    const observer = new ResizeObserver(measure);
+    if (header) observer.observe(header);
+    if (rail.current) observer.observe(rail.current);
+    measure();
     const release = () => { pinned.current = null; };
     document.addEventListener("scroll", update, { passive: true, capture: true });
     window.addEventListener("wheel", release, { passive: true });
     window.addEventListener("touchmove", release, { passive: true });
     const keyRelease = (event: KeyboardEvent) => { if (["PageDown", "PageUp", "ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) release(); };
     window.addEventListener("keydown", keyRelease);
-    return () => { document.removeEventListener("scroll", update, true); window.removeEventListener("wheel", release); window.removeEventListener("touchmove", release); window.removeEventListener("keydown", keyRelease); };
-  }, []);
-  return <nav className="v3d-nav" aria-label="3D case sections">
-    {VOLUME_SECTIONS.map(({ id, label }) => <a key={id} href={`#${id}`} aria-current={active === id ? "true" : undefined}
+    return () => { observer.disconnect(); document.removeEventListener("scroll", update, true); window.removeEventListener("wheel", release); window.removeEventListener("touchmove", release); window.removeEventListener("keydown", keyRelease); };
+  }, [sections]);
+  return <nav ref={rail} className="v3d-nav" aria-label={label}>
+    {sections.map(({ id, label }) => <a key={id} href={`#${id}`} aria-current={active === id ? "true" : undefined}
       onClick={event => { event.preventDefault();
         const target = document.getElementById(id);
         if (!target) return;
-        for (let parent = target.parentElement; parent; parent = parent.parentElement) if (parent instanceof HTMLDetailsElement) parent.open = true;
+        for (let parent: HTMLElement | null = target; parent; parent = parent.parentElement) if (parent instanceof HTMLDetailsElement) parent.open = true;
         pinned.current = id; setActive(id);
         target.setAttribute("tabindex", "-1"); target.focus({ preventScroll: true });
-        target.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }); }}>{label}</a>)}
+        const previousMargin = target.style.scrollMarginTop;
+        target.style.scrollMarginTop = `${landingOffset.current}px`;
+        target.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start", inline: "nearest" });
+        target.style.scrollMarginTop = previousMargin;
+      }}>{label}</a>)}
   </nav>;
 }
 

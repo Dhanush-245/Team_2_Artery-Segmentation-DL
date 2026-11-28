@@ -47,7 +47,7 @@ export default function VolumeIntake({ caseId, token, inferenceEligible = false,
   }
 
   return <section className="intake-pipeline">
-    {inferenceEligible && <VolumeInference caseId={caseId} token={token} readOnly={readOnly} anatomy={anatomy} />}
+    {inferenceEligible && <VolumeInference intakeOnly caseId={caseId} token={token} readOnly={readOnly} anatomy={anatomy} />}
     {!readOnly && <details><summary>Optional generic volume preparation and export (not model inference)</summary>
     <h3>3D volume preparation · Research only</h3>
     <p>Separate from 2D X-ray inference. NIfTI files must be de-identified, in millimetres, and contain at most 32 million voxels. No 3D prediction or training starts here.</p>

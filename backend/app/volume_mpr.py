@@ -80,7 +80,7 @@ def render_mpr(source_path, mask_path, *, axis, index, window, level, opacity, p
     if physical_aspect:
         # Rows follow the second remaining array axis and columns the first, after the transpose above.
         column_axis, row_axis = [item for item in range(3) if item != axis]
-        zooms = [float(z) for z in source.header.get_zooms()[:3]]
+        zooms = np.linalg.norm(source.affine[:3, :3], axis=0)
         if zooms[column_axis] > 0 and zooms[row_axis] > 0:
             height = max(1, round(picture.height * zooms[row_axis] / zooms[column_axis]))
             if height != picture.height:

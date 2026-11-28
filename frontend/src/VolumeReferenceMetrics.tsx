@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { apiUrl } from './api';
+import EvidenceStatus from './EvidenceStatus';
 import { Button } from './components/prismui/button';
 
 type Evaluation = { id: string; provenance: string; reference_sha256: string; prediction_sha256: string;
@@ -47,21 +48,22 @@ export default function VolumeReferenceMetrics({ caseId, runId, token, onSaved }
     {error && <p role="alert" className="message error">{error}</p>}
     {!state && !error && <p role="status">Loading saved reference evaluations…</p>}
     {state && !latest && <p>Case-level Dice, IoU and HD95 are unavailable until an eligible reference mask for this exact source volume and target is attached.</p>}
-    {latest && <><dl className="volume-summary-grid">
+    {latest && <><dl className="volume-summary-grid reference-metric-grid">
       <div><dt>Dice</dt><dd>{metric(latest.metrics.dice)}</dd></div><div><dt>IoU</dt><dd>{metric(latest.metrics.iou)}</dd></div>
       <div><dt>HD95</dt><dd>{metric(latest.metrics.hd95, ' mm')}</dd></div><div><dt>ASSD</dt><dd>{metric(latest.metrics.assd, ' mm')}</dd></div>
-    </dl><p>Reference evaluation {latest.id} · {latest.provenance}</p>
+    </dl><div className="reference-provenance"><strong>Saved reference</strong><code>{latest.id}</code><p>{latest.provenance}</p></div>
       <p className="caption">Compared with the original saved prediction on its source grid. Reviewer-supplied reference evidence; independent clinical validation is not established. Reviewer-painted versions are separate.</p>
       <details><summary>Saved reference evaluation history ({state?.records.length})</summary>{state?.records.map(item => <p key={item.id}>{item.id} · Dice {metric(item.metrics.dice)} · IoU {metric(item.metrics.iou)} · HD95 {metric(item.metrics.hd95, ' mm')} · {item.provenance}</p>)}</details></>}
-    {state?.can_evaluate ? <form onSubmit={submit} className="case-details-form">
+    {state?.can_evaluate ? <form onSubmit={submit} className="case-details-form reference-evaluation-form">
       <label>Source-aligned reference mask <input type="file" accept=".nii,.nii.gz" onChange={event => { setFile(event.target.files?.[0] ?? null); setSuccess(''); }} required /></label>
       <p className="caption">Binary NIfTI labels 0 and 1, original shape, affine and millimetre units, up to 32 MiB. No automatic resampling or alignment. Foreground extent is bounded for surface-distance processing.</p>
       <label>Reference provenance <textarea value={provenance} onChange={event => setProvenance(event.target.value)} minLength={10} maxLength={2000} required placeholder="Reference author or dataset, annotation method and eligibility" /></label>
-      <label><input type="checkbox" checked={study} onChange={event => setStudy(event.target.checked)} required />I confirm this reference belongs to the exact source study for this saved run.</label>
-      <label><input type="checkbox" checked={target} onChange={event => setTarget(event.target.checked)} required />I confirm the foreground annotation matches this model’s segmentation target.</label>
+      <label className="reference-confirmation"><input type="checkbox" checked={study} onChange={event => setStudy(event.target.checked)} required />I confirm this reference belongs to the exact source study for this saved run.</label>
+      <label className="reference-confirmation"><input type="checkbox" checked={target} onChange={event => setTarget(event.target.checked)} required />I confirm the foreground annotation matches this model’s segmentation target.</label>
       <Button type="submit" disabled={busy || !file || !study || !target || provenance.trim().length < 10}>{busy ? 'Calculating reference metrics…' : 'Calculate and save case metrics'}</Button>
     </form> : state && <p className="caption">A doctor, clinician or administrator with review access can attach the eligible reference mask.</p>}
     {success && <p role="status" className="message success">{success}</p>}
+    <EvidenceStatus token={token} compact />
     <p className="caption">The retained ImageCAS validation Dice 0.7937 describes a development cohort of 150 prepared volumes; it is separate from this scan’s reference metrics.</p>
   </section>;
 }

@@ -52,7 +52,8 @@ def test_reference_persistence_and_export():
         assert c.get(url,headers=h).json()['records'][-1]['id']==record['id']
         changed=nib.load(path);nib.save(nib.Nifti1Image(np.zeros(changed.shape,np.uint8),changed.affine,changed.header),path)
         assert c.get(url,headers=h).json()['records']==[]
-        assert c.get(report+'/json',headers=h).json()['reference_evaluations']==[]
+        assert c.get(report+'/json',headers=h).json()['reference_evaluations']==[record]
+        assert c.get(f'/api/cases/{cid}/volumes/analyses/{run}/analysis-detail',headers=h).json()['reference_evaluations']==[]
 
 
 def test_reference_denials_geometry_and_retry(tmp_path):

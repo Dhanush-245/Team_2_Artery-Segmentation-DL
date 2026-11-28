@@ -51,7 +51,7 @@ def cross_section(mask, affine, center, tangent, radius_mm=12, step_mm=.25):
         lumen_pixels_ij=np.argwhere(lumen).tolist(),grid_size=len(axis))
 
 
-def saved_measurement(path):
+def saved_measurement(path, *, cached_only=False):
     """Reuse geometry only when both its source hash and method match."""
     path = Path(path)
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
@@ -61,6 +61,8 @@ def saved_measurement(path):
         if (result.get('mask_sha256') == digest
                 and result.get('method') == METHOD):
             return result
+    if cached_only:
+        return None
     result = measure(path)
     result['mask_sha256'] = digest
     with tempfile.NamedTemporaryFile(mode='w', dir=path.parent, delete=False) as stream:

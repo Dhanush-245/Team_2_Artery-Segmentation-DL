@@ -1,0 +1,301 @@
+{
+  "schema_version": "corovision.evidence-status.v1",
+  "updated_at": "2026-11-26",
+  "external_evaluation": {
+    "id": "asoca-frozen-3d-20261126",
+    "title": "ASOCA external expert-reference evaluation",
+    "model_id": "imagecas-coronary-unet3d-128-v1",
+    "checkpoint_sha256": "b77271b1780f32100bc954ccbec2ac5c4efa54a10e0f5975b631924c8a2f553d",
+    "checkpoint_epoch": 75,
+    "modality": "3D coronary CTA",
+    "dataset": "ASOCA",
+    "cases": 40,
+    "processing_failures": 0,
+    "empty_predictions": 1,
+    "distance_unit": "mm",
+    "grid": "original CT source grid",
+    "classification": "External expert-reference evidence",
+    "clinical_validated": false,
+    "patient_independence_established": false,
+    "summary_sha256": "de0195dbeebc015371f1dc9a97abc41a47dd13f3071a8eedaa6670bf733299f1",
+    "protocol_sha256": "b2d12184706e07b560a49a91c165c1364166e09fbcd5254e2aa513b456adf673",
+    "cohorts": {
+      "All": {
+        "cases": 40,
+        "metrics": {
+          "dice": {
+            "support": 40,
+            "mean": 0.35728218592742467,
+            "median": 0.36709198982908064,
+            "min": 0.0,
+            "max": 0.4674863797670815,
+            "bootstrap_mean_ci95": [
+              0.3303582125047225,
+              0.3797382692574033
+            ]
+          },
+          "iou": {
+            "support": 40,
+            "mean": 0.22010473661703242,
+            "median": 0.22481355941834524,
+            "min": 0.0,
+            "max": 0.3050454975375885,
+            "bootstrap_mean_ci95": [
+              0.2022388436001087,
+              0.23582836960265066
+            ]
+          },
+          "hd95": {
+            "support": 39,
+            "mean": 21.480284785276847,
+            "median": 19.67143240008589,
+            "min": 7.140041628828841,
+            "max": 44.95462920386169,
+            "bootstrap_mean_ci95": [
+              18.83648534206979,
+              24.365246634109013
+            ]
+          },
+          "assd": {
+            "support": 39,
+            "mean": 3.764015582213865,
+            "median": 3.5002531110079413,
+            "min": 1.607583188045122,
+            "max": 11.826486428556139,
+            "bootstrap_mean_ci95": [
+              3.278603636922502,
+              4.3837573801096354
+            ]
+          },
+          "precision": {
+            "support": 39,
+            "mean": 0.22921809976358254,
+            "median": 0.2303805962048924,
+            "min": 0.10368646676418926,
+            "max": 0.30920480743792284,
+            "bootstrap_mean_ci95": [
+              0.21588045781924908,
+              0.24244245093211297
+            ]
+          },
+          "recall": {
+            "support": 40,
+            "mean": 0.9152414900757847,
+            "median": 0.9418542471832523,
+            "min": 0.0,
+            "max": 0.9911763884622903,
+            "bootstrap_mean_ci95": [
+              0.8630968011192656,
+              0.9462275111791205
+            ]
+          }
+        }
+      },
+      "Normal": {
+        "cases": 20,
+        "metrics": {
+          "dice": {
+            "support": 20,
+            "mean": 0.38186484165564805,
+            "median": 0.3783224510810234,
+            "min": 0.2819585258201138,
+            "max": 0.4674863797670815,
+            "bootstrap_mean_ci95": [
+              0.3617522824616216,
+              0.40190129892291987
+            ]
+          },
+          "iou": {
+            "support": 20,
+            "mean": 0.2369671367773838,
+            "median": 0.2332918210383444,
+            "min": 0.1641162510088459,
+            "max": 0.3050454975375885,
+            "bootstrap_mean_ci95": [
+              0.22182539999512035,
+              0.2525817230753905
+            ]
+          },
+          "hd95": {
+            "support": 20,
+            "mean": 19.720805835254374,
+            "median": 19.329951357949064,
+            "min": 8.770726752939686,
+            "max": 30.998409199641596,
+            "bootstrap_mean_ci95": [
+              17.099500902525772,
+              22.406999828656875
+            ]
+          },
+          "assd": {
+            "support": 20,
+            "mean": 3.4300783619264967,
+            "median": 3.3725525104789296,
+            "min": 1.607583188045122,
+            "max": 5.2491390348822,
+            "bootstrap_mean_ci95": [
+              2.9381139536924326,
+              3.9133797557030716
+            ]
+          },
+          "precision": {
+            "support": 20,
+            "mean": 0.23994499448255713,
+            "median": 0.23703283403668174,
+            "min": 0.16492279030924026,
+            "max": 0.3072480716923117,
+            "bootstrap_mean_ci95": [
+              0.22459539583641192,
+              0.2554521455499595
+            ]
+          },
+          "recall": {
+            "support": 20,
+            "mean": 0.9520697461587281,
+            "median": 0.9578258845487462,
+            "min": 0.9052067256924702,
+            "max": 0.9911763884622903,
+            "bootstrap_mean_ci95": [
+              0.9406918150212095,
+              0.962958759072779
+            ]
+          }
+        }
+      },
+      "Diseased": {
+        "cases": 20,
+        "metrics": {
+          "dice": {
+            "support": 20,
+            "mean": 0.3326995301992013,
+            "median": 0.352972283859655,
+            "min": 0.0,
+            "max": 0.4601054481546573,
+            "bootstrap_mean_ci95": [
+              0.2854120597225808,
+              0.3708145360424076
+            ]
+          },
+          "iou": {
+            "support": 20,
+            "mean": 0.20324233645668102,
+            "median": 0.21431042268264022,
+            "min": 0.0,
+            "max": 0.29879023054097237,
+            "bootstrap_mean_ci95": [
+              0.1732239441432858,
+              0.2285594595603762
+            ]
+          },
+          "hd95": {
+            "support": 19,
+            "mean": 23.33236789056366,
+            "median": 21.043472154671715,
+            "min": 7.140041628828841,
+            "max": 44.95462920386169,
+            "bootstrap_mean_ci95": [
+              18.700526006450435,
+              28.33758286296131
+            ]
+          },
+          "assd": {
+            "support": 19,
+            "mean": 4.115528445674252,
+            "median": 3.5014464460366703,
+            "min": 1.8324384544204089,
+            "max": 11.826486428556139,
+            "bootstrap_mean_ci95": [
+              3.267836127314541,
+              5.197326531080505
+            ]
+          },
+          "precision": {
+            "support": 19,
+            "mean": 0.21792663163834616,
+            "median": 0.218499940284247,
+            "min": 0.10368646676418926,
+            "max": 0.30920480743792284,
+            "bootstrap_mean_ci95": [
+              0.19706906532877386,
+              0.23862120840662723
+            ]
+          },
+          "recall": {
+            "support": 20,
+            "mean": 0.8784132339928415,
+            "median": 0.9242008098740759,
+            "min": 0.0,
+            "max": 0.9669235851134111,
+            "bootstrap_mean_ci95": [
+              0.7795817357364507,
+              0.9353535443361317
+            ]
+          }
+        }
+      }
+    },
+    "limitations": [
+      "Mean overlap is low on this external cohort; the model is not clinically validated.",
+      "Diseased_11 has an empty final mask after the unchanged epicardial filter. Dice and IoU are zero and included; surface distances are undefined (39/40 support).",
+      "The 40 labelled ASOCA development studies are external to recorded ImageCAS training; this is not a hidden ASOCA challenge-test submission.",
+      "No geometry match among 1,000 checkpoint-manifest cases; de-identified cross-dataset patient overlap cannot be conclusively excluded.",
+      "ImageCAS development Dice 0.7937 uses a different cohort and prepared grid; it is not a directly comparable case score."
+    ],
+    "stenosis": {
+      "candidate_cases": 28,
+      "candidates": 44,
+      "expert_confirmed": false,
+      "note": "Candidates pass existing geometric rules on predicted masks. The obstruction spreadsheet has no matched lesion locations or calibrated local diameters."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "local_workflow",
+      "title": "Local application workflow",
+      "status": "Verified in tested scope",
+      "detail": "Real ASOCA upload, linked C1/C2 navigation, perpendicular sections and measurement switching verified on port 8000."
+    },
+    {
+      "id": "reference_workflow",
+      "title": "Expert-reference workflow",
+      "status": "Verified in tested scope",
+      "detail": "Real reference upload, reopen, administrator save/researcher read permissions and PDF/CSV/JSON/ZIP agreement verified; 12 ZIP member hashes checked."
+    },
+    {
+      "id": "external_segmentation",
+      "title": "External 3D segmentation",
+      "status": "Evaluated \u00b7 limited generalization",
+      "detail": "40 native-grid cases scored with frozen weights. One empty final prediction retained; qualified full-volume anatomical review remains open."
+    },
+    {
+      "id": "lesion_validation",
+      "title": "Stenosis and severity agreement",
+      "status": "Reference data needed",
+      "detail": "Matched expert lesion locations, calibrated MLD/RVD and grading references are still required. Rule-passing candidates are not confirmed disease."
+    },
+    {
+      "id": "independence",
+      "title": "Reference independence",
+      "status": "Partial evidence",
+      "detail": "Recorded exposure screening completed; conclusive patient deduplication and qualified anatomical review remain open. Additional independent 2D validation is also incomplete."
+    },
+    {
+      "id": "explainability",
+      "title": "Explainability faithfulness",
+      "status": "Partial evidence",
+      "detail": "Raw 2D Grad-CAM passed recorded controls. Other 2D maps and volumetric attribution retain failed or partial controls."
+    },
+    {
+      "id": "hosted_operations",
+      "title": "Hosted operational acceptance",
+      "status": "Not completed",
+      "detail": "Authenticated hosted workflows, restart persistence, backup/restore, monitoring and representative load need evidence; local checks do not establish hosted acceptance."
+    },
+    {
+      "id": "acquisition",
+      "title": "Acquisition and platform coverage",
+      "status": "Partial coverage",
+      "detail": "Broader real-series, acquisition and platform acceptance remains open; local container base-package findings are tracked separately."
+    }
+  ]
+}

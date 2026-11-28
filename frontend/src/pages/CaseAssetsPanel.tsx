@@ -132,7 +132,7 @@ function ReadOnlyIntakeCard({ record }: { record: CaseRecord }) {
   return <Card className="panel">
     <div className="viewer-heading"><h3>Study Intake</h3><span>Read-only</span></div>
     <p className="muted">This assignment does not allow image uploads. Upload requires case ownership or edit access and a role with upload permission.</p>
-    {volumeInferenceEligible(record) && <VolumeInference caseId={record.id} token={token} anatomy={record.anatomy} readOnly />}
+    {volumeInferenceEligible(record) && <VolumeInference intakeOnly caseId={record.id} token={token} anatomy={record.anatomy} readOnly />}
     <CaseMetadata record={record} />
   </Card>;
 }

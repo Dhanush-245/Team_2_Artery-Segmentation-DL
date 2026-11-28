@@ -79,8 +79,8 @@ export default function XaiDashboardPage() {
       </div>
       {rows.length === 0 ? <p className="muted">No saved explanations match.</p> : <div className="table-scroll"><table>
         <thead><tr><th>Case</th><th>Run</th><th>Target</th><th>Method</th><th>Status</th><th>Deletion</th><th>Insertion</th><th>Randomization</th><th>Saved</th></tr></thead>
-        <tbody>{rows.map(r => <tr key={r.record_id}>
-          <td><button type="button" className="cv-link-button" onClick={() => navigate(`/analysis?case_id=${r.case_id}&image_id=${r.image_id}&run_id=${r.run_id}`)}>{r.case_code}</button></td>
+        <tbody>{rows.map(r => <tr key={r.record_id} className="cv-row-link" onClick={() => navigate(`/analysis?case_id=${r.case_id}&image_id=${r.image_id}&run_id=${r.run_id}`)}>
+          <td><button type="button" className="cv-link-button">{r.case_code}</button></td>
           <td>{r.run_id.slice(0, 8)}</td><td>{r.task === "segmentation" ? "Vessel mask" : r.target_id}</td><td>{r.method_label}</td>
           <td><Chip value={r.status} /></td><td><Chip value={r.deletion} /></td><td><Chip value={r.insertion} /></td><td><Chip value={r.randomization} /></td>
           <td>{utcDate(r.created_at).toLocaleString()}</td></tr>)}</tbody>
@@ -91,8 +91,8 @@ export default function XaiDashboardPage() {
       <div className="cv-panel-head"><span className="eyebrow">3D CTA</span><h3>Saved volumetric explanations</h3></div>
       {!data.volume?.records.length ? <p className="muted">No volumetric explanation saved yet. Generate one from a 3D case's analysis view.</p> : <div className="table-scroll"><table>
         <thead><tr><th>Case</th><th>Run</th><th>Method</th><th>Status</th><th>Alignment</th><th>Deletion</th><th>Insertion</th><th>Saved</th></tr></thead>
-        <tbody>{data.volume.records.map(r => <tr key={r.record_id}>
-          <td><button type="button" className="cv-link-button" onClick={() => navigate(`/analysis?case_id=${r.case_id}`)}>{r.case_code}</button></td>
+        <tbody>{data.volume.records.map(r => <tr key={r.record_id} className="cv-row-link" onClick={() => navigate(`/analysis?case_id=${r.case_id}`)}>
+          <td><button type="button" className="cv-link-button">{r.case_code}</button></td>
           <td>{r.run_id.slice(0, 8)}</td><td>{r.method_label}</td><td><Chip value={r.status} /></td><td><Chip value={r.alignment} /></td>
           <td><Chip value={r.deletion} /></td><td><Chip value={r.insertion} /></td><td>{utcDate(r.created_at).toLocaleString()}</td></tr>)}</tbody>
       </table></div>}

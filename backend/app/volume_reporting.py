@@ -58,7 +58,7 @@ def snapshot(run):
                 primary = candidates[0]
                 document['narrowing_percent'] = primary.get('narrowing_percent')
                 document['severity_category'] = primary.get('severity')
-                document['severity_status'] = 'experimental_research_grade'
+                document['severity_status'] = 'experimental_research_grade' if primary.get('severity') else 'grade_withheld'
                 document['severity_candidate_id'] = primary.get('id')
         else:
             reason = ', '.join(str(item).replace('_', ' ') for item in reasons) or 'geometry quality gates did not pass'
@@ -73,10 +73,16 @@ def snapshot(run):
 def csv_text(document):
     stream = StringIO()
     writer = csv.writer(stream)
+    if document.get('report'):
+        report = document['report']
+        writer.writerow(['schema_version', 'case_id', 'run_id', 'report_id', 'report_version', 'source_sha256', 'snapshot_sha256'])
+        writer.writerow([document['schema_version'], document['case_id'], document['analysis_run_id'], report['id'],
+                         report['version'], document['source_sha256'], document['snapshot_sha256']])
+        writer.writerow([])
     writer.writerow(['case_id', 'analysis_run_id', 'model_id', 'checkpoint_sha256', 'stage', 'status', 'reason'])
     def safe(value):
         text = '' if value is None else str(value)
-        return "'" + text if text.startswith(('=', '+', '-', '@', '\t', '\r')) else text
+        return "'" + text if (text.lstrip().startswith(('=', '+', '-', '@')) or text.startswith(('\t', '\r', '\n'))) and not isinstance(value, (int, float)) else text
     for stage, item in document['stages'].items():
         writer.writerow([safe(x) for x in [document['case_id'],document['analysis_run_id'],document['model_id'],
             document['checkpoint_sha256'],stage,item['status'],item['reason']]])
@@ -101,16 +107,20 @@ def csv_text(document):
     return stream.getvalue()
 
 
-def pdf_bytes(document):
+def pdf_bytes(document, artifacts=None):
     from reportlab.lib import colors
-    from reportlab.platypus import PageBreak, Paragraph, Table, TableStyle
+    from reportlab.platypus import Image, KeepTogether, PageBreak, Paragraph, Table, TableStyle
+    from xml.sax.saxutils import escape
+    from io import BytesIO
+
+    artifacts = artifacts or {}
 
     report = ResearchPDF('3D vessel analysis report')
     geometry = document.get('experimental_geometry')
     candidates = (geometry or {}).get('candidates', [])
 
     def cell(value, style=None):
-        return Paragraph(str(value), style or report.table_body)
+        return Paragraph(escape(str(value)), style or report.table_body)
 
     report.story.append(Paragraph('COROVISION AI · 3D RESEARCH ANALYSIS', report.eyebrow))
     summary = Table([
@@ -118,19 +128,21 @@ def pdf_bytes(document):
         [cell('Analysis run', report.table_label), cell(document['analysis_run_id']), cell('Study type', report.table_label), cell((document.get('input_kind') or 'Unavailable').replace('_', ' ').capitalize())],
         [cell('Source volume', report.table_label), cell(' × '.join(map(str, document.get('source_shape') or [])) + ' voxels'), cell('Candidates', report.table_label), cell(len(candidates))],
     ], colWidths=[70, 174, 78, 172], style=TableStyle([('GRID',(0,0),(-1,-1),.5,colors.HexColor('#ccd8e4')),('VALIGN',(0,0),(-1,-1),'TOP'),('PADDING',(0,0),(-1,-1),7)]))
+    if document.get('case_code'):
+        report.section(document['case_code'])
     report.story.append(summary)
-    if document.get('reference_evaluations'):
-        reference = document['reference_evaluations'][-1]
-        report.section('Case reference mask evaluation')
-        report.paragraph('Reviewer-supplied reference on the original source grid; independent clinical validation is not established.')
-        report.field('Reference evaluation', reference['id'])
-        for key, label in [('dice','Dice'),('iou','IoU'),('hd95','HD95 mm'),('assd','ASSD mm')]:
-            report.field(label, reference['metrics'].get(key))
-        report.paragraph(reference['provenance'])
+    identity = document.get('report')
+    if identity:
+        report.field('Report ID / version', f"{identity['id']} / {identity['version']}")
+        report.field('Generated at', identity['generated_at'])
+        report.field('Review status at export', identity['review_status'])
+        report.field('Modality / processing', f"{document.get('modality') or 'Unavailable'} / completed")
+        report.field('Frozen checkpoint SHA-256', document.get('checkpoint_sha256'))
     report.section('Analysis summary')
     if candidates:
         first = candidates[0]
-        report.paragraph(f"{len(candidates)} experimental narrowing candidate(s) were identified from component-local saved-mask geometry. The leading candidate has {first['narrowing_percent']:.2f}% diameter narrowing and an experimental {first['severity']} category. Expert review is required.")
+        grade = f"experimental {first['severity']}" if first.get('severity') else 'Grade withheld'
+        report.paragraph(f"{len(candidates)} experimental narrowing candidate(s) were identified from component-local saved-mask geometry. The leading candidate has {first['narrowing_percent']:.2f}% diameter narrowing. Research grade: {grade}. Expert review is required.")
     else:
         report.paragraph('No quality-eligible 3D narrowing candidate is available. No normal finding is inferred.')
     report.field('Segmentation', document['stages']['segmentation']['status'].replace('_',' ').capitalize())
@@ -138,27 +150,74 @@ def pdf_bytes(document):
     report.paragraph('Research use only. This document is not a clinical diagnostic report.')
 
     report.story.append(PageBreak())
-    report.section('Volume geometry and localization')
+    report.section('Source CTA and preprocessing')
     report.field('Source dimensions', ' × '.join(map(str, document.get('source_shape') or [])) + ' voxels')
     report.field('Predicted coarse-grid foreground', document.get('predicted_coarse_foreground_voxels'))
     report.field('Extracted centerline paths', len((geometry or {}).get('paths', [])))
     report.field('Physical coordinate frame', 'RAS millimetres')
-    report.paragraph('Axial, sagittal and coronal saved previews and the interactive vessel reconstruction are available in the application and evidence artifacts. No absent visualization is synthesized in this PDF.')
+    source = document.get('source_volume') or {}
+    report.field('Source identity verification', source.get('verification_status'))
+    report.field('Source voxel spacing in mm', source.get('spacing_mm'))
+    report.field('Source orientation', source.get('orientation'))
+    report.field('Inference input dimensions', source.get('inference_grid'))
+    report.field('Preprocessing version', (document.get('preprocessing') or {}).get('version'))
+    report.field('Predicted connected components', (geometry or {}).get('component_count'))
+    figure_captions = document.get('figure_captions', {})
+    def figure_block(name, width, max_height):
+        figure = Image(BytesIO(artifacts[name]))
+        scale = min(width / figure.imageWidth, max_height / figure.imageHeight)
+        figure.drawWidth = figure.imageWidth * scale
+        figure.drawHeight = figure.imageHeight * scale
+        return [figure, Paragraph(escape(figure_captions[name]), report.body)]
+
+    def figure_row(names):
+        names = [name for name in names if name in figure_captions]
+        if names:
+            width = 480 / len(names)
+            report.story.append(Table([[figure_block(name, width - 12, 160) for name in names]],
+                                      colWidths=[width] * len(names)))
+
+    if any(name.startswith('images/source_axis_') for name in figure_captions):
+        report.section('Source-aligned segmentation overlays')
+        figure_row([f'images/source_axis_{axis}.png' for axis in range(3)])
+    if not figure_captions:
+        report.paragraph('Source-aligned report figures were unavailable for this report version.')
+
+    if any(name in figure_captions for name in ('images/3d_vessel_overview.png', 'images/cpr_selected_path.png')):
+        report.story.append(PageBreak())
+        report.section('Vessel geometry and localization')
+        report.paragraph('The oblique volume view and the curved planar reformation (CPR) use the saved predicted mask and the selected saved path.')
+        for name in ('images/3d_vessel_overview.png', 'images/cpr_selected_path.png'):
+            if name in figure_captions:
+                report.story.append(KeepTogether(figure_block(name, 420, 255 if 'vessel' in name else 165)))
 
     report.story.append(PageBreak())
     report.section('Candidate measurements')
     data = [[cell(value, report.table_header) for value in ['Candidate', 'Min / ref diameter', 'Diameter narrowing', 'Min / ref area', 'Area narrowing', 'Severity']]]
+    def number(value, suffix=''):
+        return 'Unavailable' if value is None else f'{value:.2f}{suffix}'
+
     for candidate in candidates:
         data.append([cell(candidate['id']+' / '+candidate['path_id']),
             cell(f"{candidate['minimum_diameter_mm']:.2f} / {candidate['reference_diameter_mm']:.2f} mm"),
             cell(f"{candidate['narrowing_percent']:.2f}%"),
-            cell(f"{candidate.get('minimum_area_mm2', 0):.2f} / {candidate.get('reference_area_mm2', 0):.2f} mm2"),
-            cell(f"{candidate.get('area_narrowing_percent', 0):.2f}%"), cell(str(candidate['severity']).capitalize())])
+            cell(f"{number(candidate.get('minimum_area_mm2'))} / {number(candidate.get('reference_area_mm2'))} mm²"),
+            cell(number(candidate.get('area_narrowing_percent'), '%')), cell((candidate.get('severity') or 'Grade withheld').capitalize())])
     if candidates:
         report.story.append(Table(data, colWidths=[74,102,78,105,70,65], repeatRows=1,
             style=TableStyle([('BACKGROUND',(0,0),(-1,0),colors.HexColor('#eaf0f5')),('GRID',(0,0),(-1,-1),.5,colors.HexColor('#ccd8e4')),('VALIGN',(0,0),(-1,-1),'TOP'),('PADDING',(0,0),(-1,-1),6)])))
     else:
         report.paragraph('Unavailable — no candidate passed the recorded geometry rules.')
+    if candidates:
+        report.paragraph('Equivalent diameters are derived from perpendicular cross-sectional area. The reference uses recorded proximal and distal sections on the same path.')
+        lead = candidates[0]
+        sections = lead.get('cross_sections') or []
+        if sections:
+            report.section(f"{lead['id']} / {lead['path_id']} perpendicular lumen sections")
+            figure_row([f'images/lumen_section_{index}.png' for index in range(3)])
+            for role, section in zip(('Minimum', 'Proximal reference', 'Distal reference'), sections):
+                coords = section.get('center_ras_mm')
+                report.field(f'{role} RAS mm', ', '.join(f'{value:.2f}' for value in coords) if coords else None)
     estimates = (geometry or {}).get('exploratory_estimates') or []
     if estimates:
         report.section('Exploratory lumen estimates by path (research demonstration)')
@@ -171,6 +230,7 @@ def pdf_bytes(document):
             style=TableStyle([('BACKGROUND',(0,0),(-1,0),colors.HexColor('#f1ecfb')),('GRID',(0,0),(-1,-1),.5,colors.HexColor('#ccd8e4')),('VALIGN',(0,0),(-1,-1),'TOP'),('PADDING',(0,0),(-1,-1),5)])))
         report.paragraph('MLD is the narrowest predicted-mask width along each path and RVD the median width elsewhere on the same path. These exploratory estimates are shown for research demonstration and are not eligible, validated measurements.')
 
+    report.story.append(PageBreak())
     report.section('Explainable AI — Research Interpretation')
     xai = document.get('explainable_ai') or []
     if not xai:
@@ -186,15 +246,44 @@ def pdf_bytes(document):
                          cell(v.get('deletion', 'NOT_TESTED')), cell(v.get('insertion', 'NOT_TESTED'))])
         report.story.append(Table(rows, colWidths=[96, 60, 110, 70, 60, 60], repeatRows=1,
             style=TableStyle([('BACKGROUND',(0,0),(-1,0),colors.HexColor('#f4f4f5')),('GRID',(0,0),(-1,-1),.5,colors.HexColor('#d4d4d8')),('VALIGN',(0,0),(-1,-1),'TOP'),('PADDING',(0,0),(-1,-1),5)])))
-        report.paragraph('Target: mean vessel-minus-background logit over the voxels the 3D model labels as vessel at 128³, explained at '
-                         'decoder block dec[1] and restored to the native grid through the saved mask transform. Attribution shows where that '
-                         'segmentation output was sensitive; it is not a lesion label, narrowing or disease probability. Model randomization was '
-                         'checked once, on the public demo case only (Grad-CAM 3D partial, Grad-CAM++ 3D fail).')
+        for item in xai:
+            target = item.get('target') or {}
+            report.field(item.get('method_label') or 'Attribution target', target.get('definition') or target.get('target_id'))
+            report.field('Model randomization', (item.get('verification') or {}).get('randomization'))
+            name = f"images/xai_{item['id']}_axis_2.png"
+            if name in figure_captions:
+                report.story.append(KeepTogether(figure_block(name, 420, 250)))
+        report.paragraph('Attribution describes sensitivity of the saved segmentation target. Lesion severity requires separate evidence.')
+
+    if document.get('reference_evaluations'):
+        reference = document['reference_evaluations'][-1]
+        report.section('Case reference mask evaluation')
+        report.paragraph('Reviewer-supplied reference on the original source grid; independent clinical validation is not established.')
+        report.field('Reference evaluation', reference['id'])
+        for key, label in [('dice','Dice'),('iou','IoU'),('hd95','HD95 mm'),('assd','ASSD mm')]:
+            report.field(label, reference['metrics'].get(key))
+        report.paragraph(reference['provenance'])
+    else:
+        report.section('Case reference mask evaluation')
+        report.paragraph('Case-level overlap and distance metrics are unavailable. No matched reference evaluation is saved in this report.')
 
     report.story.append(PageBreak())
     report.section('Methods, limitations and review')
+    report.field('Measurement mask version', (document.get('segmentation') or {}).get('measurement_mask_version'))
+    report.field('Saved reviewer mask versions', len(document.get('mask_review_versions') or []))
     report.field('Geometry method', (geometry or {}).get('method'))
     report.field('Diameter definition', 'Area-equivalent perpendicular lumen section')
+    if candidates:
+        report.field('Research severity protocol', candidates[0].get('protocol_id'))
+        report.paragraph('Research category boundaries are 25%, 50% and 70% diameter narrowing. Grade is withheld when sensitivity crosses a boundary.')
+        for candidate in candidates:
+            if candidate.get('abstention_reasons'):
+                report.field(f"{candidate['id']} grade withheld", ', '.join(candidate['abstention_reasons']))
+    if identity:
+        report.field('Source SHA-256', document.get('source_sha256'))
+        report.field('Snapshot SHA-256', document.get('snapshot_sha256'))
+        report.field('Source-grid mask SHA-256', (document.get('segmentation') or {}).get('mask_sha256'))
+        report.field('Report schema', document.get('schema_version'))
     review = document.get('human_assessment') or {}
     if review.get('current'):
         report.field('Human review', f"{len(review['current'])} path(s) reviewed · {review.get('edits_recorded')} edit(s) recorded")

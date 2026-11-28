@@ -71,7 +71,8 @@ def install(app, *, get_db, current_user, accessible_case, case_out, storage: Pa
     recovered = recover_interrupted((storage / 'volumes').glob('*/xai/*.json'))
     if recovered:
         LOG.warning('volume_xai_records_recovered count=%s', recovered)
-    from .volume_inference import CHECKPOINT_SHA, MODEL_ID, checkpoint_path
+    from . import volume_inference
+    from .volume_inference import CHECKPOINT_SHA, MODEL_ID
 
     def now():
         return datetime.now(timezone.utc).isoformat()
@@ -90,7 +91,7 @@ def install(app, *, get_db, current_user, accessible_case, case_out, storage: Pa
             return 'UNAVAILABLE', 'The 3D analysis has not completed', result
         if row.model_key != 'imagecas' or result.get('checkpoint_sha256') != CHECKPOINT_SHA:
             return 'UNSUPPORTED', 'Volumetric explanation supports the retained ImageCAS 3D checkpoint only; no other model is substituted', result
-        if not checkpoint_path().is_file():
+        if not volume_inference.checkpoint_path().is_file():
             return 'UNAVAILABLE', 'The pinned 3D checkpoint is not installed', result
         if next(folder.glob('source.nii*'), None) is None or not (folder / 'outputs' / 'mask_source.nii.gz').is_file():
             return 'UNAVAILABLE', 'The saved source volume or vessel mask is unavailable', result
@@ -107,7 +108,7 @@ def install(app, *, get_db, current_user, accessible_case, case_out, storage: Pa
     def generate(record, source, mask, crop=None):
         try:
             with VOLUME_LOCK:
-                model = vx.load_model(checkpoint_path(), CHECKPOINT_SHA)
+                model = vx.load_model(volume_inference.checkpoint_path(), CHECKPOINT_SHA)
                 values, roi, _, meta = vx.attribution(source, model, record['identity']['method'], roi=crop)
                 check = vx.alignment(roi, meta['coarse_affine'], meta['image'], mask, cropped=meta['cropped'])
                 folder = run_folder(storage, record['run_id']) / 'xai'
@@ -133,7 +134,7 @@ def install(app, *, get_db, current_user, accessible_case, case_out, storage: Pa
     def run_verification(record, source, crop=None):
         try:
             with VOLUME_LOCK:
-                model = vx.load_model(checkpoint_path(), CHECKPOINT_SHA)
+                model = vx.load_model(volume_inference.checkpoint_path(), CHECKPOINT_SHA)
                 from .volume_inference import prepare_input
                 import torch
                 _, _, prepared, _, _ = prepare_input(source, roi=crop)

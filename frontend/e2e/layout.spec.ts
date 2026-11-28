@@ -22,3 +22,20 @@ test("pages fit the screen and offer a skip link", async ({ page, request }) => 
   await page.keyboard.press("Tab");
   await expect(page.getByRole("link", { name: "Skip to content" })).toBeFocused();
 });
+
+test("mobile navigation stays compact and leaves the workspace visible", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await signIn(page, "researcher");
+  await page.goto("/analysis");
+  await page.waitForLoadState("networkidle");
+
+  const sidebar = page.getByRole("complementary", { name: "Workspace sidebar" });
+  const content = page.locator("#main-content");
+  await expect(sidebar).toBeVisible();
+  await expect(content).toBeVisible();
+  // The fixed mobile header is about 130 px tall; the compact navigation rail
+  // must keep the analysis heading inside the first 240 px of the viewport.
+  expect((await sidebar.boundingBox())?.height ?? Infinity).toBeLessThanOrEqual(90);
+  expect((await content.boundingBox())?.y ?? Infinity).toBeLessThanOrEqual(240);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
+});

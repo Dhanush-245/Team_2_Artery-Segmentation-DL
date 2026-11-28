@@ -28,10 +28,10 @@ type RegistryVersion = { version: string; dimension: string; modality: string | 
 type Registry = { versions: RegistryVersion[]; rollback: { available: boolean; reason: string | null } };
 
 const sections = ["Overview & reports", "Training & validation", "Datasets & splits", "Prediction review", "Error analysis", "Versions & approval"];
-export default function EvaluationExplorer({ token }: { token: string }) {
+export default function EvaluationExplorer({ token, initialSection = sections[0] }: { token: string; initialSection?: string }) {
   const [data, setData] = useState<EvaluationReport | null>(null);
   const [error, setError] = useState("");
-  const [section, setSection] = useState(sections[0]);
+  const [section, setSection] = useState(initialSection);
   const [query, setQuery] = useState("");
   const [task, setTask] = useState("all");
   const [architecture, setArchitecture] = useState("all");

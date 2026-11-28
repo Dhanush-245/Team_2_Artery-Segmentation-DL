@@ -3,7 +3,7 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import CommandPalette, { buildCommands } from "../components/CommandPalette";
 import ErrorBoundary from "../components/ErrorBoundary";
 import { Button } from "../components/prismui/button";
-import SectionSkeleton from "../components/Skeleton";
+import LoadingScreen from "../components/LoadingScreen";
 import Toaster from "../components/Toaster";
 import type { SidebarView } from "../components/watermelon/macos-sidebar";
 import { MacOSSidebar } from "../components/watermelon/macos-sidebar";
@@ -19,7 +19,7 @@ import { caseStatusLabel } from "../caseTypes";
 
 const ViewerWorkspace = lazy(() => import("../ViewerWorkspace"));
 
-export const SectionLoading = () => <SectionSkeleton />;
+export const SectionLoading = () => <LoadingScreen label="Loading workspace section…" />;
 
 /** Sections a viewer sees directly; everything else is presented through the read-only viewer portal. */
 /** These pages already show their own visible h1; every other section gets a screen-reader heading. */
@@ -95,7 +95,7 @@ export default function WorkspaceLayout() {
           savedAccounts={session.savedAccounts} onSwitchAccount={session.onSwitchAccount}>
           <SidebarCaseList />
         </MacOSSidebar>
-        <section className="content" id="main-content" ref={contentRef} tabIndex={-1} aria-label={SECTION_META[activeView].title}>
+        <section className={activeView === "analysis" ? "content analysis-content" : "content"} id="main-content" ref={contentRef} tabIndex={-1} aria-label={SECTION_META[activeView].title}>
           <p className="sr-only" role="status" aria-live="polite">{SECTION_META[activeView].title}</p>
           {!SECTIONS_WITH_VISIBLE_H1.includes(activeView) && <h1 className="sr-only">{SECTION_META[activeView].title}</h1>}
           <ErrorBoundary label={SECTION_META[activeView].title} resetKey={location.pathname}>

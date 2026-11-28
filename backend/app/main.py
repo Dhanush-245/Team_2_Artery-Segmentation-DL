@@ -1792,7 +1792,11 @@ def volume_locate(case_id: str, run_id: str, x: float | None = None, y: float | 
     inside = all(0 <= ijk[a] < shape[a] for a in range(3))
     clamped = [min(max(ijk[a], 0), shape[a]-1) for a in range(3)]
     ras = [round(float(v), 3) for v in nib.affines.apply_affine(image.affine, clamped)]
-    return dict(ijk=clamped, ras_mm=ras, inside_volume=inside, shape=list(shape))
+    axes = image.affine[:3, :3]
+    unit_axes = axes / np.linalg.norm(axes, axis=0)
+    cardinal = bool(np.allclose(np.abs(unit_axes).max(axis=0), 1, atol=1e-5))
+    return dict(ijk=clamped, ras_mm=ras, inside_volume=inside, shape=list(shape),
+                axis_codes=list(nib.aff2axcodes(image.affine)), cardinal_axes=cardinal)
 
 
 @app.get('/api/cases/{case_id}/volumes/analyses/{run_id}/source-validation')
@@ -1842,92 +1846,327 @@ def volume_cpr(case_id: str, run_id: str, path_id: str = Query(pattern=r'^P\d{1,
                     'X-CPR-Length-mm': f"{path_record['length_mm']:.3f}"})
 
 
-@app.get('/api/cases/{case_id}/volumes/analyses/{run_id}/evidence.zip')
-def volume_evidence(case_id: str, run_id: str, user: User = Depends(require_case_role), db: Session = Depends(get_db)):
-    research_report_access(case_id, user, db)
-    row = db.get(VolumeAnalysis, run_id)
-    if not row or row.case_id != case_id or row.status != 'completed':
-        raise HTTPException(404, 'Completed volume analysis unavailable')
-    from io import BytesIO
-    from zipfile import ZipFile, ZIP_DEFLATED
-    from fastapi.responses import Response
-    from .volume_measurements import saved_measurement
-    from .volume_reporting import snapshot, csv_text, pdf_bytes
-    folder = STORAGE/'volumes'/row.id/'outputs'
-    volume = volume_run_out(row)
-    volume['experimental_geometry'] = saved_measurement(folder/'mask_source.nii.gz')
-    volume['xai'] = volume_xai_for_report(row.id)
-    from .volume_geometry_review import for_report as geometry_review_for_report, records as geometry_review_records
-    volume['geometry_review'] = geometry_review_for_report(STORAGE, row.id)
-    from .volume_reference_metrics import matching_records as reference_records
-    volume['reference_evaluations'] = reference_records(STORAGE, row)
-    document = snapshot(volume)
-    members = {'analysis.json': json.dumps(document, allow_nan=False).encode(),
-        'geometry.json': json.dumps(document['experimental_geometry'], allow_nan=False).encode(),
-        'measurements.csv': csv_text(document).encode(), 'report.pdf': pdf_bytes(document)}
-    for name in ['mask_source.nii.gz','mask_source_raw.nii.gz','probability_coarse.nii.gz','overlay_0.png','overlay_1.png','overlay_2.png','result.json']:
-        if (folder/name).is_file():
-            members[name] = (folder/name).read_bytes()
-    members['xai_explanations.json'] = json.dumps(document.get('explainable_ai') or [], indent=2).encode()
-    members['reference_evaluations.json'] = json.dumps(document.get('reference_evaluations', []), allow_nan=False).encode()
-    review_history = geometry_review_records(STORAGE, row.id)
-    if review_history:
-        members['geometry_review.json'] = json.dumps(review_history, indent=2).encode()
-    from .volume_mask_review import versions as mask_review_versions
-    mask_versions = mask_review_versions(STORAGE, row.id)
-    if mask_versions:
-        members['mask_review.json'] = json.dumps(mask_versions, indent=2).encode()
-    for item in document.get('explainable_ai') or []:
-        coarse = STORAGE/'volumes'/row.id/'xai'/f"{item['id']}.coarse.npy"
-        if item.get('status') == 'ready' and coarse.is_file() and hashlib.sha256(coarse.read_bytes()).hexdigest() == (item.get('artifact_sha256') or {}).get('coarse'):
-            members[f"xai/{item['identity']['method']}_{item['id'][:8]}.coarse128.npy"] = coarse.read_bytes()
-    manifest = dict(case_id=case_id, run_id=run_id,
-        files={name: hashlib.sha256(value).hexdigest() for name,value in members.items()},
-        unavailable={'native_attribution':'Native-grid attribution volumes are kept in the application (hash in xai_explanations.json) to keep this archive small'})
-    stream = BytesIO()
-    with ZipFile(stream, 'w', ZIP_DEFLATED) as archive:
-        for name,value in members.items():
-            archive.writestr(name,value)
-        archive.writestr('manifest.json',json.dumps(manifest))
-    return Response(stream.getvalue(), media_type='application/zip', headers={'Content-Disposition': f'attachment; filename="volume-{run_id}-evidence.zip"'})
-
-
 def volume_xai_for_report(run_id):
     from .volume_xai_api import records as volume_records
     keep = ('id', 'status', 'method_label', 'identity', 'target', 'alignment', 'summary', 'artifact_sha256', 'verification', 'created_at', 'completed_at')
     return [{k: r.get(k) for k in keep} for r in volume_records(STORAGE, run_id)]
 
 
-@app.get('/api/cases/{case_id}/volumes/analyses/{run_id}/report/{format}')
-def volume_research_report(case_id: str, run_id: str, format: Literal['json', 'csv', 'pdf'],
-                           user: User = Depends(require_case_role), db: Session = Depends(get_db)):
-    research_report_access(case_id, user, db)
+def _volume_report_run(case_id, run_id, user, db):
+    case = research_report_access(case_id, user, db)
     row = db.get(VolumeAnalysis, run_id)
     if not row or row.case_id != case_id:
         raise HTTPException(404, 'Volume analysis not found')
-    from .volume_reporting import snapshot, csv_text, pdf_bytes
+    if row.status != 'completed':
+        raise HTTPException(409, 'A completed persisted volume result is required')
+    return case, row, STORAGE / 'volumes' / row.id
+
+
+def _volume_report_document(row, folder, *, cached_only=False):
+    from .volume_geometry_review import for_report as geometry_review_for_report
+    from .volume_measurements import saved_measurement
+    from .volume_reference_metrics import matching_records
+    from .volume_reporting import snapshot
+    volume = volume_run_out(row)
+    mask = folder / 'outputs' / 'mask_source.nii.gz'
+    if mask.is_file():
+        volume['experimental_geometry'] = saved_measurement(mask, cached_only=cached_only)
+    volume['xai'] = volume_xai_for_report(row.id)
+    volume['geometry_review'] = geometry_review_for_report(STORAGE, row.id)
+    volume['reference_evaluations'] = matching_records(STORAGE, row)
+    return snapshot(volume)
+
+
+@app.get('/api/cases/{case_id}/volumes/analyses/{run_id}/analysis-detail')
+def volume_analysis_detail(case_id: str, run_id: str, user: User = Depends(require_case_role),
+                           db: Session = Depends(get_db)):
+    _, row, folder = _volume_report_run(case_id, run_id, user, db)
     try:
-        volume = volume_run_out(row)
-        from .volume_measurements import saved_measurement
-        mask_path = STORAGE/'volumes'/row.id/'outputs'/'mask_source.nii.gz'
-        if row.status == 'completed' and mask_path.is_file():
-            volume['experimental_geometry'] = saved_measurement(mask_path)
-        volume['xai'] = volume_xai_for_report(row.id)
-        from .volume_geometry_review import for_report as geometry_review_for_report
-        volume['geometry_review'] = geometry_review_for_report(STORAGE, row.id)
-        from .volume_reference_metrics import matching_records as reference_records
-        volume['reference_evaluations'] = reference_records(STORAGE, row)
-        document = snapshot(volume)
+        return _volume_report_document(row, folder)
     except ValueError as exc:
-        raise HTTPException(409, str(exc)) from exc
-    if format == 'json':
-        return document
+        raise HTTPException(409, 'Saved analysis details are unavailable') from exc
+
+
+def _publish_volume_report(case, row, folder, version, *, reuse_existing=False):
+    from .volume_report_archive import MAX_ARTIFACT_BYTES, REPORT_SLOTS, digest, encode, package, report_path
+    if not REPORT_SLOTS.acquire(blocking=False):
+        raise HTTPException(429, '3D report generation is busy. Try again shortly.')
+    try:
+        if reuse_existing and report_path(folder, version).is_file():
+            return
+        document = _volume_report_document(row, folder, cached_only=True)
+        result = json.loads(row.result_json)
+        expected_identity = {'case_id': row.case_id, 'analysis_id': row.id, 'source_sha256': row.source_sha256}
+        if any(key in result and result[key] != value for key, value in expected_identity.items()):
+            raise ValueError('The persisted analysis identities do not match')
+        if not re.fullmatch(r'[0-9a-f]{64}', row.source_sha256 or ''):
+            raise ValueError('Invalid saved source identity')
+        from .volume_geometry_review import records as geometry_history, summarize as summarize_history
+        from .volume_mask_review import versions as mask_versions
+        full_history = geometry_history(STORAGE, row.id)
+        document.update(modality=case.modality, case_code=case.case_code,
+            review_status=case.workflow_status or 'unavailable', review_history=full_history,
+            human_assessment=summarize_history(full_history),
+            mask_review_versions=mask_versions(STORAGE, row.id))
+        outputs = folder / 'outputs'
+        mask = outputs / 'mask_source.nii.gz'
+        artifacts = {}
+        byte_count = 0
+
+        def add_saved(name, file, expected=None):
+            nonlocal byte_count
+            if not file.is_file() or file.stat().st_size + byte_count > MAX_ARTIFACT_BYTES:
+                return None
+            data = file.read_bytes()
+            actual = digest(data)
+            if expected and actual != expected:
+                return None
+            byte_count += len(data)
+            artifacts[name] = data
+            return actual
+
+        geometry = document.get('experimental_geometry') or {}
+        mask_hash = add_saved('mask_source.nii.gz', mask, geometry.get('mask_sha256'))
+        document['segmentation'] = dict(mask_sha256=mask_hash, evidence_origin='frozen_model_prediction',
+                                         measurement_mask_version='original_model',
+                                         component_count=geometry.get('component_count'))
+        document['segmentation']['postprocessing'] = result.get('postprocessing')
+        source = next(folder.glob('source.nii*'), None)
+        source_valid = False
+        if source:
+            with source.open('rb') as stream:
+                source_valid = hashlib.file_digest(stream, 'sha256').hexdigest() == row.source_sha256
+        document['source_volume'] = dict(id=row.source_sha256, sha256=row.source_sha256, shape_ijk=document['source_shape'],
+            affine_ras_mm=document['source_affine_ras_mm'], coordinate_system='RAS', format=row.input_kind,
+            inference_grid=(document.get('preprocessing') or {}).get('shape'),
+            verification_status='verified' if source_valid else 'hash_mismatch' if source else 'unavailable')
+        document['evidence_status'] = dict(
+            source_volume='Source CTA is not included in standard evidence exports.',
+            probability_volume='Probability volume is not included in standard evidence exports.',
+            native_attribution='Native attribution volumes are not included in standard evidence exports.',
+            geometry='saved' if geometry else 'No saved geometry matching the mask is available.',
+            xai='saved_metadata' if document['explainable_ai'] else 'No matched saved explanation is available.',
+            evaluation='matched_reference' if document['reference_evaluations'] else 'No matched expert reference is available.',
+            figures='Source-aligned report figures unavailable.')
+        document['reference_evaluations'] = [
+            row for row in document['reference_evaluations']
+            if row.get('checkpoint_sha256') == document['checkpoint_sha256']
+        ]
+        if not document['reference_evaluations']:
+            document['evidence_status']['evaluation'] = 'No matched expert reference is available.'
+        document['figure_captions'] = {}
+        if source_valid:
+            import nibabel as nib
+            import numpy as np
+            from .volume_report_figures import study_figures, vessel_figure
+            source_image = nib.load(source)
+            document['source_volume'].update(format='NIfTI (persisted source grid)',
+                orientation=list(nib.aff2axcodes(source_image.affine)),
+                spacing_mm=list(map(float, source_image.header.get_zooms()[:3])),
+                affine_ras_mm=source_image.affine.tolist(), shape_ijk=list(source_image.shape))
+        if source_valid and mask_hash:
+            mask_image = nib.load(mask)
+            grid_matches = (mask_image.shape == source_image.shape
+                and np.allclose(mask_image.affine, source_image.affine, atol=1e-5))
+            if not grid_matches:
+                artifacts.pop('mask_source.nii.gz')
+                document['segmentation'].update(mask_sha256=None, status='source_grid_mismatch')
+                document.pop('experimental_geometry', None)
+                document.update(narrowing_percent=None, severity_category=None, severity_status='indeterminate')
+                document.pop('severity_candidate_id', None)
+                for stage in document['stages'].values():
+                    stage.update(status='not_assessable', reason='Saved mask does not match the verified source grid.')
+                document['explanation']['text'] = 'The saved prediction could not be aligned to the verified source grid.'
+                document['reference_evaluations'] = []
+                document['evidence_status'].update(geometry='Source grid mismatch.', evaluation='Source grid mismatch.')
+                mask_hash = None
+        if source_valid and mask_hash:
+            figures, captions = study_figures(source, mask, geometry)
+            from .volume_preview import PREVIEW_VERSION, mask_preview
+            preview_path = STORAGE / 'previews' / f'{mask_hash}.{PREVIEW_VERSION}.json'
+            preview = json.loads(preview_path.read_text()) if preview_path.is_file() else mask_preview(mask)
+            vessel = vessel_figure(preview, geometry)
+            if vessel:
+                figures['images/3d_vessel_overview.png'] = vessel
+                captions['images/3d_vessel_overview.png'] = 'Oblique rendering of the saved predicted vessel mesh.'
+            artifacts.update(figures)
+            document['figure_captions'] = captions
+            document['evidence_status']['figures'] = 'saved_with_report'
+
+        def matching_explanation(item):
+            identity = item.get('identity') or {}
+            return (re.fullmatch(r'[0-9a-f]{64}', item.get('id') or '')
+                    and identity.get('source_sha256') == row.source_sha256
+                    and document['checkpoint_sha256'] and identity.get('checkpoint_sha256') == document['checkpoint_sha256']
+                    and identity.get('volume_run_id') == row.id and identity.get('case_id') == case.id)
+
+        document['explainable_ai'] = [item for item in document['explainable_ai'] if matching_explanation(item)]
+        document['evidence_status']['xai'] = 'No matched saved explanation is available.'
+        for item in document['explainable_ai']:
+            if item.get('status') != 'ready':
+                continue
+            item_id = item['id']
+            expected = (item.get('artifact_sha256') or {}).get('coarse')
+            if expected:
+                stored = add_saved(f'xai/{item_id}.coarse.npy', folder/'xai'/f'{item_id}.coarse.npy', expected)
+                if stored and source_valid and mask_hash and (item.get('alignment') or {}).get('status') == 'PASS':
+                    from .volume_xai_api import heat_for_mpr
+                    from .volume_mpr import render_mpr
+                    try:
+                        heat = heat_for_mpr(STORAGE, row.id, item_id)
+                    except HTTPException:
+                        heat = None
+                    if heat is not None and np.isfinite(heat[0]).all() and heat[0].max() > 0:
+                        from .volume_report_figures import peak_slice
+                        index = peak_slice(heat, source_image)
+                        if index is not None:
+                            name = f'images/xai_{item_id}_axis_2.png'
+                            artifacts[name] = render_mpr(source, mask, axis=2, index=index, window=800, level=300,
+                                                         opacity=0, physical_aspect=True, heat=heat)
+                            document['figure_captions'][name] = (
+                                f"{item['method_label']} on saved source axis 2, slice {index}, near the peak saved attribution. "
+                                "Red to yellow indicates increasing attribution for the segmentation target."
+                            )
+                            document['evidence_status']['xai'] = 'Matched attribution data and source-aligned visualization are included.'
+                if stored and not document['evidence_status']['xai'].startswith('Matched'):
+                    document['evidence_status']['xai'] = 'Matched attribution data is included. Source-aligned visualization is unavailable.'
+        artifacts['xai_explanations.json'] = encode(document['explainable_ai'])
+        artifacts['reference_evaluations.json'] = encode(document['reference_evaluations'])
+        if full_history:
+            artifacts['geometry_review.json'] = encode(full_history)
+        if document['mask_review_versions']:
+            artifacts['mask_review.json'] = encode(document['mask_review_versions'])
+        if not package(folder, document, artifacts, version, now().isoformat()) and not reuse_existing:
+            raise HTTPException(409, 'Another request created this version. Reload the list and try again.')
+    except (ValueError, OSError, KeyError) as exc:
+        raise HTTPException(409, 'Saved evidence could not be packaged consistently') from exc
+    finally:
+        REPORT_SLOTS.release()
+
+
+@app.get('/api/cases/{case_id}/volumes/analyses/{run_id}/report-versions')
+def volume_report_versions(case_id: str, run_id: str, user: User = Depends(require_case_role),
+                           db: Session = Depends(get_db)):
+    from .volume_report_archive import version_numbers
+    _, _, folder = _volume_report_run(case_id, run_id, user, db)
+    return {'versions': version_numbers(folder)}
+
+
+@app.post('/api/cases/{case_id}/volumes/analyses/{run_id}/report-versions', status_code=201)
+def create_volume_report_version(case_id: str, run_id: str, user: User = Depends(require_case_role),
+                                 db: Session = Depends(get_db)):
+    from .volume_report_archive import version_numbers
+    case, row, folder = _volume_report_run(case_id, run_id, user, db)
+    version = max(version_numbers(folder), default=0) + 1
+    _publish_volume_report(case, row, folder, version)
+    audit(db, user.id, 'volume_research_report_version_created', case_id)
+    db.commit()
+    return {'version': version}
+
+
+def _volume_report_export(case_id, run_id, user, db, version, member):
+    from zipfile import BadZipFile
+    from .volume_report_archive import read_member, report_path, version_numbers
+    case, row, folder = _volume_report_run(case_id, run_id, user, db)
+    path = report_path(folder, version)
+    if not path.is_file():
+        if version != 1 or version_numbers(folder):
+            raise HTTPException(404, 'Report version unavailable')
+        _publish_volume_report(case, row, folder, version, reuse_existing=True)
+    try:
+        content = read_member(path, member, case_id, run_id, version)
+    except (BadZipFile, KeyError, OSError, ValueError) as exc:
+        raise HTTPException(409, 'Saved report integrity could not be verified') from exc
+    return path, content
+
+
+@app.get('/api/cases/{case_id}/volumes/analyses/{run_id}/evidence.zip')
+def volume_evidence(case_id: str, run_id: str, version: int = Query(default=1, ge=1),
+                    user: User = Depends(require_case_role), db: Session = Depends(get_db)):
+    path, _ = _volume_report_export(case_id, run_id, user, db, version, None)
+    return FileResponse(path, media_type='application/zip', filename=f'volume-{run_id}-v{version}-evidence.zip',
+                        headers={'Cache-Control': 'private, no-store'})
+
+
+@app.get('/api/cases/{case_id}/volumes/analyses/{run_id}/extended-evidence.zip')
+def volume_extended_evidence(case_id: str, run_id: str, version: int = Query(ge=1),
+                             user: User = Depends(require_case_role), db: Session = Depends(get_db)):
+    from starlette.background import BackgroundTask
+    from .volume_extended_evidence import DOWNLOAD_SLOTS, ExtendedEvidenceResponse, approval_for, build_extended
+    from .volume_report_archive import report_path
+
+    _, row, folder = _volume_report_run(case_id, run_id, user, db)
+    approval = approval_for(user.id, case_id, run_id, version, row.source_sha256)
+    if not approval:
+        raise HTTPException(403, 'Extended evidence requires approval for this recipient and report version')
+    source = folder / 'source.nii.gz'
+    if not source.is_file() or not report_path(folder, version).is_file():
+        raise HTTPException(404, 'Approved report version or source artifact unavailable')
+    if not DOWNLOAD_SLOTS.acquire(blocking=False):
+        raise HTTPException(429, 'Evidence packaging is busy. Try again shortly.')
+    path = None
+
+    def cleanup():
+        try:
+            if path is not None:
+                path.unlink(missing_ok=True)
+        finally:
+            DOWNLOAD_SLOTS.release()
+
+    try:
+        standard, _ = _volume_report_export(case_id, run_id, user, db, version, None)
+        path = build_extended(standard, source, expected_hash=row.source_sha256, approval_id=approval)
+        audit(db, user.id, 'volume_extended_evidence_download', case_id)
+        db.commit()
+        return ExtendedEvidenceResponse(path, media_type='application/zip', filename=f'volume-{run_id}-v{version}-extended.zip',
+                            headers={'Cache-Control': 'private, no-store'}, background=BackgroundTask(cleanup))
+    except (ValueError, OSError) as exc:
+        cleanup()
+        raise HTTPException(409, 'Extended evidence failed its size or integrity check') from exc
+    except BaseException:
+        cleanup()
+        raise
+
+
+@app.get('/api/cases/{case_id}/volumes/analyses/{run_id}/report-preview.png')
+def volume_report_preview(case_id: str, run_id: str, version: int = Query(default=1, ge=1),
+                          page: int = Query(default=1, ge=1), user: User = Depends(require_case_role),
+                          db: Session = Depends(get_db)):
+    from io import BytesIO
+    import subprocess
+    import sys
     from fastapi.responses import Response
-    if format == 'pdf':
-        return Response(pdf_bytes(document), media_type='application/pdf',
-                        headers={'Content-Disposition': f'attachment; filename="volume-{row.id}.pdf"'})
-    return Response(csv_text(document), media_type='text/csv',
-                    headers={'Content-Disposition': f'attachment; filename="volume-{row.id}.csv"'})
+    from pypdf import PdfReader
+    from .volume_report_archive import REPORT_SLOTS
+    _, content = _volume_report_export(case_id, run_id, user, db, version, 'report.pdf')
+    total = len(PdfReader(BytesIO(content)).pages)
+    if page > total:
+        raise HTTPException(404, 'Report page unavailable')
+    if not REPORT_SLOTS.acquire(blocking=False):
+        raise HTTPException(429, 'Report rendering is busy. Try again shortly.')
+    try:
+        result = subprocess.run([sys.executable, '-m', 'app.pdf_render', str(page - 1)], input=content,
+                                capture_output=True, check=True, timeout=12)
+    except (subprocess.SubprocessError, OSError) as exc:
+        raise HTTPException(422, 'Saved PDF page could not be rendered') from exc
+    finally:
+        REPORT_SLOTS.release()
+    return Response(result.stdout, media_type='image/png',
+                    headers={'Cache-Control': 'private, no-store', 'X-Report-Pages': str(total)})
+
+
+@app.get('/api/cases/{case_id}/volumes/analyses/{run_id}/report/{format}')
+def volume_research_report(case_id: str, run_id: str, format: Literal['json', 'csv', 'pdf'],
+                           version: int = Query(default=1, ge=1), preview: bool = False,
+                           user: User = Depends(require_case_role), db: Session = Depends(get_db)):
+    from fastapi.responses import Response
+    member, media_type = {'json': ('analysis.json','application/json'), 'csv': ('measurements.csv','text/csv'),
+                          'pdf': ('report.pdf','application/pdf')}[format]
+    _, content = _volume_report_export(case_id, run_id, user, db, version, member)
+    filename = f'volume-{run_id}{f"-v{version}" if version != 1 else ""}.{format}'
+    disposition = 'inline' if preview and format == 'pdf' else 'attachment'
+    return Response(content, media_type=media_type, headers={'Cache-Control': 'private, no-store',
+        'Content-Disposition': f'{disposition}; filename="{filename}"'})
 
 
 @app.get("/api/images/{image_id}/preview")

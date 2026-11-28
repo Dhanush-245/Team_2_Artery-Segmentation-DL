@@ -229,7 +229,7 @@ export default function LoginPage({ capabilities, capabilitiesLoaded, handoff, o
                 <div className="wm-auth-options">
                   <label className="wm-remember-option" htmlFor="remember-me">
                     <input id="remember-me" type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} />
-                    <span title="For security, each browser tab keeps its own sign-in.">Keep me signed in on this tab</span>
+                    <span title="Reloading this tab keeps your session until it expires.">Keep me signed in on this tab for 24 hours</span>
                   </label>
                   <button type="button" className="wm-auth-link" onClick={() => { clearMessages(); setResetContact(email.includes("@") ? email : ""); setResetting(true); }}>Forgot password?</button>
                 </div>

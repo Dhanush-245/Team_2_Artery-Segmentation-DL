@@ -47,19 +47,29 @@ test.describe("3D case workspace", () => {
 
     await page.setViewportSize({ width: 1400, height: 900 });
     await page.goto(`/uploads?case_id=${caseId}`);
-    await expect(page.getByRole("navigation", { name: "3D case sections" })).toBeVisible();
-    await expect(page.getByRole("region", { name: "3D measurement report" })).toBeVisible();
-    await expect(page.getByRole("region", { name: "Experimental 3D geometry" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Open saved 3D analysis" })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "3D case sections" })).toHaveCount(0);
+    await expect(page.getByRole("region", { name: "3D measurement report" })).toHaveCount(0);
     for (const width of [1400, 390]) {
       await page.setViewportSize({ width, height: 900 });
       await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
     }
     await page.setViewportSize({ width: 1400, height: 900 });
-    await page.goto(`/analysis?case_id=${caseId}`);
+    await page.getByRole("link", { name: "Open saved 3D analysis" }).click();
     await expect(nav).toBeVisible();
 
     const readout = page.locator(".lv-readout");
     await expect(page.locator(".lv-panel")).toHaveCount(4);
+    const axial = page.getByRole("group", { name: "Axial zoom controls" });
+    const sagittal = page.getByRole("group", { name: "Sagittal zoom controls" });
+    await axial.getByRole("button", { name: "Fit Axial slice" }).click();
+    await sagittal.getByRole("button", { name: "Fit Sagittal slice" }).click();
+    await axial.getByRole("button", { name: "Zoom in Axial" }).click();
+    await expect(axial).toContainText("125%");
+    await expect(sagittal).toContainText("100%");
+    await axial.getByRole("button", { name: "Zoom out Axial" }).click();
+    await expect(axial).toContainText("100%");
+
     const before = await readout.innerText();
     const box = (await page.locator(".lv-frame").first().boundingBox())!;
     await page.mouse.click(box.x + box.width * 0.3, box.y + box.height * 0.4);

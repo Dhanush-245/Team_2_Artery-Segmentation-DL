@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { apiUrl } from "./api";
+import { pathLabel, pointOnPath, positionOnPath } from "./lib/candidateNavigation";
 import { WINDOW_PRESETS } from "./VolumeMprViewer";
 
 export type GeometryPath = { id: string; length_mm: number; points_ras_mm: number[][]; mask_width_mm: number[] };
@@ -9,7 +10,7 @@ type Site = { position_mm: number; mask_width_mm: number; section_diameter_mm: n
 type Review = { id: string; path_id: string; decision: string; artery: string | null; notes: string | null; reviewer_role: string; reviewed_at: string;
   measurement: null | { minimum: Site; reference: Site; minimum_diameter_mm: number; reference_diameter_mm: number; narrowing_percent: number; diameter_method: string } };
 type Listing = { current: Review[]; history: Review[]; can_review: boolean; arteries: string[] };
-type Props = { caseId: string; runId: string; token: string; paths: GeometryPath[]; estimates: Estimate[]; maskSha256?: string; onSaved: () => void; focusPathId?: string; focusNonce?: number };
+type Props = { caseId: string; runId: string; token: string; paths: GeometryPath[]; estimates: Estimate[]; maskSha256?: string; onSaved: () => void; focusPathId?: string; focusNonce?: number; candidatePathIds?: string[]; candidateLocation?: number[]; candidatePathId?: string; onPathSelect?: (id: string) => void; onLocate?: (ras: number[], pathId: string) => void };
 
 const PROFILE_HEIGHT = 70;
 /** Server default half-width (mm) across the vessel; the CPR image is 2 × this tall. */
@@ -40,18 +41,18 @@ function WidthProfile({ path, minimum, reference, onPick }: { path: GeometryPath
 }
 
 /** Straightened view along one saved path, with reviewer accept/reject, artery label and lumen markers. */
-export default function VolumeCprReview({ caseId, runId, token, paths, estimates, maskSha256, onSaved, focusPathId, focusNonce }: Props) {
+export default function VolumeCprReview({ caseId, runId, token, paths, estimates, maskSha256, onSaved, focusPathId, focusNonce, candidatePathIds = [], candidateLocation, candidatePathId, onPathSelect, onLocate }: Props) {
   const ordered = useMemo(() => {
     const narrowing = new Map(estimates.map(row => [row.path_id, row.narrowing_percent]));
-    return [...paths].sort((a, b) => (narrowing.get(b.id) ?? -1) - (narrowing.get(a.id) ?? -1) || b.length_mm - a.length_mm);
-  }, [paths, estimates]);
+    return [...paths].sort((a, b) => Number(candidatePathIds.includes(b.id)) - Number(candidatePathIds.includes(a.id)) || (narrowing.get(b.id) ?? -1) - (narrowing.get(a.id) ?? -1) || b.length_mm - a.length_mm);
+  }, [paths, estimates, candidatePathIds]);
   const narrowing = useMemo(() => new Map(estimates.map(row => [row.path_id, row.narrowing_percent])), [estimates]);
   const [pathId, setPathId] = useState(ordered[0]?.id ?? "");
-  useEffect(() => { if (focusPathId && ordered.some(item => item.id === focusPathId)) setPathId(focusPathId); }, [focusNonce]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (focusPathId && ordered.some(item => item.id === focusPathId)) setPathId(focusPathId); }, [focusPathId, focusNonce, ordered]);
   const path = ordered.find(item => item.id === pathId) ?? ordered[0];
   const [rotation, setRotation] = useState(0);
-  const [expanded, setExpanded] = useState(true);
-  const [opacity, setOpacity] = useState(.3);
+  const [expanded, setExpanded] = useState(false);
+  const [opacity, setOpacity] = useState(.15);
   const [win, setWin] = useState(800);
   const [level, setLevel] = useState(300);
   const [image, setImage] = useState("");
@@ -105,7 +106,11 @@ export default function VolumeCprReview({ caseId, runId, token, paths, estimates
   useEffect(() => { setMessage(''); }, [pathId]);
 
   if (!path) return null;
+  const candidatePosition = candidateLocation && candidatePathId === path.id ? positionOnPath(path.points_ras_mm, candidateLocation) : null;
   const place = (mm: number) => {
+    const ras = pointOnPath(path.points_ras_mm, mm);
+    if (ras) onLocate?.(ras, path.id);
+    if (!listing?.can_review) return;
     const value = Math.round(Math.min(Math.max(mm, 0), path.length_mm) * 10) / 10;
     if (placing === "minimum") { setMinimum(value); setPlacing("reference"); } else { setReference(value); setPlacing("minimum"); }
   };
@@ -130,21 +135,28 @@ export default function VolumeCprReview({ caseId, runId, token, paths, estimates
   return <section className="volume-mpr volume-cpr" aria-labelledby="volume-cpr-title">
     <div className="volume-mpr-heading">
       <div><span className="eyebrow">CURVED PLANAR REFORMATION</span><h4 id="volume-cpr-title">Straightened vessel along one extracted path</h4></div>
-      <label className="volume-cpr-path">Path <select value={path.id} onChange={event => setPathId(event.target.value)}>
-        {ordered.map(item => <option key={item.id} value={item.id}>{item.id} · {item.length_mm.toFixed(1)} mm{narrowing.has(item.id) ? ` · est. ${narrowing.get(item.id)?.toFixed(0)}% narrowing` : ""}</option>)}
+      <label className="volume-cpr-path">Path <select value={path.id} onChange={event => { setPathId(event.target.value); onPathSelect?.(event.target.value); }}>
+        {ordered.map(item => <option key={item.id} value={item.id}>{candidatePathIds.includes(item.id) ? "Candidate · " : "Exploratory · "}{pathLabel(item.id)} · {item.length_mm.toFixed(1)} mm{narrowing.has(item.id) ? ` · exploratory width ${narrowing.get(item.id)?.toFixed(0)}%` : ""}</option>)}
       </select></label>
     </div>
+    <p className="caption">{candidatePathIds.includes(path.id) ? 'This path contains a strict geometry candidate. Its perpendicular-section measurements are shown separately below.' : 'Exploratory path: no strict geometry candidate is established on this path. The width estimate is not a validated stenosis measurement.'} Cyan = predicted vessel mask; grayscale = sampled CT.</p>
+    {candidatePathId && path.id !== candidatePathId && <p className="volume-cpr-context-warning" role="status"><strong>Different path in CPR.</strong> Measurements and severity still refer to {pathLabel(candidatePathId)}; this CPR is showing {pathLabel(path.id)}. Choose the matching candidate path to reconnect the views.</p>}
+    <div className="volume-mpr-controls"><button type="button" className="lv-goto" onClick={() => setOpacity(opacity === 0 ? .15 : 0)}>{opacity === 0 ? 'Show predicted mask' : 'View CT without overlay'}</button></div>
     <div className={`volume-cpr-stage${expanded ? " volume-cpr-expanded" : ""}`}>
       <div className="volume-cpr-frame" style={{ width: frameWidth }}>
         {image && <img src={image} onClick={pickOnImage} alt={`Straightened reformation of ${path.id}, ${path.length_mm.toFixed(1)} mm long, rotated ${rotation} degrees; predicted mask in cyan`} />}
-        {marker(minimum, "minimum")}{marker(reference, "reference")}
+        {marker(candidatePosition, "candidate")}{marker(minimum, "minimum")}{marker(reference, "reference")}
       </div>
       {loading && <span className="volume-mpr-busy" role="status"><Loader2 size={16} className="spin" /> Rendering</span>}
       {error && <p role="alert" className="volume-mpr-error">{error}</p>}
     </div>
+    <h5>Vessel width profile along the selected path</h5>
     <div className="volume-cpr-profile-frame" style={{ width: frameWidth }}><WidthProfile path={path} minimum={minimum} reference={reference} onPick={place} /></div>
+    <div className="cpr-axis" style={{ width: frameWidth }}><span>Start · 0 mm</span><span>Distance along path</span><span>{path.length_mm.toFixed(1)} mm · End</span></div>
+    <p className="caption">Width profile above: predicted-mask width (mm). Cross-path image span: 20 mm. Enlarging the display cannot recover detail absent from the source or prediction.</p>
+    <details className="volume-method-notes"><summary>Advanced CPR display controls</summary>
     <label>Display proportions <select value={expanded ? 'expanded' : 'physical'} onChange={event => setExpanded(event.target.value === 'expanded')}><option value="expanded">Expand path to panel width</option><option value="physical">Preserve physical proportions</option></select></label>
-    <p className="caption">{expanded ? 'Horizontal display is expanded for inspection; image proportions are not a physical scale. ' : 'Physical proportions preserved. ' }All measurements use saved 3D coordinates. This path is only {path.length_mm.toFixed(1)} mm long.</p>
+    <p className="caption">{expanded ? 'Horizontal display is expanded for inspection; image proportions are not a physical scale. ' : 'Physical proportions preserved. ' }All measurements use saved 3D coordinates. Path length: {path.length_mm.toFixed(1)} mm long.</p>
     <p className="caption">Left = path start, right = end ({path.length_mm.toFixed(1)} mm); the curve shows the predicted-mask width along the path. Click the image or the curve to place the <strong>{placing}</strong> marker.</p>
     <div className="volume-mpr-controls">
       <label className="volume-mpr-opacity"><span>Rotation · {rotation}°</span><input type="range" min={0} max={165} step={15} value={rotation} onChange={event => setRotation(Number(event.target.value))} aria-label="Rotation about the vessel axis" /></label>
@@ -154,6 +166,8 @@ export default function VolumeCprReview({ caseId, runId, token, paths, estimates
       </select></label>
       {image && <a className="volume-mpr-download" href={image} download={`cpr-${path.id}-${rotation}deg.png`}><Download size={14} /> CPR PNG</a>}
     </div>
+    </details>
+    <p className="caption">Orange marker = selected candidate position. Click the CPR or profile to locate that point in the linked MPR and 3D views.{listing?.can_review ? " Reviewer marker placement also selects minimum/reference positions; save explicitly to record them." : ""}</p>
     {listing?.can_review ? <form className="volume-cpr-review" onSubmit={event => { event.preventDefault(); void save(); }}>
       <p className="caption">Name the artery only after review. To calculate reviewer diameters and narrowing, select both positions on the image/profile or enter their distances below, then save a new review. Positions must be at least 1 mm apart. Saving a decision alone does not create measurements.</p>
       <fieldset><legend>Reviewer edit for {path.id}</legend>

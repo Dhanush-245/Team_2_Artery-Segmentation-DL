@@ -53,7 +53,7 @@ def test_cpr_and_reviewer_geometry_edits_are_authorized_computed_and_reported():
         _, outsider = make_user(f'geo-out-{uuid4().hex}@example.org', 'doctor')
         case, run = _run(client, owner)
         base = f"/api/cases/{case['id']}/volumes/analyses/{run}"
-        geometry = client.get(f'{base}/report/json', headers=owner).json()['experimental_geometry']
+        geometry = client.get(f'{base}/analysis-detail', headers=owner).json()['experimental_geometry']
         path = max(geometry['paths'], key=lambda item: item['length_mm'])
         assert path['length_mm'] > 30
 
@@ -113,7 +113,7 @@ def test_cpr_permissions_distinguish_read_and_review_grants(role):
         case, run = _run(client, owner)
         base = f"/api/cases/{case['id']}/volumes/analyses/{run}"
         access = f"/api/cases/{case['id']}/access"
-        geometry = client.get(f"{base}/report/json", headers=owner).json()["experimental_geometry"]
+        geometry = client.get(f"{base}/analysis-detail", headers=owner).json()["experimental_geometry"]
         path = geometry["paths"][0]["id"]
         urls = (f"{base}/cpr.png?path_id={path}", f"{base}/geometry-review")
         body = dict(path_id=path, mask_sha256=geometry["mask_sha256"], decision="uncertain")

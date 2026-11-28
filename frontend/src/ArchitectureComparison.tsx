@@ -23,7 +23,7 @@ function TaskComparison({ task, labels }: { task: ComparisonTask; labels: Record
         </li>;
       })}
     </ul>
-    <div className="table-scroll"><table>
+    <div className="table-scroll" role="region" aria-label={`${task.title} metrics table`} tabIndex={0}><table>
       <caption>{task.title}: every recorded metric, with how it was measured</caption>
       <thead><tr><th>Model</th><th>Status</th><th>Input</th><th>Epochs</th>{task.metric_keys.map((key) => <th key={key}>{METRIC_LABELS[key] ?? key}</th>)}<th>Aggregation</th></tr></thead>
       <tbody>{task.rows.map((row) => <tr key={row.name}>

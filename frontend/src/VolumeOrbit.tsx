@@ -1,3 +1,6 @@
+import { useId } from "react";
+import { readViewerSession, saveViewerSession } from "./lib/viewerSession";
+import { pickSurface } from "./lib/surfacePick";
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Loader2, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
 import { apiUrl } from './api';
@@ -6,6 +9,8 @@ type Point = [number, number, number];
 type MaskComponent = { id: number; foreground_voxels: number; points: Point[] };
 type SurfaceMesh = { vertices: Point[]; faces: [number, number, number][]; face_components?: number[]; step_voxels?: number | null };
 type Preview = { world_centre_mm?: Point; world_radius_mm?: number; foreground_voxels: number; component_count: number; mesh?: SurfaceMesh; components: MaskComponent[]; points: Point[] };
+export type SurfaceSite = { position: Point; label: string; color: string };
+const NO_SITES: SurfaceSite[] = [];
 type View = { yaw: number; pitch: number; zoom: number };
 
 const INITIAL: View = { yaw: 0.55, pitch: 0.35, zoom: 1 };
@@ -30,15 +35,20 @@ function camera([x, y, z]: Point, view: View): Point {
   return [horizontal, cp * z - sp * toward, sp * z + cp * toward];
 }
 
-export default function VolumeOrbit({ url, token, marker = null, compact = false }: { url: string; token: string; marker?: Point | null; compact?: boolean }) {
+export default function VolumeOrbit({ url, token, marker = null, compact = false, selectedPath = [], sites = NO_SITES, onPick }: { url: string; token: string; marker?: Point | null; compact?: boolean; selectedPath?: number[][]; sites?: SurfaceSite[]; onPick?: (point: Point) => void }) {
   const [data, setData] = useState<Preview | null>(null);
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
-  const [view, setView] = useState<View>(INITIAL);
+  const titleId = useId();
+  const cameraKey = (sites.length ? 'measurement-surface.' : 'surface.') + url;
+  const [view, setView] = useState<View>(() => readViewerSession(cameraKey, INITIAL));
+  const [surfaceOpacity, setSurfaceOpacity] = useState(() => readViewerSession(cameraKey + '.opacity', 1));
+  useEffect(() => { saveViewerSession(cameraKey, view); }, [cameraKey, view]);
+  useEffect(() => { saveViewerSession(cameraKey + '.opacity', surfaceOpacity); }, [cameraKey, surfaceOpacity]);
   const [grid, setGrid] = useState(true);
   const [showAll, setShowAll] = useState(false);
   const canvas = useRef<HTMLCanvasElement>(null);
-  const pointer = useRef<{ id: number; x: number; y: number } | null>(null);
+  const pointer = useRef<{ id: number; x: number; y: number; moved: boolean } | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -80,7 +90,7 @@ export default function VolumeOrbit({ url, token, marker = null, compact = false
     const half = Math.max(...max.map((value, axis) => (value - min[axis]) / 2)) || 1;
     const fit = (p: Point): Point => [(p[0] - centre[0]) / half, (p[1] - centre[1]) / half, (p[2] - centre[2]) / half];
     return { hasMesh, faces, vertices: hasMesh ? mesh!.vertices.map(fit) : [], points: points.map(fit), fit,
-      floor: (min[2] - centre[2]) / half - 0.08 };
+      half, floor: (min[2] - centre[2]) / half - 0.08 };
   }, [data, showAll]);
 
   useEffect(() => {
@@ -104,6 +114,7 @@ export default function VolumeOrbit({ url, token, marker = null, compact = false
         line([o, -1.15, scene.floor], [o, 1.15, scene.floor], 'rgba(96,165,250,.22)');
         line([-1.15, o, scene.floor], [1.15, o, scene.floor], 'rgba(96,165,250,.22)');
       }
+      context.globalAlpha = surfaceOpacity;
       if (scene.hasMesh) {
         const cam = scene.vertices.map(v => camera(v, view));
         const light = camera(LIGHT, view);
@@ -128,10 +139,38 @@ export default function VolumeOrbit({ url, token, marker = null, compact = false
           context.beginPath(); context.arc(x, y, 1.6, 0, Math.PI * 2); context.fill();
         }
       }
+      context.globalAlpha = 1;
+      if (data?.world_centre_mm && data.world_radius_mm && selectedPath.length > 1) {
+        const normalized = selectedPath.map(p => p.map((v, a) => (v - data.world_centre_mm![a]) / data.world_radius_mm!) as Point);
+        context.beginPath();
+        normalized.forEach((p, i) => { const xy = screen(camera(scene.fit(p), view)); if (i === 0) context.moveTo(...xy); else context.lineTo(...xy); });
+        context.strokeStyle = '#f97316'; context.lineWidth = 3; context.stroke();
+      }
+      if (data?.world_centre_mm && data.world_radius_mm) {
+        for (const site of sites) {
+          const normalized = site.position.map((value, axis) => (value - data.world_centre_mm![axis]) / data.world_radius_mm!) as Point;
+          const [x, y] = screen(camera(scene.fit(normalized), view));
+          context.beginPath(); context.arc(x, y, 10, 0, Math.PI * 2);
+          context.fillStyle = '#0b1220'; context.fill();
+          context.strokeStyle = site.color; context.lineWidth = 2; context.stroke();
+          context.fillStyle = '#fff'; context.font = 'bold 11px system-ui';
+          context.textAlign = 'center'; context.textBaseline = 'middle';
+          context.fillText(site.label, x, y);
+          context.textAlign = 'start'; context.textBaseline = 'alphabetic';
+        }
+      }
       if (markerPoint) {
         const [mx, my] = screen(camera(scene.fit(markerPoint), view));
         context.beginPath(); context.arc(mx, my, 6, 0, Math.PI * 2); context.strokeStyle = '#fde047'; context.lineWidth = 2; context.stroke();
         context.beginPath(); context.arc(mx, my, 2, 0, Math.PI * 2); context.fillStyle = '#fde047'; context.fill();
+      }
+      if (data?.world_radius_mm) {
+        const bar = 10 * scale / (scene.half * data.world_radius_mm);
+        if (bar > 8 && bar < width / 2) {
+          const x = width - bar - 16, y = height - 18;
+          context.fillStyle = '#fff'; context.fillRect(x, y, bar, 2);
+          context.font = '12px system-ui'; context.fillText('10 mm', x, y - 5);
+        }
       }
       // Orientation marker: R (right), A (anterior), S (superior).
       const origin: [number, number] = [34, height - 34];
@@ -147,7 +186,7 @@ export default function VolumeOrbit({ url, token, marker = null, compact = false
     const observer = new ResizeObserver(draw);
     observer.observe(element);
     return () => observer.disconnect();
-  }, [scene, view, grid, markerPoint]);
+  }, [scene, view, grid, markerPoint, selectedPath, data, surfaceOpacity, sites]);
 
   // Wheel zoom needs a non-passive listener so the page does not scroll while zooming.
   useEffect(() => {
@@ -163,6 +202,16 @@ export default function VolumeOrbit({ url, token, marker = null, compact = false
     return () => element.removeEventListener('wheel', onWheel);
   }, [scene]);
 
+  const selectSurface = (clientX: number, clientY: number) => {
+    if (!surfaceOpacity || !onPick || !scene?.hasMesh || !data?.mesh || !data.world_centre_mm || !data.world_radius_mm || !canvas.current) return;
+    const box = canvas.current.getBoundingClientRect();
+    const scale = Math.min(box.width, box.height) * 0.38 * view.zoom;
+    const world = data.mesh.vertices.map(p => p.map((v, axis) => v * data.world_radius_mm! + data.world_centre_mm![axis]) as Point);
+    const point = pickSurface(scene.vertices.map(p => camera(p, view)), scene.faces.map(item => item.face), world,
+      (clientX - box.left - box.width / 2) / scale, (box.height / 2 - clientY + box.top) / scale);
+    if (point) onPick(point);
+  };
+
   const rotate = (yaw: number, pitch: number) => setView(v => ({ ...v, yaw: (v.yaw + yaw) % (2 * Math.PI), pitch: Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, v.pitch + pitch)) }));
   const zoomBy = (factor: number) => setView(v => ({ ...v, zoom: Math.max(0.5, Math.min(4, v.zoom * factor)) }));
 
@@ -172,26 +221,37 @@ export default function VolumeOrbit({ url, token, marker = null, compact = false
   const others = Math.max(0, data.component_count - 1);
   const presetActive = (p: { yaw: number; pitch: number }) => Math.abs(view.yaw - p.yaw) < 1e-3 && Math.abs(view.pitch - p.pitch) < 1e-3;
 
-  return <section className={`volume-orbit${compact ? ' compact' : ''}`} aria-labelledby="volume-orbit-title">
+  return <section className={`volume-orbit${compact ? ' compact' : ''}`} aria-labelledby={titleId}>
     <div className="volume-orbit-heading">
-      <div><span className="eyebrow">3D SURFACE</span><h4 id="volume-orbit-title">Predicted vessel mask</h4></div>
+      <div><span className="eyebrow">3D SURFACE</span><h4 id={titleId}>Predicted vessel mask</h4></div>
       <div className="volume-orbit-presets" role="group" aria-label="View direction">
         {PRESETS.map(preset => <button key={preset.label} type="button" aria-pressed={presetActive(preset)} className={presetActive(preset) ? 'active' : ''}
           onClick={() => setView(v => ({ ...v, yaw: preset.yaw, pitch: preset.pitch }))}>{preset.label}</button>)}
       </div>
     </div>
+    <div className="lv-panel-zoom" role="group" aria-label="3D zoom controls">
+      <button type="button" className="volume-orbit-tool" aria-label="Zoom out 3D" title="Zoom out" disabled={view.zoom <= 0.5} onClick={() => zoomBy(1 / 1.2)}><ZoomOut size={16} /></button>
+      <span className="volume-orbit-zoom" aria-live="polite">{Math.round(view.zoom * 100)}%</span>
+      <button type="button" className="volume-orbit-tool" aria-label="Zoom in 3D" title="Zoom in" disabled={view.zoom >= 4} onClick={() => zoomBy(1.2)}><ZoomIn size={16} /></button>
+      <button type="button" className="volume-orbit-tool" aria-label="Fit vessel surface" title="Fit vessel surface" onClick={() => setView(INITIAL)}><RotateCcw size={16} /></button>
+    </div>
     <canvas ref={canvas} className="volume-orbit-canvas" tabIndex={0}
-      aria-label="3D vessel surface. Drag or use the arrow keys to rotate; pinch, Ctrl or Command plus scroll, or plus and minus to zoom; double-click to reset."
+      aria-label={`3D vessel surface. ${onPick ? 'Click the surface to locate a point in the CTA slices. ' : ''}Drag or use arrow keys to rotate. Use plus and minus to zoom.`}
       onDoubleClick={() => setView(INITIAL)}
       onKeyDown={event => {
         const keys: Record<string, () => void> = { ArrowLeft: () => rotate(-TURN, 0), ArrowRight: () => rotate(TURN, 0), ArrowUp: () => rotate(0, TURN), ArrowDown: () => rotate(0, -TURN), '+': () => zoomBy(1.2), '=': () => zoomBy(1.2), '-': () => zoomBy(1 / 1.2) };
         if (keys[event.key]) { event.preventDefault(); keys[event.key](); }
       }}
-      onPointerDown={event => { if (event.button !== 0) return; event.currentTarget.setPointerCapture(event.pointerId); pointer.current = { id: event.pointerId, x: event.clientX, y: event.clientY }; }}
+      onPointerDown={event => { if (event.button !== 0) return; event.currentTarget.setPointerCapture(event.pointerId); pointer.current = { id: event.pointerId, x: event.clientX, y: event.clientY, moved: false }; }}
       onPointerMove={event => {
         const last = pointer.current; if (!last || last.id !== event.pointerId) return;
+        if (!last.moved && Math.hypot(event.clientX - last.x, event.clientY - last.y) < 4) return;
         rotate((event.clientX - last.x) * 0.01, (event.clientY - last.y) * 0.01);
-        pointer.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
+        pointer.current = { id: event.pointerId, x: event.clientX, y: event.clientY, moved: true };
+      }}
+      onPointerUp={event => {
+        if (pointer.current?.id === event.pointerId && !pointer.current.moved) selectSurface(event.clientX, event.clientY);
+        pointer.current = null;
       }}
       onLostPointerCapture={() => { pointer.current = null; }} />
     <div className="volume-orbit-toolbar" role="group" aria-label="3D view controls">
@@ -200,17 +260,14 @@ export default function VolumeOrbit({ url, token, marker = null, compact = false
       <button type="button" className="volume-orbit-tool" aria-label="Tilt up" title="Tilt up" onClick={() => rotate(0, TURN)}><ArrowUp size={16} /></button>
       <button type="button" className="volume-orbit-tool" aria-label="Tilt down" title="Tilt down" onClick={() => rotate(0, -TURN)}><ArrowDown size={16} /></button>
       <span className="volume-orbit-divider" aria-hidden="true" />
-      <button type="button" className="volume-orbit-tool" aria-label="Zoom out" title="Zoom out" disabled={view.zoom <= 0.5} onClick={() => zoomBy(1 / 1.2)}><ZoomOut size={16} /></button>
-      <span className="volume-orbit-zoom" aria-live="polite">{Math.round(view.zoom * 100)}%</span>
-      <button type="button" className="volume-orbit-tool" aria-label="Zoom in" title="Zoom in" disabled={view.zoom >= 4} onClick={() => zoomBy(1.2)}><ZoomIn size={16} /></button>
-      <button type="button" className="volume-orbit-tool" aria-label="Reset view" title="Reset view" onClick={() => setView(INITIAL)}><RotateCcw size={16} /></button>
-      <span className="volume-orbit-divider" aria-hidden="true" />
+      <label>3D surface opacity <input type="range" min="0" max="1" step=".05" value={surfaceOpacity} onChange={event => setSurfaceOpacity(Number(event.target.value))} /></label>
       <label className="volume-orbit-toggle"><input type="checkbox" checked={grid} onChange={event => setGrid(event.target.checked)} />Floor grid</label>
       {others > 0 && <label className="volume-orbit-toggle"><input type="checkbox" checked={showAll} onChange={event => setShowAll(event.target.checked)} />Show {others} disconnected fragment{others === 1 ? '' : 's'}</label>}
     </div>
     <div className="volume-orbit-legend">
       <span><i className="swatch main" />Largest connected component</span>
       {showAll && others > 0 && <span><i className="swatch other" />Disconnected fragments</span>}
+      {selectedPath.length > 1 && <span>Orange = selected extracted path (projected over surface)</span>}
       <span className="muted">{data.foreground_voxels.toLocaleString()} mask voxels{data.mesh?.step_voxels && data.mesh.step_voxels > 1 ? ` · surface simplified ${data.mesh.step_voxels}×` : ''}</span>
     </div>
     <p className="caption volume-orbit-hint">Drag to rotate · pinch or Ctrl/⌘ + scroll to zoom · double-click to reset</p>

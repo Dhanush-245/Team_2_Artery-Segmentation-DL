@@ -7,9 +7,9 @@ export const VOLUME_SECTIONS: VolumeSection[] = [
   { id: "v3d-source", label: "Source & preprocessing" },
   { id: "v3d-viewer", label: "3D & MPR viewer" },
   { id: "v3d-segmentation", label: "Segmentation" },
-  { id: "v3d-vessel", label: "Vessel analysis & CPR" },
   { id: "v3d-candidates", label: "Stenosis candidates" },
   { id: "v3d-measurements", label: "Measurements" },
+  { id: "v3d-vessel", label: "Vessel analysis & CPR" },
   { id: "v3d-severity", label: "Severity" },
   { id: "v3d-xai", label: "Explainable AI" },
   { id: "v3d-evaluation", label: "Model evaluation" },
@@ -19,10 +19,10 @@ export const VOLUME_SECTIONS: VolumeSection[] = [
 
 /** Section whose anchor is nearest above the reading line, whatever order the blocks sit in on the page;
  *  the first section when none has scrolled past it. */
-export function activeSection(tops: Record<string, number>, line = 140): string {
-  let current = VOLUME_SECTIONS[0].id;
+export function activeSection(tops: Record<string, number>, line = 140, sections: readonly VolumeSection[] = VOLUME_SECTIONS): string {
+  let current = sections[0]?.id ?? "";
   let best = -Infinity;
-  for (const { id } of VOLUME_SECTIONS) {
+  for (const { id } of sections) {
     const top = tops[id];
     if (typeof top === "number" && top <= line && top > best) { best = top; current = id; }
   }

@@ -55,6 +55,7 @@ export function useAnalysisSession({ token, user, caseList, activeView, setActiv
   const requestedRun = useRef<string | null>(initial.current.runId);
   const pinnedRun = useRef<SavedRunPin | null>(null);
   const restorationImage = useRef<string | null>(null);
+  const restoringLocation = useRef<NavigationTarget | null>(null);
   const announcedJobRef = useRef<string | null>(null);
   const overlayRequest = useRef(0);
 
@@ -67,14 +68,15 @@ export function useAnalysisSession({ token, user, caseList, activeView, setActiv
 
   useEffect(() => () => { if (overlay.startsWith("blob:")) URL.revokeObjectURL(overlay); }, [overlay]);
 
-  // Back/forward onto a saved-run URL re-selects that run instead of rewriting the URL to the current one.
+  // Follow explicit links from other pages as well as browser history.
   useEffect(() => {
-    if (navigationType !== "POP" || activeView !== "analysis") return;
+    if (navigationType === "REPLACE" || activeView !== "analysis") return;
     const { target, runId } = requestedTarget(location.search);
     if (!target) return;
     const current = currentRef.current;
     if (target.caseId === current.caseId && target.imageId === selectedImageRef.current && (!runId || runId === current.runId)) return;
     requestedCaseNavigation.current = target;
+    restoringLocation.current = target;
     requestedRun.current = runId;
     setNavigationRequest((count) => count + 1);
   }, [location.key]);
@@ -86,6 +88,7 @@ export function useAnalysisSession({ token, user, caseList, activeView, setActiv
     requestedCaseNavigation.current = null;
     const cleanPath = clearAnalysisLocation(window.location.href);
     if (!allowedCase || !canOpenSection("analysis", user.role, user.permissions)) {
+      restoringLocation.current = null;
       requestedRun.current = null;
       navigate(cleanPath, { replace: true });
       setError("The requested analysis case is unavailable for this account.");
@@ -95,11 +98,12 @@ export function useAnalysisSession({ token, user, caseList, activeView, setActiv
     if (!allowedCase.images.length && !target.imageId) {
       requestedRun.current = null;
       setSelectedId(allowedCase.id);
-      setActiveView("analysis", { replace: true });
+      if (activeView !== "analysis") setActiveView("analysis", { replace: true });
       return;
     }
     const image = savedImageForRequest(allowedCase.images, target.imageId, requestedRun.current);
     if (!image) {
+      restoringLocation.current = null;
       requestedRun.current = null;
       navigate(cleanPath, { replace: true });
       setError("The requested study image is unavailable for this account.");
@@ -110,7 +114,7 @@ export function useAnalysisSession({ token, user, caseList, activeView, setActiv
     requestedRun.current = null;
     restorationImage.current = image.id;
     setSelectedImageId(image.id);
-    setActiveView("analysis", { replace: true });
+    if (activeView !== "analysis") setActiveView("analysis", { replace: true });
   }, [cases, caseListToken, token, location.search, navigationRequest]);
 
   useEffect(() => {
@@ -172,11 +176,16 @@ export function useAnalysisSession({ token, user, caseList, activeView, setActiv
       })
       .catch(() => { if (active && sequence === overlayRequest.current) { setAnalysis(null); setOverlay(""); } });
     return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
-  }, [selectedImage?.id, selectedImage?.latest_analysis_id, token]);
+  }, [selectedImage?.id, selectedImage?.latest_analysis_id, token, navigationRequest]);
 
   // Mirror the open saved run into the address bar so it can be bookmarked and shared.
   useEffect(() => {
     if (activeView !== "analysis" || !selected || caseListToken !== token) return;
+    const target = restoringLocation.current;
+    if (requestedCaseNavigation.current || (target &&
+      (target.caseId !== selected.id || (target.imageId && target.imageId !== selectedImage?.id)))) return;
+    restoringLocation.current = null;
+    if (pinnedRun.current?.imageId === selectedImage?.id && pinnedRun.current?.runId !== selectedAnalysis?.id) return;
     if (!selected.images.length) {
       const volumeLink = `${window.location.pathname}?case_id=${encodeURIComponent(selected.id)}`;
       if (volumeLink !== window.location.pathname + window.location.search) navigate(volumeLink, { replace: true });

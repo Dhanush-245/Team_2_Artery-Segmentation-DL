@@ -71,7 +71,10 @@ def test_eligible_geometry_promotes_primary_experimental_severity():
 
 
 def test_report_api_identity_access_and_failed_run():
+    import hashlib
     import json
+    from io import BytesIO
+    from zipfile import ZipFile
     from uuid import uuid4
     from fastapi.testclient import TestClient
     from app.main import app
@@ -102,6 +105,99 @@ def test_report_api_identity_access_and_failed_run():
         assert pdf.headers['content-type'] == 'application/pdf'
         assert pdf.headers['content-disposition'] == f'attachment; filename="volume-{run_id}.pdf"'
         assert pdf.content.startswith(b'%PDF-')
+        base = url.removesuffix('/report/json')
+        csv = client.get(base+'/report/csv', headers=headers)
+        archive_response = client.get(base+'/evidence.zip', headers=headers)
+        with ZipFile(BytesIO(archive_response.content)) as archive:
+            manifest = json.loads(archive.read('manifest.json'))
+            assert manifest['run_id'] == run_id
+            assert manifest['report'] == response.json()['report']
+            assert response.content == archive.read('analysis.json')
+            assert csv.content == archive.read('measurements.csv')
+            assert pdf.content == archive.read('report.pdf')
+            assert set(manifest['files']) == set(archive.namelist()) - {'manifest.json'}
+            assert all(hashlib.sha256(archive.read(name)).hexdigest() == value
+                       for name, value in manifest['files'].items())
+        assert client.post(base+'/report-versions', headers=outsider).status_code == 404
+        assert client.post(base+'/report-versions', headers=headers).json() == {'version': 2}
+        assert client.get(base+'/report-versions', headers=headers).json() == {'versions': [1, 2]}
+        assert client.get(url+'?version=2', headers=headers).json()['report']['version'] == 2
+        assert client.get(url+'?version=3', headers=headers).status_code == 404
+        assert client.get(pdf_url+'?preview=true', headers=headers).headers['content-disposition'].startswith('inline')
+        assert client.get(base+'/report-preview.png', headers=outsider).status_code == 404
+        preview = client.get(base+'/report-preview.png', headers=headers)
+        assert preview.content.startswith(b'\x89PNG\r\n\x1a\n')
+        assert int(preview.headers['x-report-pages']) >= 1
+        assert client.get(base+'/report-preview.png?page=999', headers=headers).status_code == 404
+        assert client.get(base+'/evidence.zip?version=1', headers=headers).content == archive_response.content
         with SessionLocal() as db:
             db.get(VolumeAnalysis,run_id).status='failed';db.commit()
         assert client.get(url,headers=headers).status_code==409
+
+
+def test_extended_evidence_requires_unexpired_recipient_and_exact_source(monkeypatch, tmp_path):
+    import hashlib
+    import json
+    from datetime import datetime, timedelta, timezone
+    from io import BytesIO
+    from uuid import uuid4
+    from zipfile import ZipFile
+
+    import nibabel as nib
+    import numpy as np
+    from fastapi.testclient import TestClient
+
+    from app.database import SessionLocal
+    from app.main import STORAGE, app
+    from app.models import VolumeAnalysis
+    from test_rbac_system import make_user
+
+    with TestClient(app) as client:
+        owner, headers = make_user(f'extended-{uuid4().hex}@example.org', 'researcher')
+        other, outsider = make_user(f'other-{uuid4().hex}@example.org', 'researcher')
+        case = client.post('/api/cases', headers=headers,
+                           json={'case_code': 'EXT-'+uuid4().hex,'modality': 'CTA'}).json()
+        run = uuid4().hex
+        source = STORAGE/'volumes'/run/'source.nii.gz'
+        source.parent.mkdir(parents=True)
+        image = nib.Nifti1Image(np.zeros((8, 8, 8), dtype=np.uint8), np.eye(4))
+        image.header.set_xyzt_units('mm')
+        nib.save(image, source)
+        original = source.read_bytes()
+        sha = hashlib.sha256(original).hexdigest()
+        with SessionLocal() as db:
+            db.add(VolumeAnalysis(id=run,case_id=case['id'],created_by=owner['id'],status='completed',
+                                  source_sha256=sha,result_json=json.dumps(fixture()['result'])))
+            db.commit()
+        base = f"/api/cases/{case['id']}/volumes/analyses/{run}"
+        assert client.post(base+'/report-versions', headers=headers).status_code == 201
+        normal = client.get(base+'/evidence.zip', headers=headers)
+        assert normal.status_code == 200
+        extended = base+'/extended-evidence.zip?version=1'
+        assert client.get(extended).status_code == 401
+        assert client.get(extended, headers=outsider).status_code == 404
+        assert client.get(extended, headers=headers).status_code == 403
+        policy = tmp_path/'approvals.json'
+        monkeypatch.setenv('COROVISION_EXTENDED_EVIDENCE_APPROVALS', str(policy))
+        record = dict(user_id=owner['id'], case_id=case['id'], run_id=run, report_version=1,
+                      source_sha256=sha, artifact='artifacts/source.nii.gz', approval_id='synthetic-approval',
+                      license_reference='Locally generated engineering fixture', deidentified=True, approved_by='test')
+        when = datetime.now(timezone.utc)
+        policy.write_text(json.dumps([{**record,'expires_at': (when-timedelta(hours=1)).isoformat()}]))
+        assert client.get(extended, headers=headers).status_code == 403
+        policy.write_text(json.dumps([{**record,'expires_at': (when+timedelta(hours=1)).isoformat()}]))
+        assert client.get(extended.replace('version=1','version=2'), headers=headers).status_code == 403
+        assert client.post(f"/api/cases/{case['id']}/access", headers=headers,
+            json={'user_email_or_id':other['email'], 'access_level':'read'}).status_code == 201
+        assert client.get(base+'/evidence.zip', headers=outsider).status_code == 200
+        assert client.get(extended, headers=outsider).status_code == 403
+        result = client.get(extended, headers=headers)
+        assert result.status_code == 200
+        with ZipFile(BytesIO(result.content)) as archive:
+            assert archive.read('standard-evidence.zip') == normal.content
+            assert archive.read(record['artifact']) == original
+            manifest = json.loads(archive.read('manifest.json'))
+            assert manifest['report']['version'] == 1
+            assert all(hashlib.sha256(archive.read(f['path'])).hexdigest() == f['sha256'] for f in manifest['entries'])
+        source.write_bytes(b'changed')
+        assert client.get(extended, headers=headers).status_code == 409

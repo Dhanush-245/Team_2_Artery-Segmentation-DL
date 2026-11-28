@@ -6,6 +6,7 @@ import ModelAnalytics from "./ModelAnalytics";
 import EvaluationExplorer from "./EvaluationExplorer";
 import ExperimentLab from "./ExperimentLab";
 import ResearchProgress from "./ResearchProgress";
+import EvidenceStatus from "./EvidenceStatus";
 
 export type ModelStatus = {
   task_connections?:Array<{id:string;title:string;connected:boolean;state:string;dimension:string;anatomy:string;modality:string;checkpoint_sha256:string|null;limitation:string}>;
@@ -116,10 +117,11 @@ export default function ModelWorkspace({ token }: { token: string }) {
   if (panel === "training") return <div className="settings-page model-workspace">
     <div className="page-heading"><div><p className="eyebrow">RESEARCH EVIDENCE</p><h2>Training &amp; validation</h2></div></div>
     {navigation}
-    <p className="muted">Import results from external runs to inspect recorded epochs, validation metrics, dataset provenance, and checkpoint identity. Use Model evaluation to see which checkpoints serve inference.</p>
-    <ExperimentLab token={token} />
+    <p className="muted">Inspect recorded learning curves, validation metrics, dataset splits and checkpoint provenance. Use the experiment lab to import results from an external run.</p>
+    <EvaluationExplorer key="training-evidence" token={token} initialSection="Training & validation" />
+    <EvaluationSection title="External experiment imports" open><ExperimentLab token={token} /></EvaluationSection>
   </div>;
-  if(panel==="progress")return <div className="settings-page model-workspace"><div className="page-heading"><div><p className="eyebrow">RESEARCH EVIDENCE</p><h2>Demonstration &amp; verification</h2></div><span className="stage-badge">Research only</span></div>{navigation}<ResearchProgress token={token}/></div>;
+  if(panel==="progress")return <div className="settings-page model-workspace"><div className="page-heading"><div><p className="eyebrow">RESEARCH EVIDENCE</p><h2>Demonstration &amp; verification</h2></div><span className="stage-badge">Research only</span></div>{navigation}<EvidenceStatus token={token}/><details className="evaluation-section"><summary>Historical demonstration records</summary><ResearchProgress token={token}/></details></div>;
   return <div className="settings-page model-workspace">
     <div className="page-heading"><div><p className="eyebrow">RESEARCH EVALUATION</p><h2>Model Evaluation</h2></div><span className="stage-badge">Research only</span></div>
     {navigation}
@@ -151,6 +153,7 @@ export default function ModelWorkspace({ token }: { token: string }) {
       <p>Saved ImageCAS selection evidence records rejection of the attention candidate despite Dice 0.794519 because the gain and recall acceptance criteria failed.</p>
     </EvaluationSection>
     {status && <ModelAnalytics status={status} registry={registry} refreshing={refreshing} updatedAt={updatedAt} onRefresh={() => setRefreshKey(key => key + 1)} />}
+    <EvidenceStatus token={token} />
     <EvaluationSection title="Architecture comparison across tasks" open><ArchitectureComparison token={token} /></EvaluationSection>
     <EvaluationSection title="Pinned release report explorer"><EvaluationExplorer token={token} /></EvaluationSection>
 

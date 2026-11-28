@@ -15,6 +15,7 @@ def test_locate_converts_between_world_and_voxel_and_is_protected():
         base = f"/api/cases/{case['id']}/volumes/analyses/{run}/locate"
         forward = client.get(base + '?i=3&j=5&k=2', headers=owner).json()
         assert forward['ijk'] == [3, 5, 2] and forward['inside_volume'] and forward['shape'] == [16, 16, 8]
+        assert forward['axis_codes'] == ['R', 'A', 'S'] and forward['cardinal_axes'] is True
         back = client.get(base + '?' + '&'.join(f'{a}={v}' for a, v in zip('xyz', forward['ras_mm'])), headers=owner).json()
         assert back['ijk'] == [3, 5, 2]
         outside = client.get(base + '?i=99&j=0&k=0', headers=owner).json()

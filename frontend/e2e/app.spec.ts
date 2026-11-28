@@ -41,8 +41,11 @@ test("a case with an uploaded image opens in the analysis workspace by link", as
   await expect(page.locator(".workbench-selectors select").first()).toHaveValue(caseRecord.id);
   await expect(page.locator(".workbench-selectors select").nth(1)).toHaveValue(image.id);
   const sections = page.getByRole("navigation", { name: "2D case sections" });
-  await expect(sections.getByRole("button")).toHaveCount(12);
-  await sections.getByRole("button", { name: "Image & Preprocessing" }).click();
+  await expect(sections.getByRole("link", { name: "Overview" })).toHaveAttribute("aria-current", "true");
+  const source = sections.getByRole("link", { name: "Source & preprocessing" });
+  await source.focus();
+  await page.keyboard.press("Enter");
+  await expect(source).toHaveAttribute("aria-current", "true");
   await expect(page.locator("#xca-preprocessing")).toHaveAttribute("open", "");
   await expect(page.locator("#xca-preprocessing")).toContainText(image.id);
 

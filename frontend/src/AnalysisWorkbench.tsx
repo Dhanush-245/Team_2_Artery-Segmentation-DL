@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from "react";
+import { AnalysisSectionNav } from "./VolumeSectionNav";
 import { screeningTone } from "./lib/screening";
 import { ZoomIn, ZoomOut, RotateCcw, Maximize2, Play, FileText } from "lucide-react";
 import type { AnalysisResult, CaseRecord, ImageRecord } from "./caseTypes";
@@ -48,6 +49,10 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
   const [mode, setMode] = useState<"source" | "processed" | "overlay" | "mask" | "attention" | "artery_probability" | "probability" | "gradcam" | "gradcampp" | "centerline" | "contours" | "localization">("overlay");
   const [opacity, setOpacity] = useState(80);
   const [showCandidates, setShowCandidates] = useState(true);
+  const [studioMethod, setStudioMethod] = useState('gradcam');
+  const [studioOpacity, setStudioOpacity] = useState(60);
+  const [studioZoom, setStudioZoom] = useState(1);
+  const [studioCompare, setStudioCompare] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [source, setSource] = useState("");
@@ -177,9 +182,32 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
   ] as const;
   const stages = analysis?.structured_result?.stages;
   const candidateCount = analysis?.structured_result?.candidates.length;
+  const hasImage = Boolean(selectedImage);
+  const hasAnalysis = Boolean(analysis);
+  const hasVesselResult = Boolean(analysis?.vessel_analysis && stages?.vessel_analysis?.status !== "skipped");
+  const sections = useMemo(() => [
+    { id: "xca-overview", label: "Overview" },
+    ...(hasImage ? [
+      { id: "xca-preprocessing", label: "Source & preprocessing" },
+      { id: "xca-viewer", label: "2D viewer" },
+    ] : []),
+    ...(hasAnalysis ? [
+      { id: "xca-segmentation", label: "Segmentation" },
+      { id: "xca-candidates", label: "Stenosis candidates" },
+      { id: "severity-assessment", label: "Measurements & severity" },
+      { id: hasVesselResult ? "xca-vessel-result" : "xca-vessel", label: "Vessel analysis" },
+      { id: "xca-xai-summary", label: "Explainable AI" },
+      { id: "xca-models", label: "Model evaluation" },
+    ] : []),
+    ...(hasImage ? [{ id: "xca-history", label: "Review & history" }] : []),
+    ...(hasAnalysis ? [{ id: "xca-reports", label: "Reports & exports" }] : []),
+  ], [hasImage, hasAnalysis, hasVesselResult]);
   function jump(id: string) {
     const target = document.getElementById(id);
-    if (target instanceof HTMLDetailsElement) target.open = true;
+    if (!target) return;
+    for (let parent: HTMLElement | null = target; parent; parent = parent.parentElement) if (parent instanceof HTMLDetailsElement) parent.open = true;
+    target.setAttribute('tabindex', '-1');
+    target.focus({ preventScroll: true });
     target?.scrollIntoView({ block: "start" });
   }
   const openXai = () => jump("case-xai");
@@ -190,20 +218,7 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
 
   return <div className="workbench-page analysis-console">
     <div className="page-heading"><div><p className="eyebrow">{reviewMode ? 'SAVED EVIDENCE' : 'IMAGING WORKSPACE'}</p><h2>{reviewMode ? 'Severity review' : 'Coronary analysis'}</h2></div><span className="stage-badge">Research only</span></div>
-    {!reviewMode ? <nav className="case-section-nav xca-section-nav" aria-label="2D case sections">
-      <Button variant="outline" onClick={() => jump("xca-overview")}>Overview</Button>
-      <Button variant="outline" disabled={!selectedImage} onClick={() => jump("xca-preprocessing")}>Image &amp; Preprocessing</Button>
-      <Button variant="outline" disabled={!selectedImage} onClick={() => jump("xca-viewer")}>2D Viewer</Button>
-      <Button variant="outline" disabled={!analysis} onClick={() => jump("xca-segmentation")}>Artery Segmentation</Button>
-      <Button variant="outline" disabled={!analysis} onClick={() => jump(analysis?.vessel_analysis && stages?.vessel_analysis?.status !== "skipped" ? "xca-vessel-result" : "xca-vessel")}>Vessel Analysis</Button>
-      <Button variant="outline" disabled={!analysis} onClick={() => jump("xca-candidates")}>Stenosis Candidates</Button>
-      <Button variant="outline" disabled={!analysis} onClick={() => jump("severity-assessment")}>MLD/RVD Measurements</Button>
-      <Button variant="outline" disabled={!analysis} onClick={openSeverity}>Research Severity</Button>
-      <Button variant="outline" disabled={!analysis} onClick={openXai}>Explainable AI</Button>
-      <Button variant="outline" disabled={!analysis} onClick={() => jump("xca-models")}>Model Evaluation</Button>
-      <Button variant="outline" disabled={!selectedImage} onClick={() => jump("xca-history")}>Review &amp; History</Button>
-      <Button variant="outline" disabled={!analysis} onClick={onReports}>Reports &amp; Exports</Button>
-    </nav> : <nav className="case-section-nav" aria-label="Analysis review report workflow"><Button variant={reviewMode ? 'outline' : 'default'} onClick={onImageReview}>1 · Image Review</Button><Button variant="outline" disabled={!analysis || reviewMode} onClick={openXai}>2 · Explainable AI</Button><Button variant={reviewMode ? 'default' : 'outline'} disabled={!analysis} onClick={openSeverity}>3 · Severity Review</Button><Button variant="outline" disabled={!analysis} onClick={onReports}>4 · Reports</Button></nav>}
+    {!reviewMode ? <AnalysisSectionNav key={selectedImage?.id} sections={sections} label="2D case sections" /> : <nav className="case-section-nav" aria-label="Analysis review report workflow"><Button variant={reviewMode ? 'outline' : 'default'} onClick={onImageReview}>1 · Image Review</Button><Button variant="outline" disabled={!analysis || reviewMode} onClick={openXai}>2 · Explainable AI</Button><Button variant={reviewMode ? 'default' : 'outline'} disabled={!analysis} onClick={openSeverity}>3 · Severity Review</Button><Button variant="outline" disabled={!analysis} onClick={onReports}>4 · Reports</Button></nav>}
     <div className="workbench-selectors" id="xca-overview">
       <label>Case<select value={selectedCase?.id || ""} onChange={(event) => onCaseChange(event.target.value)}><option value="">Select a case</option>{cases.map((item) => <option value={item.id} key={item.id}>{item.case_code} · {item.status}</option>)}</select></label>
       <label>Study image<select value={selectedImage?.id || ""} onChange={(event) => onImageChange(event.target.value)} disabled={!selectedCase?.images.length}><option value="">Select an image</option>{selectedCase?.images.map((item) => <option value={item.id} key={item.id}>{item.original_name}</option>)}</select></label>
@@ -232,13 +247,16 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
           <div><dt>Artery outline</dt><dd>{stages?.artery_segmentation?.status === 'skipped' ? 'Not assessed' : analysis.artery_pixels > 0 ? 'Available' : 'No vessel pixels found'}</dd></div>
           <div><dt>Vessel measurements</dt><dd>{stages?.vessel_analysis?.status === 'skipped' || !analysis.vessel_analysis ? 'Unavailable' : 'Available for review'}</dd></div>
           <div><dt>Possible narrowing</dt><dd>{stages?.stenosis_detection?.status === 'skipped' || candidateCount == null ? 'Not assessed' : candidateCount ? `${candidateCount} saved candidate${candidateCount === 1 ? '' : 's'}` : 'No candidate locations saved'}</dd></div>
-          {analysis.screening && <div className="screening-row"><dt>Screening result</dt><dd>
-            <span className={`screening-badge tone-${screeningTone(analysis.screening.label)}`}>{analysis.screening.display}</span>
-            <small>{analysis.screening.reasons[0]}</small>
-            <details className="screening-why"><summary>How this label is set</summary><p>{analysis.screening.basis.rule}. Highest raw score {analysis.screening.basis.max_score.toFixed(2)} across {analysis.screening.basis.candidates} candidate{analysis.screening.basis.candidates === 1 ? '' : 's'}.</p><p>{analysis.screening.limitations}</p></details>
-          </dd></div>}
+          <div className="screening-row"><dt>Screening result</dt><dd>
+            {analysis.screening ? <span className={`screening-badge tone-${screeningTone(analysis.screening.label)}`}>{analysis.screening.display}</span> : 'Not recorded for this run'}
+          </dd></div>
           <div><dt>Severity grading</dt><dd>{candidateCount == null ? 'Not assessed' : candidateCount ? 'See saved measurement assessment below' : 'No candidate to grade'}</dd></div>
         </dl>}
+        {analysis?.screening && <details className="screening-why screening-summary-details"><summary>How this label is set</summary>
+          <p>{analysis.screening.reasons.join(' ')}</p>
+          <p>{analysis.screening.basis.rule}. Highest raw score {analysis.screening.basis.max_score.toFixed(2)} across {analysis.screening.basis.candidates} candidate{analysis.screening.basis.candidates === 1 ? '' : 's'}.</p>
+          <p>{analysis.screening.limitations}</p>
+        </details>}
       </Card>
       <div className="analysis-record-strip" aria-label="Selected evidence record">
         <div><span>STUDY</span><strong>{selectedCase?.case_code}</strong><small>{selectedImage.original_name} · {selectedCase?.modality}</small></div>
@@ -377,17 +395,39 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
             {!!analysis.vessel_analysis.quality_flags?.length && <div className="vessel-candidates"><strong>Segmentation and graph quality checks</strong><ul>{analysis.vessel_analysis.quality_flags.map((flag) => <li key={flag.code}>{flag.message}</li>)}</ul></div>}
           </details>}
           <p className="privacy-note">Connected components are candidate regions, not validated anatomical artery identities. Branching, continuity, tortuosity, boundary, projected area, and diameter are approximate measurements from a 2D predicted mask. Cross-sectional area needs a 3D scan; physical units require valid source spacing.</p>
-          <Button type="button" variant="outline" onClick={onReports}><FileText size={16} aria-hidden="true" /> View report</Button>
         </Card>
       </div>
-      {analysis && <Card className="panel xai-summary" aria-labelledby="xai-summary-title" aria-busy={xaiLoading}>
-        <div className="xai-summary-heading"><div><span className="eyebrow">EXPLAINABLE AI</span><h3 id="xai-summary-title">Saved output evidence</h3><p>Inspect the evidence produced for this exact analysis run.</p></div><span className="xai-count" role="status">{xaiLoading ? 'Loading evidence…' : `${explanationLayers.filter(layer => layer.available).length} of ${explanationLayers.length} available`}</span></div>
+      {analysis && <Card id="xca-xai-summary" className="panel xai-summary" aria-labelledby="xai-summary-title" aria-busy={xaiLoading}>
+        <div className="xai-summary-heading"><div><span className="eyebrow">EXPLAINABLE AI</span><h3 id="xai-summary-title">Saved output evidence</h3><p>Choose a saved layer to inspect alongside the prepared source image.</p></div>{xaiLoading && <span role="status">Loading evidence…</span>}</div>
         <p className="xai-note">Unsupported attribution methods remain clearly unavailable and are never replaced with illustrative heatmaps.</p>
-        <div className="xai-method-grid">{explanationLayers.map(layer => <article key={layer.key} className={layer.available ? 'available' : 'unavailable'}>
-          <div><strong>{layer.label}</strong><span>{layer.available ? 'Available' : 'Unavailable'}</span></div>
-          <p>{layer.description}</p>
-          <button type="button" disabled={!layer.available} onClick={() => { setMode(layer.key); canvas.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }} aria-label={layer.available ? `View ${layer.label}` : `${layer.label} unavailable`}>{layer.available ? 'View in analysis viewer' : 'Not supplied by model'}</button>
-        </article>)}</div>
+        <div className="xai-layer-picker" role="group" aria-label="Saved evidence layers">
+          {explanationLayers.map(layer => <button type="button" key={layer.key} disabled={!layer.available}
+            aria-pressed={!studioCompare && studioMethod === layer.key}
+            onClick={() => { setStudioMethod(layer.key); setStudioCompare(false); }}>
+            {layer.label}{!layer.available && !xaiLoading ? " · unavailable" : ""}
+          </button>)}
+        </div>
+        <div className="xai-studio-controls">
+          <label>Overlay opacity · {studioOpacity}%<input className="xai-opacity-slider" aria-label="XAI studio overlay opacity"
+            type="range" min="0" max="100" value={studioOpacity}
+            style={{ backgroundImage: `linear-gradient(to right, currentColor ${studioOpacity}%, hsl(var(--muted)) ${studioOpacity}%)` }}
+            onChange={event => setStudioOpacity(Number(event.target.value))} /></label>
+          <label>Zoom <select value={studioZoom} onChange={event => setStudioZoom(Number(event.target.value))}><option value={1}>Fit</option><option value={1.5}>150%</option><option value={2}>200%</option><option value={3}>300%</option></select></label>
+          <button type="button" aria-pressed={studioCompare} onClick={() => setStudioCompare(value => !value)}>Compare Grad-CAM methods</button>
+          <button type="button" onClick={() => { setStudioZoom(1); setStudioOpacity(60); }}>Reset view</button>
+        </div>
+        <div className="xai-studio-views">
+          {(studioCompare ? ['gradcam', 'gradcampp'] : ['original', studioMethod]).map((method, index) => <figure key={`${method}-${index}`}>
+            <figcaption>{method === 'original' ? 'Prepared source image' : explanationLayers.find(layer => layer.key === method)?.label ?? method}</figcaption>
+            <div className="xai-studio-frame"><div style={{width: `${studioZoom * 100}%`, position: 'relative'}}>
+              {processedPreview && <img src={processedPreview} alt="Saved prepared image for this analysis" />}
+              {method !== 'original' && xaiLayers[method] && <img className="xai-studio-overlay" src={xaiLayers[method]} style={{opacity: studioOpacity / 100}} alt={`Saved ${method} evidence for this run`} />}
+            </div></div>
+            {method !== 'original' && !xaiLayers[method] && <p role="status">{xaiLoading ? 'Loading saved evidence…' : 'This method has no loaded artifact for this run.'}</p>}
+          </figure>)}
+        </div>
+        <p>{explanationLayers.find(layer => layer.key === studioMethod)?.description}</p>
+        <p className="caption">Images use the saved prepared-image grid. Overlay intensity is relative to its saved method scale. Availability does not establish faithfulness; target-specific verification is recorded in the case explanation panel below. Prediction maps, contours and centerlines are supporting model evidence.</p>
         {!!xaiFailures.length && <p role="alert" className="xai-error">Some saved explanation artifacts could not be loaded. The analysis result is unchanged.</p>}
       </Card>}
       {analysis && <Card className="panel"><details className="evidence-details" id="xca-models"><summary>Model provenance, structured explanation & limitations</summary><p className="caption">Case-level Dice, IoU and boundary distances require an eligible expert mask matched to this exact source frame.</p><pre className="provenance-json">{JSON.stringify({ model: analysis.model_version, models: analysis.structured_result?.models, preprocessing: analysis.structured_result?.input || selectedImage.processing_record }, null, 2)}</pre><ResultEvidence result={analysis.structured_result} /></details></Card>}
@@ -396,6 +436,10 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
       {analysis && selectedCase && <div id="severity-assessment"><Card className="panel"><StenosisMeasurements key={analysis.id} token={token} caseId={selectedCase.id} imageId={selectedImage.id} runId={analysis.id} focusedCandidate={focusedCandidate} candidates={analysis.structured_result?.candidates.map(c=>c.candidate_id)||[]} canReview={!!selectedCase.permissions?.can_review} canAssess={!!(selectedCase.permissions?.can_run_analysis||selectedCase.permissions?.can_review)} /></Card></div>}
       {analysis && <ImageMaskReview key={analysis.id} imageId={selectedImage.id} runId={analysis.id} token={token} sourceHash={selectedImage.processing_record?.source_sha256} canReview={!!selectedCase?.permissions?.can_review} />}
       <div id="xca-history"><AnalysisHistory imageId={selectedImage.id} token={token} history={history} onSelect={onSelectAnalysis} /></div>
+      {analysis && <Card className="panel" id="xca-reports">
+        <h3>Reports &amp; exports</h3>
+        <Button type="button" variant="outline" onClick={onReports}><FileText size={16} aria-hidden="true" /> View report</Button>
+      </Card>}
     </>}
   </div>;
 }

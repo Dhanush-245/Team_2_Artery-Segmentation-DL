@@ -28,6 +28,7 @@ def verify_password(password: str, stored: str) -> bool:
 
 MINIMUM_SESSION_MINUTES = 309
 DEFAULT_SESSION_MINUTES = 480
+REMEMBERED_SESSION_MINUTES = 24 * 60
 LOCAL_DEMO_SESSIONS = os.getenv("CV_LOCAL_DEMO_SESSIONS", "0") == "1"
 
 
@@ -47,7 +48,10 @@ def configured_session_minutes() -> int:
 def session_expiry(remember: bool = False) -> datetime:
     if remember and LOCAL_DEMO_SESSIONS:
         return utcnow() + timedelta(days=30)
-    return utcnow() + timedelta(minutes=configured_session_minutes())
+    minutes = configured_session_minutes()
+    if remember:
+        minutes = max(minutes, REMEMBERED_SESSION_MINUTES)
+    return utcnow() + timedelta(minutes=minutes)
 
 
 def create_token(user: User, session: AuthSession, *, mfa_verified: bool = False) -> str:
