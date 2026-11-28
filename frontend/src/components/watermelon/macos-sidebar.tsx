@@ -89,9 +89,9 @@ const AVATAR_COLORS = [
   "#d35400", // pumpkin orange
   "#b45309", // amber
   "#047857", // emerald
-  "#0e7490", // cyan
-  "#1d4ed8", // blue
-  "#4338ca", // indigo
+  "#3f3f46", // zinc
+  "#27272a", // graphite
+  "#57534e", // stone
   "#6d28d9", // violet
   "#be185d", // rose pink
 ];

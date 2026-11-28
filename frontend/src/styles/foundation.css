@@ -64,7 +64,7 @@
 .app-shell .account .notification-tabs button[aria-pressed=true] { background: var(--theme-selected); border-color: var(--theme-accent); }
 .notification-feedback { font-size: 12px; color: var(--theme-muted); line-height: 1.6; }
 .notification-select { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 12px; cursor: pointer; }
-.notification-panel input[type=checkbox] { width: 18px; height: 18px; min-height: 18px; margin: 0; flex-shrink: 0; }
+
 .notification-select { padding-left: 4px; }
 .notification-delete-confirm p { flex-basis: 100%; font-size: 12px; line-height: 1.6; }
 .notification-heading-actions { display: flex; align-items: center; gap: 8px; }

@@ -239,13 +239,13 @@ html[data-design=existing] .overview-hero button[data-ui-variant=outline] { back
 
 /* Keyboard and screen-reader navigation. */
 .skip-link { position: fixed; top: 8px; left: 8px; z-index: 1000; padding: 10px 14px; border-radius: 8px; background: #18181b; color: #fff; font-weight: 600; transform: translateY(-160%); transition: transform .15s; }
-.skip-link:focus { transform: translateY(0); outline: 2px solid #60a5fa; outline-offset: 2px; }
+.skip-link:focus { transform: translateY(0); outline: 2px solid #a1a1aa; outline-offset: 2px; }
 .content:focus { outline: none; }
-.content:focus-visible { box-shadow: inset 0 0 0 2px #60a5fa; }
+.content:focus-visible { box-shadow: inset 0 0 0 2px var(--theme-accent, #202124); }
 
 /* Glossary hints and panel. */
 .cv-term { text-decoration: underline dotted; text-underline-offset: 3px; cursor: help; }
-.cv-term:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; border-radius: 2px; }
+.cv-term:focus-visible { outline: 2px solid var(--theme-accent, #202124); outline-offset: 2px; border-radius: 2px; }
 .cv-glossary { margin-top: 1rem; border: 1px solid var(--theme-line, #e4e4e7); border-radius: 12px; padding: .75rem 1rem; }
 .cv-glossary summary { cursor: pointer; font-weight: 600; }
 .cv-glossary dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: .75rem 1.5rem; margin: .75rem 0 0; }
@@ -254,7 +254,7 @@ html[data-design=existing] .overview-hero button[data-ui-variant=outline] { back
 .cv-bar-list { display: grid; gap: 6px; margin: .5rem 0 1rem; }
 .cv-bar-row { display: grid; grid-template-columns: minmax(110px, 180px) 1fr 70px; align-items: center; gap: 10px; font-size: .82rem; }
 .cv-bar-track { height: 10px; border-radius: 999px; background: var(--theme-line, #e4e4e7); overflow: hidden; }
-.cv-bar-fill { height: 100%; border-radius: 999px; background: #0891b2; }
+.cv-bar-fill { height: 100%; border-radius: 999px; background: var(--theme-accent, #202124); }
 .cv-bar-fill.warn { background: #d97706; }
 .cv-bar-row output { text-align: right; font-variant-numeric: tabular-nums; }
 
