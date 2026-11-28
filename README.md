@@ -169,6 +169,29 @@ Figures are research measurements on the stated cohort and are not clinical perf
 
 The two 3D scores come from different cohorts and grids and must not be compared directly. These values are shown on the application's **Model Evaluation** page. Dataset-level results and incomplete work: [measured-results report](reports/latest_measured_training_results.md). Not every dataset has completed training, and training remains paused.
 
+## Project status
+
+| Area | Status |
+| :--- | :--- |
+| 2D XCA artery segmentation and stenosis candidates | Working end to end. Trained on ARCADE only. |
+| 3D coronary CTA (ImageCAS model) | Working. Development validation strong, external ASOCA result limited. |
+| 3D aorta (CTA and CT) | Working baseline trained on pseudo-labels. Not expert-validated. |
+| Explainable AI, reports, operations and monitoring | Working and covered by browser tests. |
+| Cerebral, hepatic, MRA | Not connected. Removed from case creation. |
+| Independent clinical validation | Not done. This is research software. |
+
+### Recent changes
+
+- **Operations console:** redesigned with status header, KPI cards, gauges, live API traffic, 1/6/24 hour trends, event search and CSV export, and auto-refresh.
+- **Explainable AI:** redesigned page with a gallery of saved explanation images, coverage and check scorecards.
+- **Reports:** the Reports section opens a case chooser for 2D and 3D cases, and 3D analysis has a **Create report** shortcut.
+- **Model Registry:** corrected training provenance and scope text; the Monitoring tab shows live telemetry for administrators.
+- **Case creation:** limited to modality and anatomy pairs that have a connected model.
+- **Case Inventory** is now separate from **Data & Uploads**.
+- **Quality:** backend 482, frontend unit 64 and browser 19 tests pass.
+
+The `lingareddy-dhanush` and `review` branches are kept identical.
+
 ## Development and testing
 
 ```bash
