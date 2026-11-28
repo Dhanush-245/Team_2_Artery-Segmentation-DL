@@ -56,3 +56,20 @@ def test_production_rejects_unsafe_defaults(monkeypatch):
     monkeypatch.setenv('CV_LOCAL_DEMO_SESSIONS', '0')
     monkeypatch.setenv('CV_LOCAL_DEMO_SHARING', '0')
     validate_deployment_environment()
+
+
+def test_production_warns_when_every_user_can_see_every_case(monkeypatch, caplog):
+    import logging
+    from app import operations
+    monkeypatch.setenv('COROVISION_ENV', 'production')
+    monkeypatch.setenv('JWT_SECRET', 'a' * 48)
+    for name in ('CV_LOCAL_DEMO_SESSIONS', 'CV_LOCAL_DEMO_SHARING', 'CV_LOCAL_DEMO_DOCKER_PROXY'):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv('CV_CASE_VISIBILITY', 'assigned')
+    with caplog.at_level(logging.WARNING):
+        operations.validate_deployment_environment()
+    assert 'shared_case_visibility_enabled' not in caplog.text
+    monkeypatch.setenv('CV_CASE_VISIBILITY', 'shared')
+    with caplog.at_level(logging.WARNING):
+        operations.validate_deployment_environment()
+    assert 'shared_case_visibility_enabled' in caplog.text

@@ -50,6 +50,10 @@ def validate_deployment_environment():
         raise RuntimeError('Production requires a private, randomly generated JWT_SECRET of at least 32 bytes')
     if any(os.getenv(name, '0') == '1' for name in ('CV_LOCAL_DEMO_SESSIONS', 'CV_LOCAL_DEMO_SHARING', 'CV_LOCAL_DEMO_DOCKER_PROXY')):
         raise RuntimeError('Local demo session/sharing flags must be disabled for production')
+    if os.getenv('CV_CASE_VISIBILITY', 'assigned').strip().lower() == 'shared':
+        # Allowed for a single shared team workspace, but every active user then sees every case.
+        logger.warning(json.dumps({'event': 'shared_case_visibility_enabled',
+                                   'detail': 'CV_CASE_VISIBILITY=shared: all active users can open all cases; use assigned access for any public deployment'}))
 
 
 def install_telemetry(app):
