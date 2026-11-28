@@ -11,7 +11,7 @@ import CaseHistoryPanel from "./CaseHistoryPanel";
 const CaseDetails = lazy(() => import("../CaseDetails"));
 const CaseWorkflow = lazy(() => import("../CaseWorkflow"));
 
-const CASE_SECTIONS: [CaseSection, string][] = [["overview", "Overview & access"], ["assets", "Assets & preparation"], ["reviews", "Reviews & notes"], ["history", "Analysis history"]];
+const CASE_SECTIONS: [CaseSection, string][] = [["overview", "Overview & access"], ["assets", "Assets"], ["reviews", "Reviews & notes"], ["history", "Analysis history"]];
 const PREVIOUS_SECTION: Record<CaseSection, CaseSection> = { overview: "overview", assets: "overview", reviews: "assets", history: "reviews" };
 
 /** The eyebrow repeats the sidebar name of the page, so Case Inventory is never labelled as Data & Uploads. */
@@ -40,6 +40,8 @@ export default function CasesPage() {
   const { token, user, activeView, setActiveView, selected, caseSection, setCaseSection, newCase, caseList, analysis: run, caseDeleted } = useWorkspace();
   if (activeView === "cases" && (newCase.newCaseOpen || newCase.caseFinderOpen)) return <CaseActionsPage />;
   const copy = roleCopy(user.role, activeView);
+  const uploadsView = activeView === "uploads";
+  const section = uploadsView ? "assets" : caseSection;
   return <>
     <div className="page-heading">
       <div><p className="eyebrow">{copy.eyebrow}</p><h2>{selected ? selected.case_code : "Select a case"}</h2></div>
@@ -47,21 +49,21 @@ export default function CasesPage() {
     </div>
     <WorkspaceAlerts />
     {selected?.visibility === "shared" && <p className="muted">Shared team case · visible to all active case-workspace users. Available actions follow your role.</p>}
-    {selected && <><p className="muted">{selected.modality} · {selected.anatomy} · {(selected.intended_tasks || [selected.intended_task]).map(taskLabel).join(", ")} · {selected.source_dataset || "Source not recorded"}</p><nav className="case-section-nav" aria-label="Case sections">{CASE_SECTIONS.map(([id, title]) => <Button key={id} type="button" variant={caseSection === id ? "default" : "outline"} aria-pressed={caseSection === id} onClick={() => setCaseSection(id)}>{title}</Button>)}<Button type="button" variant="outline" onClick={() => setActiveView("analysis")}>Open analysis</Button><Button type="button" variant="outline" onClick={() => setActiveView("reports")}>Reports</Button></nav></>}
+    {selected && <><p className="muted">{selected.modality} · {selected.anatomy} · {(selected.intended_tasks || [selected.intended_task]).map(taskLabel).join(", ")} · {selected.source_dataset || "Source not recorded"}</p><nav className="case-section-nav" aria-label="Case sections">{uploadsView ? <Button type="button" variant="outline" onClick={() => { setCaseSection("overview"); setActiveView("cases"); }}>← Back to case inventory</Button> : CASE_SECTIONS.map(([id, title]) => <Button key={id} type="button" variant={section === id ? "default" : "outline"} aria-pressed={section === id} onClick={() => setCaseSection(id)}>{title}</Button>)}<Button type="button" variant="outline" onClick={() => setActiveView("analysis")}>Open analysis</Button><Button type="button" variant="outline" onClick={() => setActiveView("reports")}>Reports</Button></nav></>}
     {!selected ? (
       <div className="placeholder">{user.role === "viewer" ? "Select an accessible case from the sidebar to view." : "Create a de-identified case to upload an angiography image."}</div>
     ) : (
-      <div className={`analysis-grid ${caseSection === "assets" ? "case-assets-layout" : ""}`}>
-        {caseSection === "overview" && <CaseWorkflow caseRecord={selected} token={token} role={user.role}
+      <div className={`analysis-grid ${section === "assets" ? "case-assets-layout" : ""}`}>
+        {section === "overview" && <CaseWorkflow caseRecord={selected} token={token} role={user.role}
           onUpdated={caseList.replaceCase} onDeleted={caseDeleted} onNext={() => setCaseSection("assets")}>
           <CaseDetails key={`${selected.id}:overview`} section="overview" caseRecord={selected} token={token} modelVersion={run.analysis?.model_version} userRole={user.role} currentUserId={user.id}
             onSaved={caseList.replaceCase} />
         </CaseWorkflow>}
-        {caseSection === "reviews" && <CaseDetails key={`${selected.id}:${caseSection}`} section={caseSection} caseRecord={selected} token={token} modelVersion={run.analysis?.model_version} userRole={user.role} currentUserId={user.id}
+        {section === "reviews" && <CaseDetails key={`${selected.id}:${section}`} section={section} caseRecord={selected} token={token} modelVersion={run.analysis?.model_version} userRole={user.role} currentUserId={user.id}
           onSaved={caseList.replaceCase} />}
-        {caseSection === "assets" && <CaseAssetsPanel record={selected} />}
-        {caseSection === "history" && <CaseHistoryPanel record={selected} />}
-        <CaseStepNavigation />
+        {section === "assets" && <CaseAssetsPanel record={selected} mode={activeView === "uploads" ? "uploads" : "inventory"} />}
+        {section === "history" && <CaseHistoryPanel record={selected} />}
+        {!uploadsView && <CaseStepNavigation />}
       </div>
     )}
     <p className="footer-note">Research prototype · AI masks require expert review and are not a clinical diagnosis.</p>

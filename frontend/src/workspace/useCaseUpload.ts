@@ -20,7 +20,7 @@ type Options = {
   setNotice: (message: string) => void;
 };
 
-/** Upload form state for "Assets & preparation"; kept per session so it survives section switches. */
+/** Upload form state for Data & Uploads; kept per session so it survives section switches. */
 export function useCaseUpload({ token, selectedId, selectedImage, loadCases, onUploaded, setBusy, setError, setNotice }: Options) {
   const [files, setFiles] = useState<File[]>([]);
   const [roi, setRoi] = useState("");

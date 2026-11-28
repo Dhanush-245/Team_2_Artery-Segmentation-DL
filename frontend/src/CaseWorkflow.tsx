@@ -120,7 +120,7 @@ export default function CaseWorkflow({ caseRecord, token, role, onUpdated, onDel
     </Card>
     {children && <div className="case-overview-details">{children}</div>}
     {canDelete && <Card className="panel workflow-danger"><div className="viewer-heading"><div><p className="eyebrow">CASE MANAGEMENT</p><h3>Delete case</h3></div><Trash2 size={19} aria-hidden="true" /></div><p className="muted">Remove this case from active workspaces. An administrator can restore it from Trash; images and audit history are retained.</p>{!deleting ? <Button type="button" variant="outline" onClick={() => setDeleting(true)}>Delete case…</Button> : <form onSubmit={deleteCase}><label>Type <strong>{caseRecord.case_code}</strong> to confirm<input value={deleteCode} onChange={(event) => setDeleteCode(event.target.value)} autoComplete="off" /></label><div><Button type="submit" disabled={busy || deleteCode !== caseRecord.case_code}>Move case to Trash</Button><Button type="button" variant="outline" onClick={() => { setDeleting(false); setDeleteCode(""); }}>Cancel</Button></div></form>}</Card>}
-    {onNext && <div className="case-bottom-navigation"><Button type="button" className="primary" onClick={onNext}>Next: Assets &amp; preparation →</Button></div>}
+    {onNext && <div className="case-bottom-navigation"><Button type="button" className="primary" onClick={onNext}>Next: Assets →</Button></div>}
     {error && <p className="message error" role="alert">{error}</p>}
     {notice && <p className="message success" role="status">{notice}</p>}
   </section>;

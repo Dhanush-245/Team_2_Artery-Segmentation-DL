@@ -163,10 +163,34 @@ function AnalysisEntryCard() {
   </Card>;
 }
 
-/** "Assets & preparation" tab of a case. */
-export default function CaseAssetsPanel({ record }: { record: CaseRecord }) {
+/** Case Inventory: what this case already holds, with a pointer to Data & Uploads for adding more. */
+function AssetsSummary({ record }: { record: CaseRecord }) {
+  const { setActiveView } = useWorkspace();
+  const canUpload = record.permissions?.can_upload ?? true;
+  const volumes = record.analysis_summary?.runs_3d ?? 0;
+  return <Card className="panel">
+    <div className="viewer-heading"><h3>Case assets</h3><span>{record.images.length} image{record.images.length === 1 ? "" : "s"}</span></div>
+    <p className="muted">Images and volumes already attached to this case. Uploading and preparation happen in Data &amp; Uploads.</p>
+    {record.images.length === 0 ? <p className="muted">{record.modality === "XCA" ? "No images uploaded yet." : `No 2D images. ${volumes ? `${volumes} saved 3D volume run${volumes === 1 ? "" : "s"}.` : "No 3D volume run saved yet."}`}</p> : <ul className="analysis-report-list">
+      {record.images.map(item => <li key={item.id}><div><strong>{item.original_name}</strong><small>{item.width} × {item.height}{item.processed_spacing_mm ? ` · ${item.processed_spacing_mm} mm spacing` : ""}</small></div><span className="cv-chip info">{item.modality}</span></li>)}
+    </ul>}
+    {record.images.length === 0 && record.modality !== "XCA" && volumes > 0 && <p className="caption">Source volumes are stored with their 3D runs; open Analysis history to review them.</p>}
+    <CaseMetadata record={record} />
+    <div className="analysis-reports-actions">
+      {canUpload && <Button type="button" className="primary" onClick={() => setActiveView("uploads")}>Add or prepare data →</Button>}
+      <Button type="button" variant="outline" onClick={() => setActiveView("analysis")}>Open analysis</Button>
+    </div>
+  </Card>;
+}
+
+/** Assets tab of Case Inventory ("inventory") or the whole Data & Uploads page ("uploads"). */
+export default function CaseAssetsPanel({ record, mode = "uploads" }: { record: CaseRecord; mode?: "inventory" | "uploads" }) {
   const { user, analysis: run } = useWorkspace();
   const canUpload = record.permissions?.can_upload ?? user.role !== "viewer";
+  if (mode === "inventory") return <>
+    <AssetsSummary record={record} />
+    {record.modality === "XCA" && <QualityCheckCard record={record} />}
+  </>;
   return <>
     {canUpload ? <UploadCard record={record} /> : <ReadOnlyIntakeCard record={record} />}
     {record.modality === "XCA" && <QualityCheckCard record={record} />}

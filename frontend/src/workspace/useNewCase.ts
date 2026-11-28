@@ -47,7 +47,7 @@ export function useNewCase({ token, loadCases, onCreated, setBusy, setError, set
       setCaseCode("");
       setNewCaseOpen(false);
       onCreated(created);
-      setNotice("Research case created. Select Assets & preparation to add supported inputs.");
+      setNotice("Research case created. Open Data & Uploads to add supported inputs.");
     } catch (cause) {
       setError((cause as Error).message);
     } finally {
