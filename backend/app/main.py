@@ -23,7 +23,7 @@ from .screening import screening_from_result
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from sqlalchemy import select, func, update
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from hashlib import sha256
 import secrets
@@ -426,19 +426,55 @@ def analysis_summary(case: Case, db: Session | None) -> dict:
     empty = {'runs_2d': 0, 'runs_3d': 0, 'total_runs': 0, 'latest_model': None, 'latest_run_at': None, 'reports_saved': 0}
     if db is None:
         return empty
-    image_ids = [im.id for im in case.images]
-    events = db.scalars(select(AnalysisEvent).where(AnalysisEvent.image_id.in_(image_ids))
-                        .order_by(AnalysisEvent.created_at.desc(), AnalysisEvent.id.desc())).all() if image_ids else []
-    volumes = db.scalars(select(VolumeAnalysis).where(VolumeAnalysis.case_id == case.id, VolumeAnalysis.status == 'completed')
-                         .order_by(VolumeAnalysis.created_at.desc(), VolumeAnalysis.id.desc())).all()
+    prefetched = db.info.get("summary_prefetch")
+    if prefetched is not None:
+        events, volumes, saved_reports = prefetched["events"].get(case.id, []), prefetched["volumes"].get(case.id, []), prefetched["reports"].get(case.id, 0)
+    else:
+        image_ids = [im.id for im in case.images]
+        events = db.scalars(select(AnalysisEvent).where(AnalysisEvent.image_id.in_(image_ids))
+                            .order_by(AnalysisEvent.created_at.desc(), AnalysisEvent.id.desc())).all() if image_ids else []
+        volumes = db.scalars(select(VolumeAnalysis).where(VolumeAnalysis.case_id == case.id, VolumeAnalysis.status == 'completed')
+                             .order_by(VolumeAnalysis.created_at.desc(), VolumeAnalysis.id.desc())).all()
+        saved_reports = db.scalar(select(func.count()).select_from(ResearchReport).where(ResearchReport.case_id == case.id)) or 0
     latest = max([(e.created_at, e.model_version) for e in events[:1]] + [(v.created_at, v.model_key) for v in volumes[:1]],
                  key=lambda item: item[0].replace(tzinfo=timezone.utc).timestamp() if item[0].tzinfo is None else item[0].timestamp(),
                  default=(None, None))
-    reports = db.scalar(select(func.count()).select_from(ResearchReport).where(ResearchReport.case_id == case.id)) or 0
+    reports = saved_reports
     from .volume_report_archive import version_numbers
     reports += sum(len(version_numbers(STORAGE / 'volumes' / v.id)) for v in volumes)
     return {'runs_2d': len(events), 'runs_3d': len(volumes), 'total_runs': len(events) + len(volumes),
             'latest_model': latest[1], 'latest_run_at': latest[0], 'reports_saved': reports}
+
+
+def _cached_get(db: Session, model, key):
+    """db.get that also remembers misses for the duration of one list request (db.info['lookup_cache'])."""
+    cache = db.info.get("lookup_cache")
+    if cache is None:
+        return db.get(model, key)
+    token = (model.__name__, key)
+    if token not in cache:
+        cache[token] = db.get(model, key)
+    return cache[token]
+
+
+def _summary_prefetch(db: Session, cases: list) -> dict:
+    """Load saved runs and report counts for many cases in three queries instead of three per case."""
+    ids = [case.id for case in cases]
+    owner_of_image = {im.id: case.id for case in cases for im in case.images}
+    events: dict = {}
+    if owner_of_image:
+        for event in db.scalars(select(AnalysisEvent).where(AnalysisEvent.image_id.in_(list(owner_of_image)))
+                                .order_by(AnalysisEvent.created_at.desc(), AnalysisEvent.id.desc())):
+            events.setdefault(owner_of_image[event.image_id], []).append(event)
+    volumes: dict = {}
+    reports: dict = {}
+    if ids:
+        for volume in db.scalars(select(VolumeAnalysis).where(VolumeAnalysis.case_id.in_(ids), VolumeAnalysis.status == 'completed')
+                                 .order_by(VolumeAnalysis.created_at.desc(), VolumeAnalysis.id.desc())):
+            volumes.setdefault(volume.case_id, []).append(volume)
+        reports = dict(db.execute(select(ResearchReport.case_id, func.count()).where(ResearchReport.case_id.in_(ids))
+                                  .group_by(ResearchReport.case_id)).all())
+    return {"events": events, "volumes": volumes, "reports": reports}
 
 
 def case_out(case: Case, db: Session | None = None, viewer: User | None = None) -> dict:
@@ -451,7 +487,7 @@ def case_out(case: Case, db: Session | None = None, viewer: User | None = None) 
         ), reverse=True):
             reviewer_name = ""
             if db:
-                p = db.get(UserProfile, r.reviewer_id)
+                p = _cached_get(db, UserProfile, r.reviewer_id)
                 reviewer_name = p.display_name if p else ""
             reviews_list.append({
                 "id": r.id,
@@ -459,7 +495,7 @@ def case_out(case: Case, db: Session | None = None, viewer: User | None = None) 
                 "case_id": r.case_id,
                 "reviewer_id": r.reviewer_id,
                 "reviewer_name": reviewer_name,
-                "reviewer_role": db.get(User, r.reviewer_id).role if db and db.get(User, r.reviewer_id) else None,
+                "reviewer_role": (lambda reviewer: reviewer.role if reviewer else None)(_cached_get(db, User, r.reviewer_id)) if db else None,
                 "analysis_event_id": r.analysis_event_id,
                 "image_id": r.image_id,
                 "decision": r.decision,
@@ -504,7 +540,7 @@ def case_out(case: Case, db: Session | None = None, viewer: User | None = None) 
         "owner_id": case.owner_id,
         "visibility": "shared" if shared_case_workspace() else "assigned",
         "assigned_doctors": [
-            {"id": doctor.id, "name": ((db.get(UserProfile, doctor.id).display_name if db and db.get(UserProfile, doctor.id) else "") or "Assigned clinician"), "role": doctor.role}
+            {"id": doctor.id, "name": ((_cached_get(db, UserProfile, doctor.id).display_name if db and _cached_get(db, UserProfile, doctor.id) else "") or "Assigned clinician"), "role": doctor.role}
             for doctor in {person.id: person for person in
                            [case.owner, *[access.user for access in case.access_list
                                          if access.access_level in {"review", "edit", "admin"}]]
@@ -888,9 +924,18 @@ def list_cases(user: User = Depends(require_case_role), db: Session = Depends(ge
     statement = select(Case).where(Case.deleted_at.is_(None))
     if not workspace_case_action(user, "read", db):
         statement = statement.where((Case.owner_id == user.id) | (Case.id.in_(assigned_case_ids)))
-    statement = statement.order_by(Case.created_at.desc())
+    statement = statement.order_by(Case.created_at.desc()).options(
+        selectinload(Case.owner), selectinload(Case.images), selectinload(Case.reviews),
+        selectinload(Case.report_revisions), selectinload(Case.comments),
+        selectinload(Case.access_list).selectinload(CaseAccess.user))
     cases = db.scalars(statement).all()
-    return [case_out(case, db, user) for case in cases]
+    db.info["lookup_cache"] = {}
+    db.info["summary_prefetch"] = _summary_prefetch(db, cases)
+    try:
+        return [case_out(case, db, user) for case in cases]
+    finally:
+        db.info.pop("lookup_cache", None)
+        db.info.pop("summary_prefetch", None)
 
 
 @app.get("/api/tasks")
