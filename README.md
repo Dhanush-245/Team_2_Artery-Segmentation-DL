@@ -229,6 +229,7 @@ This branch is application-only: training notebooks, runners, queues and checkpo
 | Workflows | [Frontend workflow](docs/FRONTEND_WORKFLOW.md) · [Role section map](docs/ROLE_SECTIONS_ROUTE_MATRIX_2026-10-16.md) |
 | Images and datasets | [Preprocessing requirements](docs/PREPROCESSING_ENGINE_REQUIREMENTS.md) · [Dataset registry](docs/DATASET_REGISTRY.md) |
 | Access and publishing | [Authentication](docs/AUTH_SETUP.md) · [Administrator access](docs/ADMIN_ACCESS.md) · [Publishing rules](docs/GIT_PUBLISHING.md) |
+| API | [Postman collection](docs/api/CoroVision_AI.postman_collection.json): 16 sanitized smoke and access checks. Set `baseUrl`, `email` and `password` to a demo account. |
 | Evidence | [Correctness policy](COROVISION_CORRECTNESS_POLICY.md) · [Demonstration evidence](docs/DEMONSTRATION_EVIDENCE.md) |
 
 Dated documents may describe earlier stages. Rely on current code, explicit "not connected" states and measured-result artifacts for actual availability.
