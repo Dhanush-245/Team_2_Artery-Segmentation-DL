@@ -2,7 +2,7 @@ import { Button } from "../components/prismui/button";
 import { Input } from "../components/prismui/input";
 import Alert1 from "../components/watermelon/alert-1";
 import { CreateNewDisclosure } from "../components/watermelon/create-new-disclosure";
-import { caseAnatomies, caseTasks, taskLabel } from "../caseConfiguration";
+import { anatomiesFor, caseModalityOptions, caseTasks, taskLabel } from "../caseConfiguration";
 import { canCreateCases } from "../permissions";
 import ScreenShareSelect from "../ScreenShareSelect";
 import type { CaseSort } from "../workspace/useCaseList";
@@ -38,8 +38,8 @@ function CreateCase() {
   const { caseCode, setCaseCode, newModality, changeModality, newAnatomy, setNewAnatomy, newTasks, setNewTasks, newSource, setNewSource, handleNewCase } = newCase;
   return <form onSubmit={handleNewCase} className="new-case">
     <label className="case-code-field" htmlFor="case-code">New case code<Input id="case-code" placeholder="e.g. CASE-001" maxLength={80} value={caseCode} onChange={(e) => setCaseCode(e.target.value)} required /></label>
-    <label>Modality<ScreenShareSelect label="Modality" value={newModality} onChange={e => changeModality(e.target.value)}><option value="XCA">X-ray angiography</option><option value="CTA">CT angiography</option><option value="CT">CT</option><option value="MRA">MR angiography</option></ScreenShareSelect></label>
-    <label>Anatomy<ScreenShareSelect label="Anatomy" value={newAnatomy} onChange={e => setNewAnatomy(e.target.value)}>{caseAnatomies.filter(v => newModality !== "XCA" || v === "coronary").map(v => <option key={v}>{v}</option>)}</ScreenShareSelect></label>
+    <label>Modality<ScreenShareSelect label="Modality" value={newModality} onChange={e => changeModality(e.target.value)}>{caseModalityOptions.map(([id, title]) => <option key={id} value={id}>{title}</option>)}</ScreenShareSelect></label>
+    <label>Anatomy<ScreenShareSelect label="Anatomy" value={newAnatomy} onChange={e => setNewAnatomy(e.target.value)}>{anatomiesFor(newModality).map(v => <option key={v}>{v}</option>)}</ScreenShareSelect></label>
     <label>Intended tasks<ScreenShareSelect label="Intended tasks" value={newTasks[0] || ""} multiple values={newTasks} onValuesChange={setNewTasks} onChange={e => setNewTasks([e.target.value])}>{caseTasks.filter(([id]) => newModality === "XCA" ? id !== "volume_preparation" : id === "volume_preparation").map(([id, title]) => <option key={id} value={id}>{title}</option>)}</ScreenShareSelect></label>
     <label>Source dataset or release<Input value={newSource} maxLength={120} onChange={e => setNewSource(e.target.value)} placeholder="e.g. ARCADE official release" /></label>
     <Button className="primary" disabled={busy}>{busy ? "Creating…" : "Create research case"}</Button>

@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { request } from "../api";
 import type { CaseRecord } from "../caseTypes";
+import { anatomiesFor } from "../caseConfiguration";
 
 type Options = {
   token: string;
@@ -24,7 +25,8 @@ export function useNewCase({ token, loadCases, onCreated, setBusy, setError, set
   function changeModality(modality: string) {
     setNewModality(modality);
     setNewTasks(modality === "XCA" ? ["artery_and_stenosis"] : ["volume_preparation"]);
-    if (modality === "XCA") setNewAnatomy("coronary");
+    const options = anatomiesFor(modality);
+    if (!options.includes(newAnatomy)) setNewAnatomy(options[0] ?? "coronary");
   }
 
   function closeCasePanels() {

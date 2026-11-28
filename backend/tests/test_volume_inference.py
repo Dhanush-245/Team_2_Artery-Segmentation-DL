@@ -171,8 +171,8 @@ def test_volume_job_case_permissions_history_and_artifact_isolation(tmp_path, mo
         assert geometry['foreground_voxels'] == len(geometry['points']) == 3
         points = np.asarray(geometry['points'])
         assert np.ptp(points[:, 2]) == pytest.approx(2 * np.ptp(points[:, 0]), abs=1e-4)
-        wrong = client.post('/api/cases',headers=owner,json={'case_code':'WRONG-'+suffix,'modality':'MRA','anatomy':'coronary','intended_task':'volume_preparation'}).json()
-        assert client.post(f"/api/cases/{wrong['id']}/volumes/analyses",headers=owner,files=files,data=confirms).status_code == 422
+        wrong = client.post('/api/cases',headers=owner,json={'case_code':'WRONG-'+suffix,'modality':'CTA','anatomy':'aorta','intended_task':'volume_preparation'}).json()
+        assert client.post(f"/api/cases/{wrong['id']}/volumes/analyses",headers=owner,files=files,data={**confirms,'model_key':'imagecas'}).status_code == 422
         monkeypatch.setattr(volume,'MAX_UPLOAD_BYTES',1)
         assert client.post(base,headers=owner,files=files,data=confirms).status_code == 413
 

@@ -5,6 +5,16 @@ import json
 TASKS = {"artery_segmentation", "stenosis_localization", "artery_and_stenosis", "volume_preparation"}
 ANATOMIES = {"coronary", "aorta", "cerebral", "hepatic"}
 MODALITIES = {"XCA", "CT", "CTA", "MRA"}
+# New cases are limited to combinations that have a connected research model.
+# Existing records with other values stay readable; this only gates creation and re-configuration.
+SUPPORTED_PAIRS = {("XCA", "coronary"), ("CTA", "coronary"), ("CTA", "aorta"), ("CT", "aorta")}
+
+
+def require_supported_pairs(modalities, anatomy):
+    unsupported = [m for m in modalities if (m, anatomy) not in SUPPORTED_PAIRS]
+    if unsupported:
+        allowed = ", ".join(f"{m} + {a}" for m, a in sorted(SUPPORTED_PAIRS))
+        raise HTTPException(422, f"No research model is connected for {', '.join(unsupported)} + {anatomy}. Supported: {allowed}")
 
 
 def validate_case_configuration(modality, anatomy, intended_task):

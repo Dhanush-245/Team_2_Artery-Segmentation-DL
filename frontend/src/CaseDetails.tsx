@@ -5,7 +5,7 @@ import { Button } from "./components/prismui/button";
 import { Card } from "./components/prismui/card";
 import { Input } from "./components/prismui/input";
 import { CheckCircle2, AlertCircle, FileDown, ShieldAlert } from "lucide-react";
-import { taskLabel } from "./caseConfiguration";
+import { supportedPairs, taskLabel } from "./caseConfiguration";
 import { reviewLabels } from "./reviewLabels";
 import { utcDate } from "./lib/time";
 import { analysisSummaryLabel, caseStatusLabel } from "./caseTypes";
@@ -210,7 +210,7 @@ export default function CaseDetails({
             <label>Patient ID (pseudonym)<Input value={patientCode} onChange={(event) => setPatientCode(event.target.value)} pattern="[A-Za-z0-9_-]{3,40}" maxLength={40} placeholder="e.g. ARCADE-001" disabled={isReadOnly} /></label>
             <label>Age band<select value={ageBand} onChange={(event) => setAgeBand(event.target.value)} disabled={isReadOnly}>{["unknown", "under_30", "30_39", "40_49", "50_59", "60_69", "70_79", "80_plus"].map((value) => <option key={value} value={value}>{display(value)}</option>)}</select></label>
             <label>Gender<select value={gender} onChange={(event) => setGender(event.target.value)} disabled={isReadOnly}>{["unknown", "female", "male", "other"].map((value) => <option key={value} value={value}>{display(value)}</option>)}</select></label>
-            <label>Imaging modality<select value={modality} onChange={(event) => setModality(event.target.value)} disabled={isReadOnly || caseRecord.images.length > 0}>{["XCA", "CTA", "CT", "MRA"].map(v => <option key={v}>{v}</option>)}</select></label>
+            <label>Imaging modality<select value={modality} onChange={(event) => setModality(event.target.value)} disabled={isReadOnly || caseRecord.images.length > 0}>{Object.keys(supportedPairs).filter(v => v === caseRecord.modality || supportedPairs[v].includes(caseRecord.anatomy)).concat(supportedPairs[caseRecord.modality] ? [] : [caseRecord.modality]).map(v => <option key={v}>{v}</option>)}</select></label>
             <label>Source dataset or release<Input value={sourceDataset} maxLength={120} onChange={e => setSourceDataset(e.target.value)} disabled={isReadOnly} /></label>
             <label>Source case or study reference<Input value={sourceReference} maxLength={200} onChange={e => setSourceReference(e.target.value)} disabled={isReadOnly} /></label>
             <label>Scan date, if de-identified<Input type="date" value={scanDate} onChange={(event) => setScanDate(event.target.value)} disabled={isReadOnly} /></label>

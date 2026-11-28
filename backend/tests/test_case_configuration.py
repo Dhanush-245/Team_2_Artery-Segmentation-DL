@@ -11,12 +11,12 @@ def test_case_configuration_and_clinical_opt_in():
     with TestClient(app) as client:
         _, owner = make_user("configuration-owner@example.org", "researcher")
         _, outsider = make_user("configuration-other@example.org", "researcher")
-        payload = {"case_code": "HEPATIC-PREP", "modality": "CT", "anatomy": "hepatic",
-                   "intended_task": "volume_preparation", "source_dataset": "MSD Task08", "source_reference": "public-case-001"}
+        payload = {"case_code": "AORTA-PREP", "modality": "CT", "anatomy": "aorta",
+                   "intended_task": "volume_preparation", "source_dataset": "AortaSeg public", "source_reference": "public-case-001"}
         created = client.post("/api/cases", headers=owner, json=payload)
         assert created.status_code == 201, created.text
         case = created.json()
-        assert case["source_dataset"] == "MSD Task08"
+        assert case["source_dataset"] == "AortaSeg public"
         assert case["intended_task"] == "volume_preparation"
         assert case["clinical_metadata_enabled"] is False
         assert case["inference_compatible"] is False
@@ -66,3 +66,20 @@ def test_additive_local_schema_upgrade_is_repeatable(tmp_path):
         rows = db.execute(text("SELECT id, intended_task, source_dataset, clinical_metadata_enabled FROM cases ORDER BY id")).all()
         assert [tuple(row) for row in rows] == [("preserved", "artery_and_stenosis", None, 0), ("volume", "volume_preparation", None, 0)]
     engine.dispose()
+
+
+def test_new_cases_limited_to_connected_model_combinations():
+    with TestClient(app) as client:
+        _, owner = make_user("supported-pairs@example.org", "researcher")
+        ok = [("XCA", "coronary", "artery_and_stenosis"), ("CTA", "coronary", "volume_preparation"),
+              ("CTA", "aorta", "volume_preparation"), ("CT", "aorta", "volume_preparation")]
+        bad = [("CT", "coronary"), ("CT", "cerebral"), ("CT", "hepatic"), ("CTA", "cerebral"), ("CTA", "hepatic"),
+               ("MRA", "coronary"), ("MRA", "aorta"), ("MRA", "cerebral"), ("MRA", "hepatic")]
+        for index, (modality, anatomy, task) in enumerate(ok):
+            made = client.post("/api/cases", headers=owner, json={"case_code": f"OK-{index}", "modality": modality,
+                                                                  "anatomy": anatomy, "intended_task": task})
+            assert made.status_code == 201, made.text
+        for index, (modality, anatomy) in enumerate(bad):
+            refused = client.post("/api/cases", headers=owner, json={"case_code": f"NO-{index}", "modality": modality,
+                                                                     "anatomy": anatomy, "intended_task": "volume_preparation"})
+            assert refused.status_code == 422 and "No research model" in refused.json()["detail"], (modality, anatomy)

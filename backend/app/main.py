@@ -49,7 +49,7 @@ from .analysis_result import build_result
 from .operations import install_telemetry, validate_deployment_environment, telemetry_snapshot, prometheus, api_docs_enabled
 from .inference_jobs import InferenceWorker
 from .action_policy import allowed_action, effective_actions, CONDITIONAL_ACTIONS
-from .case_contract import validate_case_configuration, supports_current_inference, case_modalities, case_tasks, validate_case_routes
+from .case_contract import require_supported_pairs, validate_case_configuration, supports_current_inference, case_modalities, case_tasks, validate_case_routes
 from .preprocessing import InvalidImage, SUPPORTED_EXTENSIONS, TARGET_SIZE, STANDARD_PIPELINES, prepare_image, processed_spacing_mm, content_geometry
 from .security import (
     AuthContext, create_token, current_auth, current_user, hash_password,
@@ -848,6 +848,7 @@ def create_case(data: CaseIn, user: User = Depends(require_roles(*ROLE_CASE_CREA
         data.intended_task = "volume_preparation"
     modalities, tasks, routes = validate_case_routes(data.modalities if data.modalities is not None else [data.modality], data.anatomy,
                                                     data.intended_tasks if data.intended_tasks is not None else [data.intended_task])
+    require_supported_pairs(modalities, data.anatomy)
     data.modality = "XCA" if "XCA" in modalities else modalities[0]
     data.intended_task = next(row["intended_task"] for row in routes if row["modality"] == data.modality)
     if not data.clinical_metadata_enabled and (data.medical_history or data.risk_factors or data.clinical_notes):
@@ -1098,6 +1099,8 @@ def update_case(case_id: str, data: CasePatch, user: User = Depends(require_role
         data.intended_task = proposed["intended_task"]
         fields = fields | {"intended_task"}
     validate_case_configuration(**proposed)
+    if any(proposed[name] != getattr(case, name) for name in ("modality", "anatomy")):
+        require_supported_pairs([proposed["modality"]], proposed["anatomy"])
     if case.images and any(proposed[name] != getattr(case, name) for name in proposed):
         raise HTTPException(409, "Create a separate case to change modality, anatomy or task after images are uploaded")
     clinical_enabled = data.clinical_metadata_enabled if "clinical_metadata_enabled" in fields else case.clinical_metadata_enabled
