@@ -1312,3 +1312,11 @@ a.brand:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; bo
   flex: 0 0 16px; display: inline-block; vertical-align: middle; accent-color: var(--theme-accent, #202124); cursor: pointer;
 }
 .ops-toggle { gap: .45rem; line-height: 1.2; white-space: nowrap; }
+
+/* Safari draws a select as a small native menu and ignores its height, radius and padding. Use one custom chevron everywhere so every browser shows the same control. */
+.app-shell select:not([multiple]):not([size]) {
+  -webkit-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right .75rem center; background-size: 16px;
+  padding-right: 2.25rem; text-overflow: ellipsis;
+}
