@@ -1,12 +1,13 @@
 import { apiUrl } from "./api";
 import { useEffect, useRef, useState } from "react";
-import { VOLUME_SECTIONS, activeSection, sourceChecklist, type SourceCheck, type VolumeSection } from "./lib/volumeSections";
+import { VOLUME_SECTIONS, activeSection, orderByPosition, sourceChecklist, type SourceCheck, type VolumeSection } from "./lib/volumeSections";
 
 export function AnalysisSectionNav({ sections = VOLUME_SECTIONS, label = "3D case sections" }: {
   sections?: readonly VolumeSection[];
   label?: string;
 }) {
   const [active, setActive] = useState(sections[0]?.id);
+  const [ordered, setOrdered] = useState<readonly VolumeSection[]>(sections);
   const rail = useRef<HTMLElement>(null);
   const landingOffset = useRef(160);
   const pinned = useRef<string | null>(null); // Keep explicit selection until the user scrolls manually.
@@ -17,6 +18,10 @@ export function AnalysisSectionNav({ sections = VOLUME_SECTIONS, label = "3D cas
         const element = document.getElementById(id);
         if (element) tops[id] = element.getBoundingClientRect().top;
       }
+      setOrdered(previous => {
+        const next = orderByPosition(Object.fromEntries(sections.flatMap(({ id }) => { const el = document.getElementById(id); return el ? [[id, el.getBoundingClientRect().top + window.scrollY]] : []; })), sections);
+        return next.length === previous.length && next.every((item, index) => item.id === previous[index].id) ? previous : next;
+      });
       setActive(pinned.current && sections.some(({ id }) => id === pinned.current) ? pinned.current : activeSection(tops, landingOffset.current + 1, sections));
     };
     const header = document.querySelector<HTMLElement>(".topbar");
@@ -39,7 +44,7 @@ export function AnalysisSectionNav({ sections = VOLUME_SECTIONS, label = "3D cas
     return () => { observer.disconnect(); document.removeEventListener("scroll", update, true); window.removeEventListener("wheel", release); window.removeEventListener("touchmove", release); window.removeEventListener("keydown", keyRelease); };
   }, [sections]);
   return <nav ref={rail} className="v3d-nav" aria-label={label}>
-    {sections.map(({ id, label }) => <a key={id} href={`#${id}`} aria-current={active === id ? "true" : undefined}
+    {ordered.map(({ id, label }) => <a key={id} href={`#${id}`} aria-current={active === id ? "true" : undefined}
       onClick={event => { event.preventDefault();
         const target = document.getElementById(id);
         if (!target) return;

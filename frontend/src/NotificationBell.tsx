@@ -47,7 +47,10 @@ export default function NotificationBell({ token, onOpenCase }: {
     }
     void refresh();
     const interval = window.setInterval(() => { if (!document.hidden) void refresh(); }, 60_000);
-    return () => { active = false; window.clearInterval(interval); };
+    // Pages that create notifications (for example the administrator test alert) ask for an immediate refresh.
+    const onChanged = () => { void refresh(); };
+    window.addEventListener("corovision:notifications-changed", onChanged);
+    return () => { active = false; window.clearInterval(interval); window.removeEventListener("corovision:notifications-changed", onChanged); };
   }, [token, open, deleted]);
 
   async function bulk(action: "read" | "delete" | "restore") {

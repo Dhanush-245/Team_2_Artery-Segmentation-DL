@@ -228,7 +228,6 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
       <Card className="panel case-analysis-entry">
         <div>
           <h3>{analysis ? 'Combined findings' : 'Analyze this image'}</h3>
-          <p>One analysis brings together the artery outline, vessel measurements and areas of possible narrowing.</p>
           {analysisBusy && <p role="status">Analysis in progress. You can return to this image to see the result.</p>}
           {!analysisBusy && jobStatus === 'failed' && <p role="status">The latest analysis did not finish.</p>}
           {!modelsReady && <p className="caption">New analysis is unavailable on this installation.</p>}
@@ -336,7 +335,6 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
             </>}
           </div>
           <div className="workbench-viewer-notes">
-          {zoom <= 1 && <p className="caption">Zoom in to enable panning.</p>}
           {analysis?.structured_result?.candidates.length === 0 && ["localization", "probability", "overlay"].includes(mode) &&
             <p className="caption">This run retained no stenosis candidates. Localization and stenosis layers may show no highlight. This result does not rule out disease.</p>}
           {mode === "source" && !source && <p className="caption">{sourceError || "Original DICOM/TIFF cannot be displayed by this browser; showing its processed preview."}</p>}
@@ -352,7 +350,7 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
             {!analysis.gradcam_url && <p>{analysis.structured_result?.candidates.length === 0 ? "Grad-CAM is unavailable because this run retained no detection to explain." : "This run supplies no Grad-CAM artifact. Grad-CAM requires a supported prediction target and captured gradients."}</p>}
             <p>Vessel contours are derived from the saved artery mask. Probability views display the saved model scores.</p>
           </details>}
-          <p className="caption">{mode === "localization" ? "Red outlines mark saved candidates on the prepared angiogram. Raw scores are uncalibrated." : mode === "overlay" && !overlay ? "Outlined regions are saved detector polygons; raw scores are uncalibrated. Select a contour or its label to inspect the matching candidate." : mode === "overlay" ? "Cyan marks predicted artery pixels; coral marks predicted stenosis pixels. Colors are model output, not verified anatomy." : mode === "centerline" ? "The artery mask is shown faintly under cyan traced paths; yellow labels mark grouped junctions; green dots mark endpoints. Nodes are graph candidates, not confirmed anatomical branches." : mode === "attention" ? "Feature activation shows detector backbone response energy. It is not an attention-gate weight or a clinically validated explanation." : mode === "artery_probability" || mode === "probability" ? "Pixel probabilities are uncalibrated model scores; color intensity is not a patient-level confidence score." : mode === "gradcam" ? "Grad-CAM is calculated for every retained detection and constrained to its saved instance mask, so its location follows the predicted mask. In research faithfulness tests it did not pass the model-randomization check; treat it as a saliency view, not proof of what the model used." : mode === "gradcampp" ? "Grad-CAM++ is constrained to each saved instance mask, so its location follows the predicted mask. In research faithfulness tests its unconstrained form barely changed when the detector was randomized, so it is not presented as model-faithful." : "Review all model outputs against the original study."}</p>
+          <p className="caption">{mode === "localization" ? "Raw candidate scores are uncalibrated." : mode === "overlay" && !overlay ? "Outlined regions are saved detector polygons; raw scores are uncalibrated. Select a contour or its label to inspect the matching candidate." : mode === "overlay" ? "Cyan marks predicted artery pixels; coral marks predicted stenosis pixels. Colors are model output, not verified anatomy." : mode === "centerline" ? "The artery mask is shown faintly under cyan traced paths; yellow labels mark grouped junctions; green dots mark endpoints. Nodes are graph candidates, not confirmed anatomical branches." : mode === "attention" ? "Feature activation shows detector backbone response energy. It is not an attention-gate weight or a clinically validated explanation." : mode === "artery_probability" || mode === "probability" ? "Pixel probabilities are uncalibrated model scores; color intensity is not a patient-level confidence score." : mode === "gradcam" ? "Grad-CAM is calculated for every retained detection and constrained to its saved instance mask, so its location follows the predicted mask. In research faithfulness tests it did not pass the model-randomization check; treat it as a saliency view, not proof of what the model used." : mode === "gradcampp" ? "Grad-CAM++ is constrained to each saved instance mask, so its location follows the predicted mask. In research faithfulness tests its unconstrained form barely changed when the detector was randomized, so it is not presented as model-faithful." : "Review all model outputs against the original study."}</p>
           </div>
         </Card>
         <Card className="panel workbench-findings">
@@ -371,7 +369,6 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
           </section>}
           {analysis && !selectedLesion && <WidthProfileReview expanded key={analysis.id} value={analysis.vessel_analysis?.width_profiles} runId={analysis.id} />}
           {assessment}
-          {analysis && <p className="caption">Selected run: {analysis.id} · Job: {analysis.structured_result?.job_id || 'Legacy run; job unavailable'}</p>}
           <div id="xca-candidates" />
           {analysis?.structured_result?.candidates?.length ? <details open className="evidence-details"><summary>Candidate evidence · {analysis.structured_result.candidates.length}</summary>{analysis.structured_result.candidates.map(candidate => <button type="button" className="candidate-focus" key={candidate.candidate_id} aria-pressed={focusedCandidate === candidate.candidate_id} disabled={!candidate.bbox_prepared_xyxy && !candidate.polygon_prepared_xy?.length} onClick={() => focusCandidate(candidate)}><strong>{candidate.candidate_id} · raw score {candidate.model_score?.toFixed(4) ?? 'Unavailable'}</strong><small>Prepared bounds: {candidate.bbox_prepared_xyxy?.join(', ') || 'Unavailable'} · {candidate.association_status?.replaceAll('_', ' ') || 'No vessel association'}</small></button>)}<p className="caption">Click to focus. Model candidates are not confirmed lesions.</p></details> : null}
           <p className="eyebrow">MODEL OUTPUT</p><h3>{analysis ? "Analysis complete" : "Ready for analysis"}</h3>
@@ -398,7 +395,7 @@ export default function AnalysisWorkbench({ onImageReview, reviewMode, assessmen
         </Card>
       </div>
       {analysis && <Card id="xca-xai-summary" className="panel xai-summary" aria-labelledby="xai-summary-title" aria-busy={xaiLoading}>
-        <div className="xai-summary-heading"><div><span className="eyebrow">EXPLAINABLE AI</span><h3 id="xai-summary-title">Saved output evidence</h3><p>Choose a saved layer to inspect alongside the prepared source image.</p></div>{xaiLoading && <span role="status">Loading evidence…</span>}</div>
+        <div className="xai-summary-heading"><div><span className="eyebrow">EXPLAINABLE AI</span><h3 id="xai-summary-title">Saved output evidence</h3></div>{xaiLoading && <span role="status">Loading evidence…</span>}</div>
         <p className="xai-note">Unsupported attribution methods remain clearly unavailable and are never replaced with illustrative heatmaps.</p>
         <div className="xai-layer-picker" role="group" aria-label="Saved evidence layers">
           {explanationLayers.map(layer => <button type="button" key={layer.key} disabled={!layer.available}

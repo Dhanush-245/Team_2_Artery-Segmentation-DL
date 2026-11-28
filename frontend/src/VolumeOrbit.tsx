@@ -270,7 +270,6 @@ export default function VolumeOrbit({ url, token, marker = null, compact = false
       {selectedPath.length > 1 && <span>Orange = selected extracted path (projected over surface)</span>}
       <span className="muted">{data.foreground_voxels.toLocaleString()} mask voxels{data.mesh?.step_voxels && data.mesh.step_voxels > 1 ? ` · surface simplified ${data.mesh.step_voxels}×` : ''}</span>
     </div>
-    <p className="caption volume-orbit-hint">Drag to rotate · pinch or Ctrl/⌘ + scroll to zoom · double-click to reset</p>
     {others > 0 && <p className="volume-orbit-note" role="note">The prediction has {data.component_count} disconnected pieces. Measurements use one connected component only; fragments often indicate segmentation errors and need review.</p>}
   </section>;
 }

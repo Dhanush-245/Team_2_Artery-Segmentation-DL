@@ -62,8 +62,14 @@ test.describe("3D case workspace", () => {
     await expect(page.locator(".lv-panel")).toHaveCount(4);
     const axial = page.getByRole("group", { name: "Axial zoom controls" });
     const sagittal = page.getByRole("group", { name: "Sagittal zoom controls" });
+    await expect(readout).toContainText("Candidate"); // the viewer has finished centring on the injected candidate
     await axial.getByRole("button", { name: "Fit Axial slice" }).click();
     await sagittal.getByRole("button", { name: "Fit Sagittal slice" }).click();
+    // Let any automatic candidate centring finish before testing zoom isolation.
+    await expect(axial).toContainText("100%");
+    await expect(sagittal).toContainText("100%");
+    await page.waitForTimeout(1500);
+    await expect(axial).toContainText("100%");
     await axial.getByRole("button", { name: "Zoom in Axial" }).click();
     await expect(axial).toContainText("125%");
     await expect(sagittal).toContainText("100%");

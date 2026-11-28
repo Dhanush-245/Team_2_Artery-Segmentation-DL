@@ -5,7 +5,7 @@ import ts from "typescript";
 
 const source = fs.readFileSync(new URL("../src/lib/volumeSections.ts", import.meta.url), "utf8");
 const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext } }).outputText;
-const { VOLUME_SECTIONS, activeSection, sourceChecklist } = await import("data:text/javascript;base64," + Buffer.from(js).toString("base64"));
+const { VOLUME_SECTIONS, activeSection, sourceChecklist, orderByPosition } = await import("data:text/javascript;base64," + Buffer.from(js).toString("base64"));
 
 test("twelve sections in workflow order with unique anchors", () => {
   assert.equal(VOLUME_SECTIONS.length, 12);
@@ -38,4 +38,10 @@ test("saved source validation never treats generic guidance as a passed check", 
   assert.equal(sourceChecklist(run).find(c => c.label === "Saved source validation").status, "info");
   assert.equal(sourceChecklist({ ...run, validation: { status: "checked", detail: "Matching saved source" } }).find(c => c.label === "Saved source validation").status, "ok");
   assert.equal(sourceChecklist({ ...run, validation: { status: "failed", detail: "Hash mismatch" } }).find(c => c.label === "Saved source validation").status, "warn");
+});
+
+test("navigation follows the order of the page, with absent sections last", () => {
+  const list = [{ id: "a", label: "A" }, { id: "b", label: "B" }, { id: "c", label: "C" }, { id: "d", label: "D" }];
+  assert.deepEqual(orderByPosition({ a: 900, b: 100, c: 500 }, list).map(s => s.id), ["b", "c", "a", "d"]);
+  assert.deepEqual(orderByPosition({}, list).map(s => s.id), ["a", "b", "c", "d"]);
 });

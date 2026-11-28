@@ -45,7 +45,7 @@ export default function XaiDashboardPage() {
   const c = data.coverage;
   return <div className="settings-page xai-dashboard">
     <div className="page-heading"><div><p className="eyebrow">RESEARCH EVIDENCE</p><h2>Explainable AI</h2></div><span className="stage-badge">Research only</span></div>
-    <p className="muted">Coverage, methods and verification of saved case explanations. Each explanation belongs to one case, run and target; open a row to see it in its case. {data.scope}</p>
+    <p className="muted">Open a row to see its explanation in its case. {data.scope}</p>
 
     <Card className="panel">
       <div className="cv-panel-head"><span className="eyebrow">COVERAGE</span><h3>Saved 2D analysis runs</h3></div>

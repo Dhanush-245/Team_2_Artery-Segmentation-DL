@@ -74,7 +74,7 @@ export default function VolumeMeasurementPanel({ candidates, selectedId, onSelec
   });
   return <section className="lumen-comparison" aria-label="Candidate cross-section comparison">
     <h4>Perpendicular lumen sections</h4>
-    <p className="caption">Compare the narrowest sampled section with two references on the same path. These panels show the predicted binary mask, not CT images or expert annotations. All three use the saved sampling grid; cyan marks predicted lumen.</p>
+    <p className="caption">These panels show the predicted binary mask, not CT images or expert annotations; cyan marks predicted lumen.</p>
     <label>Geometry candidate <select value={selected.id} onChange={event => onSelect(event.target.value)}>
       {candidates.map(candidate => <option key={candidate.id} value={candidate.id}>{candidateLabel(candidate.id)} — {pathLabel(candidate.path_id)}</option>)}
     </select></label>
@@ -98,7 +98,7 @@ export default function VolumeMeasurementPanel({ candidates, selectedId, onSelec
     </div>
     {previewUrl && sites.length > 0 && <section className="measurement-surface measurement-surface-primary" aria-label="3D measurement locations">
       <div className="measurement-surface-heading">
-        <div><h5>3D measurement locations</h5><p className="caption">Rotate and zoom the predicted vessel to understand where each saved section was sampled.</p></div>
+        <div><h5>3D measurement locations</h5></div>
         <ul className="measurement-site-legend" aria-label="Measurement marker legend">{sites.map(site => <li key={site.label}><span style={{borderColor: site.color}}>{site.label}</span>{SECTION_TITLES[Number(site.label) - 1]}</li>)}</ul>
       </div>
       <VolumeOrbit key={previewUrl} url={previewUrl} token={token} selectedPath={path?.points_ras_mm} sites={sites} />

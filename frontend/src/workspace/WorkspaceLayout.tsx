@@ -32,7 +32,6 @@ function SidebarCaseList() {
   return (
     <>
       <h1>Cases</h1>
-      <p className="muted">Authorized de-identified research studies</p>
       <div className="sidebar-case-actions">
         {canCreateCases(user.role, user.permissions) && <Button type="button" variant={newCase.newCaseOpen ? "default" : "outline"} onClick={startNewCase}>Create case</Button>}
         <Button type="button" variant={newCase.caseFinderOpen ? "default" : "outline"} onClick={startFindCase}>Find case</Button>

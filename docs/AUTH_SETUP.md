@@ -63,7 +63,7 @@ or a secret manager. Use a dedicated test account and provider sandbox to verify
 delivery and redirects before exposing the app beyond local development.
 # Local prototype sign-in convenience
 
-In the local prototype, **Keep me signed in on this device** is selected by default. When `CV_LOCAL_DEMO_SESSIONS=1` is set in the local backend `.env`, a remembered password login or social login lasts 30 days. Without that setting, sessions last eight hours. Sign out, password changes, account suspension, and session expiry still invalidate access.
+In the local prototype, **Remember me** is selected by default. When `CV_LOCAL_DEMO_SESSIONS=1` is set in the local backend `.env`, a remembered password login or social login lasts 30 days. Without that setting, sessions last eight hours. Sign out, password changes, account suspension, and session expiry still invalidate access.
 
 On `localhost` and `127.0.0.1`, each account signed in with the remembered option is added to a browser-local account switcher. You can switch from the profile menu without entering its password again while its own session remains valid. Accounts must sign in once first. The switcher is hidden on other hosts and never stores passwords. Remove `CV_LOCAL_DEMO_SESSIONS=1` before deployment and avoid using the local account switcher on a shared browser.
 

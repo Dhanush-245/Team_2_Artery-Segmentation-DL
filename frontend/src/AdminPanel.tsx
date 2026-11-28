@@ -239,7 +239,7 @@ export default function AdminPanel({ token, currentUser, section = "users" }: { 
             </div>
           ))}
         </div>
-        {audit.length > 10 && <button type="button" onClick={() => setShowAllAudit(v => !v)}>{showAllAudit ? "Show ten events" : `Show all loaded events (${audit.length})`}</button>}
+        {audit.length > 10 && <button type="button" className="cv-outline-button" onClick={() => setShowAllAudit(v => !v)}>{showAllAudit ? "Show ten events" : `Show all loaded events (${audit.length})`}</button>}
       </Card>}
     </div>
   );

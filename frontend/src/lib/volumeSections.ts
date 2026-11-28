@@ -29,6 +29,18 @@ export function activeSection(tops: Record<string, number>, line = 140, sections
   return current;
 }
 
+/** Sections in the order their anchors appear on the page; sections not on the page keep their listed order at the end. */
+export function orderByPosition(tops: Record<string, number>, sections: readonly VolumeSection[]): VolumeSection[] {
+  return sections.map((section, index) => ({ section, index }))
+    .sort((a, b) => {
+      const ta = tops[a.section.id], tb = tops[b.section.id];
+      const ha = typeof ta === "number", hb = typeof tb === "number";
+      if (ha && hb && ta !== tb) return ta - tb;
+      if (ha !== hb) return ha ? -1 : 1;
+      return a.index - b.index;
+    }).map(item => item.section);
+}
+
 export type SourceCheck = { label: string; status: "ok" | "info" | "warn"; detail: string };
 
 /** Checklist built only from what the saved run records; nothing is asserted that was not stored. */

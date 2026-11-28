@@ -1,12 +1,30 @@
-import { lazy } from "react";
+import { lazy, useEffect } from "react";
 import { Button } from "../components/prismui/button";
 import { useWorkspace } from "../workspace/WorkspaceContext";
 
 const VolumeInference = lazy(() => import("../VolumeInference"));
 
 /** Volume-only cases (no XCA frames) use the 3D workspace in place of the 2D analysis and reports pages. */
-export default function VolumeWorkspace() {
+export default function VolumeWorkspace({ landing }: { landing?: "reports" } = {}) {
   const { token, caseList, selected, volumeOnly, volumeSupported, selectCase, setCaseSection, setActiveView } = useWorkspace();
+  const selectedId = selected?.id;
+  // Opening Reports & exports lands on the reports block of the 3D case once the saved run has loaded.
+  useEffect(() => {
+    if (landing !== "reports" || !selectedId) return;
+    let done = false;
+    const jump = () => {
+      const target = document.getElementById("v3d-reports");
+      if (!target || done) return;
+      done = true; observer.disconnect();
+      target.style.scrollMarginTop = "8rem";
+      target.scrollIntoView({ behavior: "auto", block: "start" });
+    };
+    const observer = new MutationObserver(jump);
+    observer.observe(document.body, { childList: true, subtree: true });
+    jump();
+    const stop = window.setTimeout(() => observer.disconnect(), 20000);
+    return () => { observer.disconnect(); window.clearTimeout(stop); };
+  }, [landing, selectedId]);
   if (!volumeOnly || !selected) return null;
   return <section className="volume-workspace" aria-labelledby="volume-workspace-title">
     <div className="page-heading">

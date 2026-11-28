@@ -1076,3 +1076,64 @@ a.brand:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; bo
 .volume-orbit { min-width: 0; max-width: 100%; contain: inline-size; }
 .volume-orbit-canvas { min-width: 0; max-width: 100%; }
 .volume-orbit-presets, .volume-orbit-toolbar, .volume-orbit-legend { flex-wrap: wrap; max-width: 100%; }
+/* Slice panels keep their own height instead of stretching to the taller 3D panel */
+.lv-grid { align-items: start; }
+
+/* ---- UI polish pass (28 Nov) ---- */
+/* Overview: three snapshot cards fill the row instead of leaving an empty slot */
+.overview-page .overview-stats.overview-stats-compact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 900px) { .overview-page .overview-stats.overview-stats-compact { grid-template-columns: minmax(0, 1fr); } }
+.overview-analytics-grid { align-items: start; }
+
+/* Forms: a label sits directly above its control, whatever the row height */
+.app-shell .case-details-form label { align-content: start; }
+.app-shell .case-details-form { gap: 1.1rem; }
+
+/* Tables: timestamps wrap instead of being cut off by the scroll area */
+.table-scroll td, .table-scroll th { white-space: normal; overflow-wrap: break-word; }
+.table-scroll td .cv-chip, .table-scroll td .chip { white-space: nowrap; }
+
+/* Buttons that follow a list keep clear space from it */
+.app-shell :is(.simple-list, .list-row, ul, ol) + :is(button, .cv-actions) { margin-top: .75rem; }
+.app-shell .assessment-evidence button, .app-shell .xai-summary button { margin-top: .5rem; }
+
+/* Comfortable target size for small text buttons and links in tables and cards */
+.lv-goto, .cv-link-button, .candidate-actions a, .candidate-actions button, .volume-mpr-download { min-height: 32px; display: inline-flex; align-items: center; }
+.app-shell main a.lv-goto { padding-block: .3rem; }
+
+/* 3D surface toolbar: one tidy row of controls, centred on a common line */
+.lv-orbit .volume-orbit-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .9rem; }
+.lv-orbit .volume-orbit-toolbar > label { display: inline-flex; flex-direction: row; align-items: center; gap: .5rem; margin: 0; min-height: 36px; font-size: .84rem; font-weight: 600; }
+.lv-orbit .volume-orbit-toolbar > label input[type="range"] { width: 110px; }
+.lv-orbit .volume-orbit-toolbar .volume-orbit-toggle { min-height: 36px; }
+.lv-orbit .volume-orbit-toolbar .volume-orbit-divider { align-self: stretch; }
+.lv-panel-zoom { flex-wrap: nowrap; }
+.lv-panel-zoom > * { flex: 0 0 auto; }
+
+/* Viewer toolbar: controls stay on one line where they fit, in a stable order */
+.lv-toolbar { align-items: center; gap: .5rem .9rem; }
+.lv-toolbar select { max-width: 17rem; }
+.lv-toolbar .volume-orbit-tool { flex: 0 0 auto; }
+
+/* Evidence panel buttons and selects in the dark 2D console */
+.analysis-console select { min-height: 32px; }
+.lv-candidate-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin: .6rem 0 .9rem; }
+.app-shell .lv-orbit .volume-orbit-toolbar > label { display: inline-flex; flex-direction: row; align-items: center; gap: .5rem; margin: 0; min-height: 36px; }
+.app-shell section[aria-label="Reviewed stenosis measurements"] button { min-height: 32px; }
+/* Secondary action buttons on administration pages */
+.cv-outline-button { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: .4rem .95rem; border: 1px solid hsl(var(--border)); border-radius: 8px; background: transparent; color: inherit; font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer; }
+.cv-outline-button:hover:not(:disabled) { background: hsl(var(--muted)); }
+.cv-outline-button:disabled { opacity: .55; cursor: not-allowed; }
+.cv-outline-button:focus-visible { outline: 3px solid #2f8fdb; outline-offset: 2px; }
+.app-shell .ops-test-row, .app-shell .panel > .cv-outline-button { margin-top: .6rem; }
+
+/* XAI studio controls on one baseline with consistent control sizes */
+.xai-studio-controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .6rem 1rem; }
+.xai-studio-controls label { display: grid; gap: .3rem; font-size: .84rem; font-weight: 650; }
+.xai-studio-controls select { min-height: 40px; padding: 0 .7rem; border: 1px solid hsl(var(--border)); border-radius: 8px; background: transparent; color: inherit; }
+.xai-studio-controls .xai-opacity-slider { min-height: 24px; padding: 0; border: 0; }
+.xai-studio-controls button { min-height: 40px; }
+
+/* Viewer readout: status first, technical details after, on one line when they fit */
+.lv-readout { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem 1.25rem; }
+.lv-readout .lv-note { order: -1; }

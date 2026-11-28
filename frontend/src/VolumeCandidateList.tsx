@@ -9,7 +9,7 @@ export type VolumeCandidate = {
 };
 export default function VolumeCandidateList({ candidates, selectedId, onSelect }: { candidates: VolumeCandidate[]; selectedId?: string; onSelect: (candidate: VolumeCandidate) => void }) {
   return <div className="candidate-picker" aria-label="Select a geometry candidate">
-    <p className="caption">Select a suspected narrowing to locate it in all four views. Geometry-eligible means it passed the calculation rules; expert acceptance and artery identity are not established by this list.</p>
+    <p className="caption">Select a candidate to locate it in all four views. Expert acceptance and artery identity are not established.</p>
     <div className="candidate-card-grid">{candidates.map(candidate => <button type="button" key={candidate.id} aria-pressed={selectedId === candidate.id} className={`candidate-choice${selectedId === candidate.id ? ' active' : ''}`} onClick={() => onSelect(candidate)}>
       <strong>{candidateLabel(candidate.id)} — {pathLabel(candidate.path_id)}</strong>
       <span>{candidate.narrowing_percent.toFixed(1)}% diameter narrowing</span>

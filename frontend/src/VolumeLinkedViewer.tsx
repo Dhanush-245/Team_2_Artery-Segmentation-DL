@@ -249,7 +249,7 @@ export default function VolumeLinkedViewer({ caseId, runId, token, shape, heatId
         </figure>
       </div>
       {candidatePanel}
-      <p className="caption">Click a slice to place the shared crosshair; the other two planes and the 3D marker follow. Scroll or use the arrow keys (Shift for steps of 10) to change slice, drag to pan when zoomed, double-click a panel to recentre it. Rendered on demand from the saved full-resolution source and predicted mask; the mask is a research prediction that needs review.</p>
+      <p className="caption">Click a slice to place the crosshair; scroll or use the arrow keys to change slice. The mask is a research prediction that needs review.</p>
     </> : <>{children}</>}
   </section>;
 }

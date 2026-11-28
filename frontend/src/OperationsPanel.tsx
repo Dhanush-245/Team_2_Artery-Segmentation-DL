@@ -39,6 +39,7 @@ export default function OperationsPanel({ token }: { token: string }) {
       const result = await request<{ admins_notified: number; webhook: string }>("/api/admin/operations/test-alert", token, {}, "POST");
       const webhook = result.webhook === "sent" ? "and the webhook" : result.webhook === "failed" ? "but the webhook could not be reached" : "(no webhook configured)";
       setNotice(`Test alert sent to ${result.admins_notified} administrator${result.admins_notified === 1 ? "" : "s"} ${webhook}.`);
+      window.dispatchEvent(new Event("corovision:notifications-changed"));
       await load();
     } catch (cause) { setError((cause as Error).message); }
     finally { setBusy(false); }
@@ -56,7 +57,7 @@ export default function OperationsPanel({ token }: { token: string }) {
     {notice && <p role="status" className="message success">{notice}</p>}
     {!alerts && !error && <p role="status">Loading operations data…</p>}
     {alerts && signals && <>
-      <Card className="panel"><div className="viewer-heading"><h3>Current signals</h3><button type="button" onClick={() => void load()}>Refresh</button></div>
+      <Card className="panel"><div className="viewer-heading"><h3>Current signals</h3><button type="button" className="cv-outline-button" onClick={() => void load()}>Refresh</button></div>
         <div className="ops-signals">
           <div><span>Readiness</span><strong className={signals.ready ? "" : "ops-bad"}>{signals.ready ? "Ready" : "Not ready"}</strong></div>
           <div><span>Memory</span><strong className={memoryStatus(signals.memory, warnPercent).level === "info" ? "" : "ops-bad"}>{memoryStatus(signals.memory, warnPercent).label}</strong></div>
@@ -72,7 +73,7 @@ export default function OperationsPanel({ token }: { token: string }) {
           <li>In-app: every active administrator gets a notification in the bell. <strong>On</strong></li>
           <li>Webhook (Slack, Discord, Teams or a pager): {alerts.channels.webhook ? <strong>Configured</strong> : <strong>Not configured</strong>}. {alerts.channels.webhook ? "" : "Set OPS_ALERT_WEBHOOK_URL in the service variables."}</li>
         </ul>
-        <button type="button" disabled={busy} onClick={() => void sendTest()}>{busy ? "Sending…" : "Send a test alert"}</button>
+        <button type="button" className="cv-outline-button" disabled={busy} onClick={() => void sendTest()}>{busy ? "Sending…" : "Send a test alert"}</button>
         <details className="ops-settings"><summary>Thresholds (change with OPS_* variables)</summary>
           <table><thead><tr><th>Setting</th><th>Value</th></tr></thead><tbody>{Object.entries(alerts.settings).map(([key, value]) => <tr key={key}><td>{key.replaceAll("_", " ")}</td><td>{String(value)}</td></tr>)}</tbody></table>
         </details>
