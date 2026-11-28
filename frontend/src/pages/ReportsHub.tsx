@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Box, FileText, ScanLine } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Box, ChevronLeft, ChevronRight, FileText, ScanLine } from "lucide-react";
 import { apiUrl } from "../api";
 import { analysisSummaryLabel, type CaseRecord } from "../caseTypes";
 import { Button } from "../components/prismui/button";
@@ -9,10 +9,33 @@ import VolumeReports from "../VolumeReports";
 
 /** Case chooser for the Reports section: every case, 2D or 3D, is opened the same way. */
 export function ReportsCasePicker({ cases, selectedId, onSelect }: { cases: CaseRecord[]; selectedId?: string; onSelect: (id: string) => void }) {
+  const track = useRef<HTMLDivElement>(null);
+  const [edge, setEdge] = useState({ start: true, end: true });
+  const measure = useCallback(() => {
+    const element = track.current;
+    if (element) setEdge({ start: element.scrollLeft <= 2, end: element.scrollLeft + element.clientWidth >= element.scrollWidth - 2 });
+  }, []);
+  useEffect(() => {
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [measure, cases.length]);
+  useEffect(() => {
+    track.current?.querySelector<HTMLElement>(".reports-case.is-active")?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [selectedId]);
+  const slide = (direction: -1 | 1) => {
+    const element = track.current;
+    if (element) element.scrollBy({ left: direction * Math.max(240, element.clientWidth * 0.8), behavior: "smooth" });
+  };
   if (!cases.length) return <Card className="panel"><p className="muted">No cases yet. Create a case and run an analysis to produce a report.</p></Card>;
   return <Card className="panel reports-picker">
-    <div className="cv-panel-head"><span className="eyebrow">CHOOSE A CASE</span><h3>Which case is this report for?</h3></div>
-    <div className="reports-case-grid" role="list">
+    <div className="cv-panel-head reports-picker-head"><div><span className="eyebrow">CHOOSE A CASE</span><h3>Which case is this report for?</h3></div>
+      <div className="reports-picker-nav" aria-label="Scroll cases">
+        <span className="reports-picker-count">{cases.length} case{cases.length === 1 ? "" : "s"}</span>
+        <button type="button" className="reports-picker-arrow" aria-label="Scroll cases left" disabled={edge.start} onClick={() => slide(-1)}><ChevronLeft size={18} aria-hidden="true" /></button>
+        <button type="button" className="reports-picker-arrow" aria-label="Scroll cases right" disabled={edge.end} onClick={() => slide(1)}><ChevronRight size={18} aria-hidden="true" /></button>
+      </div></div>
+    <div className="reports-case-grid" role="list" ref={track} onScroll={measure} tabIndex={0} aria-label="Cases, scroll sideways">
       {cases.map(item => {
         const volume = !(item.modalities ?? [item.modality]).includes("XCA");
         const Icon = volume ? Box : ScanLine;
