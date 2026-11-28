@@ -14,6 +14,8 @@ A role-based research workspace for coronary artery segmentation, suspected sten
 
 [Quick start](#quick-start) · [Features](#features) · [Supported analyses](#supported-analyses) · [Architecture](#architecture) · [Results](#measured-results) · [Documentation](#documentation)
 
+📘 **New here?** Read the [Instruction Guide (PDF)](docs/CoroVision_AI_Instruction_Guide.pdf) for setup and every screen, and the [Project Report (PDF)](docs/CoroVision_AI_Project_Report.pdf) for the full project documentation.
+
 </div>
 
 ---
@@ -99,6 +101,8 @@ flowchart TB
 SQLite is the local default. PostgreSQL can be configured through `DATABASE_URL`, but production use needs its own security, operations and privacy review.
 
 ## Quick start
+
+> Need help at any step? See the [Instruction Guide (PDF)](docs/CoroVision_AI_Instruction_Guide.pdf) and the [Project Report (PDF)](docs/CoroVision_AI_Project_Report.pdf).
 
 ### Docker (recommended)
 
@@ -219,7 +223,7 @@ This branch is application-only: training notebooks, runners, queues and checkpo
 
 | Topic | Links |
 | :--- | :--- |
-| User guide | [Instruction guide (PDF)](docs/CoroVision_AI_Instruction_Guide.pdf) · [Instruction guide (Markdown)](docs/INSTRUCTION_GUIDE.md) |
+| **Start here** | [Instruction Guide (PDF)](docs/CoroVision_AI_Instruction_Guide.pdf): clone, Docker, start-up, every section and button, 2D and 3D workflows · [Instruction Guide (Markdown)](docs/INSTRUCTION_GUIDE.md) · [Project Report (PDF)](docs/CoroVision_AI_Project_Report.pdf): abstract, datasets, models, methods, results and limits |
 | Product and scope | [Project scope](docs/PROJECT_SCOPE.md) · [Comprehensive PRD](docs/CoroVision_AI_Comprehensive_PRD_Infosys_Springboard_Team_2.md) |
 | Architecture and design | [Architecture](docs/ARCHITECTURE.md) · [Database schema](docs/PRD_DATABASE_SCHEMA.md) · [Wireframes](docs/WIREFRAMES.md) |
 | Workflows | [Frontend workflow](docs/FRONTEND_WORKFLOW.md) · [Role section map](docs/ROLE_SECTIONS_ROUTE_MATRIX_2026-10-16.md) |

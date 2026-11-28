@@ -18,11 +18,18 @@ SECRET_KEY = os.getenv("JWT_SECRET", "development-only-change-before-deployment"
 ALGORITHM = "HS256"
 
 
+MAX_PASSWORD_CHARS = 1024  # passlib rejects very long inputs with an exception; refuse them cleanly instead
+
+
 def hash_password(password: str) -> str:
+    if len(password) > MAX_PASSWORD_CHARS:
+        raise HTTPException(422, "Password is too long")
     return pwd_context.hash(password)
 
 
 def verify_password(password: str, stored: str) -> bool:
+    if len(password) > MAX_PASSWORD_CHARS:
+        return False
     return pwd_context.verify(password, stored)
 
 
